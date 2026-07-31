@@ -1,0 +1,315 @@
+/* ==========================================================================
+   Kohinoor Tez — Glass Material System + Motion Primitives
+   Depends on tokens.css. Imported by app/globals.css after it.
+
+   THE GLASS DOCTRINE (see docs/phase-2-design-system.md §5)
+   -----------------------------------------------------------------------
+   Glass is a material for CHROME — surfaces that float above content:
+   navbar, mega menu, command palette, modals, drawers, chat panel, toasts,
+   sticky purchase bar, mobile bottom nav.
+
+   Glass is NOT for CONTENT — book cards, section backgrounds, and product
+   surfaces are opaque. This is how visionOS/macOS actually work, it is what
+   separates premium glass from the 2021 "frosted everything" template look,
+   and it caps `backdrop-filter` to a handful of mostly-fixed elements.
+
+   HARD BUDGET: max 2 live backdrop-filter layers composited per viewport.
+   Large ambient areas use pre-blurred gradient meshes (.mesh-*), which cost
+   nothing, instead of blurring a real backdrop.
+   ========================================================================== */
+
+@layer components {
+  /* ------------------------------------------------------------------------
+     Tier 1 — CHROME. Persistent, usually fixed. Navbar, bottom nav, toolbars.
+     ------------------------------------------------------------------------ */
+  .glass-chrome {
+    background-color: var(--glass-chrome-bg);
+    backdrop-filter: blur(var(--blur-chrome)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur-chrome)) saturate(180%);
+    border-bottom: 1px solid var(--border-glass);
+    /* Promote once, deliberately. Without this the blur re-rasterises on
+       every scroll frame and destroys INP on mid-range Android. */
+    will-change: backdrop-filter;
+    transform: translateZ(0);
+  }
+
+  /* ------------------------------------------------------------------------
+     Tier 2 — PANEL. Transient overlays. Palette, modal, drawer, chat, menu.
+     Heavier blur is affordable because these are short-lived and exclusive.
+     ------------------------------------------------------------------------ */
+  .glass-panel {
+    background-color: var(--glass-panel-bg);
+    backdrop-filter: blur(var(--blur-panel)) saturate(180%);
+    -webkit-backdrop-filter: blur(var(--blur-panel)) saturate(180%);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-glass);
+  }
+
+  /* ------------------------------------------------------------------------
+     Tier 3 — VEIL. The scrim behind a panel. Cheap, low blur, no saturation.
+     ------------------------------------------------------------------------ */
+  .glass-veil {
+    background-color: rgb(15 23 42 / 0.32);
+    backdrop-filter: blur(var(--blur-veil));
+    -webkit-backdrop-filter: blur(var(--blur-veil));
+  }
+  .dark .glass-veil { background-color: rgb(0 0 0 / 0.52); }
+
+  /* ------------------------------------------------------------------------
+     Specular edge — what actually sells "glass" vs "translucent rectangle".
+     A 1px top highlight simulating light catching the leading edge.
+     Composable onto any glass tier. Costs one pseudo-element, no blur.
+     ------------------------------------------------------------------------ */
+  .glass-edge { position: relative; isolation: isolate; }
+  .glass-edge::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      160deg,
+      var(--glass-edge-top) 0%,
+      transparent 34%,
+      transparent 66%,
+      var(--glass-edge-bot) 100%
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ------------------------------------------------------------------------
+     CONTENT surfaces — opaque by doctrine. Depth from shadow + hairline only.
+     ------------------------------------------------------------------------ */
+  .surface-card {
+    background-color: var(--surface-1);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      box-shadow var(--duration-base) var(--ease-standard),
+      transform var(--duration-base) var(--ease-standard),
+      border-color var(--duration-base) var(--ease-standard);
+  }
+  .surface-card:hover {
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-2);
+    transform: translateY(-2px);
+  }
+
+  /* ------------------------------------------------------------------------
+     Ambient mesh — the "background blobs" from the brief, done cheaply.
+     A fixed, non-interactive gradient field. No backdrop-filter, no
+     animation loop, no particle canvas. GPU cost is a single paint.
+     ------------------------------------------------------------------------ */
+  .mesh-ambient {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+    background-image:
+      radial-gradient(60rem 40rem at 12% -10%, var(--mesh-1), transparent 60%),
+      radial-gradient(48rem 36rem at 96% 8%,  var(--mesh-2), transparent 62%),
+      radial-gradient(52rem 40rem at 48% 108%, var(--mesh-3), transparent 64%);
+  }
+
+  /* Fine grain — kills gradient banding on large soft fields. 8-bit displays
+     band badly across a 60rem radial; this is the standard fix. */
+  .mesh-ambient::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ------------------------------------------------------------------------
+     Focus — one visible, consistent ring. Never removed, never `outline: none`
+     without a replacement. Uses :focus-visible so mouse users don't see it.
+     ------------------------------------------------------------------------ */
+  .focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: inherit;
+  }
+}
+
+/* ==========================================================================
+   KEYFRAMES
+   Consumed by the navbar mega menu, dropdowns and the mobile accordion.
+   Radix supplies --radix-accordion-content-height at runtime; animating to
+   `auto` is impossible in CSS, which is the whole reason that var exists.
+   ========================================================================== */
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes expand {
+  from { height: 0; }
+  to   { height: var(--radix-accordion-content-height); }
+}
+@keyframes collapse {
+  from { height: var(--radix-accordion-content-height); }
+  to   { height: 0; }
+}
+/* Assistant launcher: one slow breath, not a notification pulse. An infinite
+   fast pulse reads as "you have an unread message", which is a lie. */
+@keyframes ambientGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(93 99 236 / 0.35), var(--shadow-lg); }
+  50%      { box-shadow: 0 0 0 12px rgb(93 99 236 / 0), var(--shadow-lg); }
+}
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+/* Testimonial marquee. Translating -1/3 works because the row is rendered
+   three times — the seam lands exactly where the sequence repeats. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.3333%); }
+}
+
+/* ==========================================================================
+   MOTION PRIMITIVES
+   Framer Motion owns orchestrated/interruptible animation. These CSS
+   primitives cover the high-frequency, non-stateful cases so we don't pay
+   JS for a hover lift.
+   ========================================================================== */
+@layer utilities {
+  .lift {
+    transition: transform var(--duration-fast) var(--ease-standard),
+                box-shadow var(--duration-fast) var(--ease-standard);
+  }
+  .lift:hover  { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .lift:active { transform: translateY(-1px); }
+
+  /* Press feedback for touch — the mobile equivalent of hover (D12) */
+  .press { transition: transform var(--duration-instant) var(--ease-standard); }
+  .press:active { transform: scale(0.975); }
+
+  /* CSS 3D book tilt (D6) — R3F-free, ~0 KB, works on every device.
+     Rotation values are set by a pointer handler writing --rx/--ry. */
+  .tilt-3d {
+    transform-style: preserve-3d;
+    transform: perspective(900px)
+               rotateX(var(--rx, 0deg))
+               rotateY(var(--ry, 0deg))
+               translateZ(0);
+    transition: transform var(--duration-base) var(--ease-standard);
+  }
+  .tilt-3d__depth { transform: translateZ(28px); }
+
+  /* Glass sheen sweep — for CTAs and featured cards. One transform, no
+     repaint. Trigger with .sheen:hover or a Framer variant. */
+  .sheen { position: relative; overflow: hidden; }
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 38%,
+      rgb(255 255 255 / 0.28) 50%,
+      transparent 62%
+    );
+    transform: translateX(-120%);
+    transition: transform var(--duration-slow) var(--ease-standard);
+    pointer-events: none;
+  }
+  .sheen:hover::after { transform: translateX(120%); }
+
+  /* Scroll-reveal base. Framer's whileInView flips data-revealed. Kept in
+     CSS so SSR content is visible before hydration (no FOUC, no CLS). */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity var(--duration-reveal) var(--ease-out-expo),
+      transform var(--duration-reveal) var(--ease-out-expo);
+  }
+  [data-reveal][data-revealed="true"] { opacity: 1; transform: none; }
+}
+
+/* ==========================================================================
+   CAPABILITY + PREFERENCE FALLBACKS
+   Three independent escape hatches. All degrade to a still-premium result —
+   none of them produce a broken layout.
+   ========================================================================== */
+
+/* 1. Browser can't do backdrop-filter → opaque surfaces. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-chrome { background-color: var(--surface-1); }
+  .glass-panel  { background-color: var(--surface-1); }
+  .glass-veil   { background-color: rgb(15 23 42 / 0.56); }
+}
+
+/* 2. Device is too weak (set by lib/device-capability.ts on <html>).
+      Blur is the single most expensive thing on this site; dropping it is
+      the first lever, before we ever drop layout or content. */
+:root[data-perf="low"] {
+  .glass-chrome,
+  .glass-panel { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .glass-chrome { background-color: color-mix(in srgb, var(--surface-1) 94%, transparent); }
+  .glass-panel  { background-color: var(--surface-1); }
+  .mesh-ambient::after { display: none; }
+  .sheen::after { display: none; }
+}
+
+/* 3. User preferences. `prefers-reduced-transparency` is a real a11y need
+      (vestibular + low-vision), not a nice-to-have. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass-chrome, .glass-panel {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: var(--surface-1);
+  }
+  .glass-veil { background-color: rgb(15 23 42 / 0.72); backdrop-filter: none; }
+}
+
+/* THE REDUCED-MOTION CONTRACT
+   Movement is removed; opacity and colour transitions are KEPT. A user with
+   vestibular sensitivity still needs to perceive that a menu opened — a hard
+   `animation: none !important` reset makes interfaces feel broken, not calm.
+   Rule for every component: motion carries delight, opacity carries meaning. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: var(--duration-instant) !important;
+    scroll-behavior: auto !important;
+  }
+  .lift:hover, .lift:active, .press:active { transform: none; }
+  .tilt-3d { transform: none; }
+  .sheen::after { display: none; }
+  [data-reveal] { opacity: 1; transform: none; transition: none; }
+}
+
+/* High contrast — borders become real, glass becomes solid. */
+@media (prefers-contrast: more) {
+  :root { --border-1: rgb(15 23 42 / 0.28); --border-2: rgb(15 23 42 / 0.48); }
+  .dark { --border-1: rgb(255 255 255 / 0.28); --border-2: rgb(255 255 255 / 0.48); }
+  .glass-chrome, .glass-panel {
+    background-color: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

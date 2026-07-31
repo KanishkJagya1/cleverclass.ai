@@ -1,0 +1,18 @@
+# Normalise line endings. Without this, committing from Windows stores CRLF
+# and every file shows as fully modified when anyone edits on macOS/Linux or
+# in CI — which is how a one-line change turns into a 200-file diff.
+* text=auto eol=lf
+
+# Binary — never touch these.
+*.jpg  binary
+*.jpeg binary
+*.png  binary
+*.webp binary
+*.avif binary
+*.ico   binary
+*.woff  binary
+*.woff2 binary
+*.pdf  binary
+
+# Generated: collapse in PR diffs.
+package-lock.json linguist-generated=true -diff

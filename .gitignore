@@ -1,0 +1,94 @@
+# ---------------------------------------------------------------------------
+# Dependencies
+# ---------------------------------------------------------------------------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# ---------------------------------------------------------------------------
+# Environment — never commit real secrets.
+# .env.example files ARE committed on purpose; they document the contract.
+# ---------------------------------------------------------------------------
+.env
+.env.local
+.env.development
+.env.production
+.env*.local
+!.env.example
+
+# ---------------------------------------------------------------------------
+# Python / backend
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Vector store + downloaded model weights. Both are regenerated on boot
+# (`ingest_directory`) and would otherwise add hundreds of MB to the repo.
+backend/vector_db/chroma/
+backend/.cache/
+backend/knowledge/**/*.pdf
+
+# ---------------------------------------------------------------------------
+# Cover-sync artefacts — regenerate with `npm run download:covers`.
+# The images in frontend/public/covers/ ARE committed: Vercel serves them
+# from the repo, so ignoring them would ship a site with no book covers.
+# ---------------------------------------------------------------------------
+frontend/scripts/.cache/
+frontend/download-report.json
+frontend/missing-covers.txt
+frontend/unmatched-products.txt
+frontend/slugs.txt
+
+# ---------------------------------------------------------------------------
+# Deployment / tooling
+# ---------------------------------------------------------------------------
+.vercel
+.turbo
+.cache/
+coverage/
+*.pem
+
+# ---------------------------------------------------------------------------
+# Editor / OS / local tooling
+# ---------------------------------------------------------------------------
+# Machine-local Claude Code settings (permission allowlists etc.)
+.claude/settings.local.json
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.swp
+*~
+
+# ---------------------------------------------------------------------------
+# Logs
+# ---------------------------------------------------------------------------
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

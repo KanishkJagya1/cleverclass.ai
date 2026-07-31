@@ -1,0 +1,30 @@
+# --- Core -------------------------------------------------------------------
+fastapi==0.115.8
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+python-multipart==0.0.20
+
+# --- Vector store -----------------------------------------------------------
+chromadb==0.6.3
+
+# --- Embeddings -------------------------------------------------------------
+# ~90 MB model download on first run. Set EMBEDDING_PROVIDER=openai to skip it.
+sentence-transformers==3.4.1
+
+# --- Document ingestion -----------------------------------------------------
+pypdf==5.3.0
+
+# --- LLM providers (optional) ----------------------------------------------
+# Install only the one you use; the service runs without either via the
+# `echo` provider, which answers extractively from retrieved context.
+openai==1.63.2
+google-generativeai==0.8.4
+
+# --- Optional: LangChain --------------------------------------------------
+# The pipeline is written directly against the vector store and LLM
+# interfaces rather than through LangChain — for a corpus this size the
+# abstraction cost outweighed the benefit. Uncomment if you later need
+# agents, tool calling, or a multi-step chain.
+# langchain==0.3.19
+# langchain-community==0.3.18

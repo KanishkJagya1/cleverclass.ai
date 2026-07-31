@@ -1,0 +1,335 @@
+/* ==========================================================================
+   Kohinoor Tez — Design Tokens
+   Tailwind v4 CSS-first theme. Single source of truth for the design system.
+   Imported by app/globals.css before any component styles.
+
+   Structure:
+     1. Primitive ramps      (@theme)      — raw values, never used directly in JSX
+     2. Semantic aliases     (@theme inline) — what components actually consume
+     3. Light / dark values  (:root / .dark) — the only place a theme is defined
+   ========================================================================== */
+
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* --------------------------------------------------------------------------
+   1. PRIMITIVES
+   Ramps only. If a component references `--color-indigo-600` directly, that's
+   a bug — it means a semantic token is missing.
+   -------------------------------------------------------------------------- */
+@theme {
+  /* Brand — anchored at 900 = #312E81 (Deep Indigo), cooled slightly through
+     the midtones so 500/600 read as "royal" rather than generic Tailwind. */
+  --color-indigo-50:  #EEF1FF;
+  --color-indigo-100: #E0E5FF;
+  --color-indigo-200: #C6CEFE;
+  --color-indigo-300: #A3AEFB;
+  --color-indigo-400: #7D87F6;
+  --color-indigo-500: #5D63EC;
+  --color-indigo-600: #4A46DC;
+  --color-indigo-700: #3E38BF;
+  --color-indigo-800: #37339B;
+  --color-indigo-900: #312E81;
+  --color-indigo-950: #1D1B4B;
+
+  /* Ink — cool neutral, sits under the indigo so greys never look muddy */
+  --color-ink-50:  #F8FAFC;
+  --color-ink-100: #F1F5F9;
+  --color-ink-200: #E2E8F0;
+  --color-ink-300: #CBD5E1;
+  --color-ink-400: #94A3B8;
+  --color-ink-500: #64748B;
+  --color-ink-600: #475569;
+  --color-ink-700: #334155;
+  --color-ink-800: #1E293B;
+  --color-ink-900: #0F172A;
+  --color-ink-950: #080C18;
+
+  /* Accents — deliberately few. Emerald carries all commercial "gain"
+     signals (savings, in stock, free shipping unlocked). Amber = ratings.
+     Rose = destructive only. Violet exists ONLY for gradient meshes. */
+  --color-emerald-50:  #ECFDF5;
+  --color-emerald-100: #D1FAE5;
+  --color-emerald-500: #10B981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;  /* 5.21:1 on --color-ink-50 — the text-safe one */
+  --color-emerald-900: #064E3B;
+
+  --color-amber-400: #FBBF24;
+  --color-amber-500: #F59E0B;
+  --color-amber-700: #B45309;
+
+  --color-rose-50:  #FFF1F2;
+  --color-rose-500: #F43F5E;
+  --color-rose-700: #BE123C;
+
+  --color-violet-400: #A78BFA;
+  --color-violet-600: #7C3AED;
+
+  /* Typography ------------------------------------------------------------
+     Latin + Devanagari pairs. Devanagari faces are listed inside the same
+     stack so a Marathi title inherits weight/size from the same utility. */
+  --font-display: var(--font-space-grotesk), var(--font-noto-deva), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:    var(--font-inter), var(--font-noto-deva), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-deva:    var(--font-mukta), var(--font-noto-deva), ui-sans-serif, sans-serif;
+  --font-mono:    ui-monospace, "SF Mono", "Cascadia Code", monospace;
+
+  /* Fluid type scale. min = 360px viewport, max = 1280px.
+     Ratio 1.200 mobile → 1.333 desktop, so headlines gain presence on
+     desktop without body copy inflating. */
+  --text-2xs:  0.6875rem;                                  /* 11px  — legal, badges */
+  --text-xs:   0.75rem;                                    /* 12px  — meta, labels */
+  --text-sm:   0.8125rem;                                  /* 13px  — dense UI */
+  --text-base: 0.9375rem;                                  /* 15px  — UI default */
+  --text-body: 1rem;                                       /* 16px  — prose */
+  --text-lg:   clamp(1.0625rem, 0.98rem + 0.36vw, 1.25rem);
+  --text-xl:   clamp(1.1875rem, 1.06rem + 0.54vw, 1.5rem);
+  --text-2xl:  clamp(1.375rem, 1.17rem + 0.89vw, 1.875rem);
+  --text-3xl:  clamp(1.625rem, 1.29rem + 1.43vw, 2.375rem);
+  --text-4xl:  clamp(1.875rem, 1.34rem + 2.32vw, 3.125rem);
+  --text-5xl:  clamp(2.25rem, 1.41rem + 3.57vw, 4rem);
+  --text-6xl:  clamp(2.625rem, 1.28rem + 5.71vw, 5.25rem);  /* hero only */
+
+  --leading-tight:   1.08;   /* display */
+  --leading-snug:    1.24;   /* headings */
+  --leading-normal:  1.5;    /* UI */
+  --leading-relaxed: 1.68;   /* prose */
+  --leading-deva:    1.78;   /* Devanagari needs extra — matras clip below 1.7 */
+
+  --tracking-tighter: -0.03em;  /* display 4xl+ */
+  --tracking-tight:   -0.018em; /* headings */
+  --tracking-normal:  -0.006em; /* Inter reads better slightly tight */
+  --tracking-wide:    0.06em;   /* eyebrow / overline, uppercase */
+
+  /* Spacing — 4px base, 8px rhythm. The large steps are the "premium
+     whitespace" tokens; sections must use them, never ad-hoc padding. */
+  --spacing: 0.25rem;
+
+  /* Radius — restrained. Nothing rounder than 24px except pills. */
+  --radius-xs:  0.375rem;
+  --radius-sm:  0.5rem;
+  --radius-md:  0.75rem;   /* inputs, small buttons */
+  --radius-lg:  1rem;      /* cards */
+  --radius-xl:  1.25rem;   /* panels */
+  --radius-2xl: 1.5rem;    /* modals, hero surfaces */
+  --radius-3xl: 2rem;      /* rare, feature blocks */
+
+  /* Motion ---------------------------------------------------------------
+     Four durations, four curves. If a component needs a fifth, it's wrong. */
+  --duration-instant: 90ms;
+  --duration-fast:    150ms;   /* hover, focus, tap feedback */
+  --duration-base:    240ms;   /* dropdowns, tooltips, toggles */
+  --duration-slow:    380ms;   /* modals, drawers, page chrome */
+  --duration-reveal:  620ms;   /* scroll-triggered section reveals */
+
+  --ease-standard:   cubic-bezier(0.2, 0, 0, 1);        /* the workhorse */
+  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);     /* entrances */
+  --ease-in-out:     cubic-bezier(0.65, 0, 0.35, 1);    /* position changes */
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1); /* magnetic / elastic, sparingly */
+
+  /* Breakpoints — 480 added for large phones (this audience is mobile-heavy) */
+  --breakpoint-xs:  30rem;    /* 480 */
+  --breakpoint-sm:  40rem;    /* 640 */
+  --breakpoint-md:  48rem;    /* 768 */
+  --breakpoint-lg:  64rem;    /* 1024 */
+  --breakpoint-xl:  80rem;    /* 1280 */
+  --breakpoint-2xl: 96rem;    /* 1536 */
+
+  /* Blur — the glass system consumes only these three */
+  --blur-chrome: 20px;
+  --blur-panel:  32px;
+  --blur-veil:   8px;
+}
+
+/* --------------------------------------------------------------------------
+   2. SEMANTIC ALIASES
+   `@theme inline` keeps the var() reference intact, so flipping .dark
+   re-points every utility without generating a second copy of the CSS.
+   Components consume ONLY these.
+   -------------------------------------------------------------------------- */
+@theme inline {
+  /* Surfaces */
+  --color-canvas:        var(--surface-canvas);
+  --color-surface:       var(--surface-1);
+  --color-surface-raised:var(--surface-2);
+  --color-surface-sunken: var(--surface-0);
+  --color-surface-inverse: var(--surface-inverse);
+
+  /* Text */
+  --color-fg:          var(--text-1);
+  --color-fg-muted:    var(--text-2);
+  --color-fg-subtle:   var(--text-3);
+  --color-fg-inverse:  var(--text-inverse);
+  --color-fg-brand:    var(--text-brand);
+
+  /* Lines */
+  --color-line:        var(--border-1);
+  --color-line-strong: var(--border-2);
+  --color-line-glass:  var(--border-glass);
+
+  /* Brand / interactive */
+  --color-brand:         var(--brand-base);
+  --color-brand-hover:   var(--brand-hover);
+  --color-brand-soft:    var(--brand-soft);
+  --color-brand-on:      var(--brand-on);
+  --color-ring:          var(--focus-ring);
+
+  /* Commercial signals */
+  --color-gain:      var(--signal-gain);       /* savings, in stock */
+  --color-gain-soft: var(--signal-gain-soft);
+  --color-rating:    var(--signal-rating);
+  --color-danger:    var(--signal-danger);
+
+  /* Glass materials */
+  --color-glass-chrome: var(--glass-chrome-bg);
+  --color-glass-panel:  var(--glass-panel-bg);
+}
+
+/* --------------------------------------------------------------------------
+   3. THEMES
+   -------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  --surface-canvas:  #F8FAFC;   /* page background */
+  --surface-0:       #F1F5F9;   /* sunken wells, inputs on white */
+  --surface-1:       #FFFFFF;   /* cards, content surfaces (OPAQUE by doctrine) */
+  --surface-2:       #FFFFFF;   /* raised cards — separated by shadow, not tint */
+  --surface-inverse: #131235;
+
+  --text-1:       #0F172A;   /* 17.4:1 on canvas */
+  --text-2:       #475569;   /*  7.2:1 — secondary, safe for body */
+  --text-3:       #64748B;   /*  4.6:1 — AA floor. Never below 14px. */
+  --text-inverse: #F8FAFC;
+  --text-brand:   #312E81;   /* 10.9:1 */
+
+  --border-1:     rgb(15 23 42 / 0.08);
+  --border-2:     rgb(15 23 42 / 0.14);
+  --border-glass: rgb(255 255 255 / 0.55);
+
+  --brand-base:  #312E81;
+  --brand-hover: #3E38BF;
+  --brand-soft:  #EEF1FF;
+  --brand-on:    #FFFFFF;    /* 11.4:1 on --brand-base */
+  --focus-ring:  #5D63EC;
+
+  --signal-gain:      #047857;  /* 5.2:1 — text-safe emerald */
+  --signal-gain-soft: #ECFDF5;
+  --signal-rating:    #F59E0B;
+  --signal-danger:    #BE123C;
+
+  /* Glass materials — see glass.css for the utilities that consume these */
+  --glass-chrome-bg: rgb(255 255 255 / 0.72);
+  --glass-panel-bg:  rgb(255 255 255 / 0.80);
+  --glass-edge-top:  rgb(255 255 255 / 0.90);   /* specular top highlight */
+  --glass-edge-bot:  rgb(255 255 255 / 0.25);
+
+  /* Shadows — indigo-tinted, never pure black. Multi-layer for real depth. */
+  --shadow-xs: 0 1px 2px rgb(30 27 75 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(30 27 75 / 0.04),
+               0 2px 6px rgb(30 27 75 / 0.04);
+  --shadow-md: 0 2px 4px rgb(30 27 75 / 0.04),
+               0 6px 16px rgb(30 27 75 / 0.06);
+  --shadow-lg: 0 4px 8px rgb(30 27 75 / 0.04),
+               0 12px 28px rgb(30 27 75 / 0.08);
+  --shadow-xl: 0 8px 16px rgb(30 27 75 / 0.05),
+               0 24px 48px rgb(30 27 75 / 0.10);
+  --shadow-glass: 0 1px 0 rgb(255 255 255 / 0.6) inset,
+                  0 8px 32px rgb(30 27 75 / 0.10);
+  --shadow-brand: 0 4px 14px rgb(49 46 129 / 0.24);
+
+  /* Ambient mesh — the ONLY place violet appears. Kept under 0.10 alpha. */
+  --mesh-1: rgb(93 99 236 / 0.10);
+  --mesh-2: rgb(124 58 237 / 0.07);
+  --mesh-3: rgb(16 185 129 / 0.05);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --surface-canvas:  #0A0C14;
+  --surface-0:       #0E111B;
+  --surface-1:       #141826;   /* elevation via lighter surface, not shadow */
+  --surface-2:       #1B2033;
+  --surface-inverse: #F8FAFC;
+
+  --text-1:       #F1F5F9;
+  --text-2:       #A5B0C2;
+  --text-3:       #7C8AA3;
+  --text-inverse: #0F172A;
+  --text-brand:   #A3AEFB;   /* 900 is unreadable on dark — brand shifts to 300 */
+
+  --border-1:     rgb(255 255 255 / 0.08);
+  --border-2:     rgb(255 255 255 / 0.14);
+  --border-glass: rgb(255 255 255 / 0.12);
+
+  --brand-base:  #5D63EC;
+  --brand-hover: #7D87F6;
+  --brand-soft:  rgb(93 99 236 / 0.14);
+  --brand-on:    #FFFFFF;
+  --focus-ring:  #7D87F6;
+
+  --signal-gain:      #34D399;
+  --signal-gain-soft: rgb(16 185 129 / 0.14);
+  --signal-rating:    #FBBF24;
+  --signal-danger:    #FB7185;
+
+  /* Dark glass is a DARKENING material, not a lightening one. Raising white
+     alpha here produces the milky plastic look that kills dark glassmorphism. */
+  --glass-chrome-bg: rgb(12 14 22 / 0.70);
+  --glass-panel-bg:  rgb(16 19 30 / 0.78);
+  --glass-edge-top:  rgb(255 255 255 / 0.10);
+  --glass-edge-bot:  rgb(255 255 255 / 0.03);
+
+  /* Shadows do almost nothing on dark. Depth comes from the edge highlight. */
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.30);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.30),
+               0 2px 6px rgb(0 0 0 / 0.24);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.30),
+               0 6px 16px rgb(0 0 0 / 0.30);
+  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.32),
+               0 12px 28px rgb(0 0 0 / 0.36);
+  --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.34),
+               0 24px 48px rgb(0 0 0 / 0.44);
+  --shadow-glass: 0 1px 0 rgb(255 255 255 / 0.08) inset,
+                  0 8px 32px rgb(0 0 0 / 0.40);
+  --shadow-brand: 0 4px 14px rgb(93 99 236 / 0.34);
+
+  --mesh-1: rgb(93 99 236 / 0.16);
+  --mesh-2: rgb(124 58 237 / 0.12);
+  --mesh-3: rgb(16 185 129 / 0.07);
+}
+
+/* --------------------------------------------------------------------------
+   Layout constants — not Tailwind utilities, consumed by layout components.
+   -------------------------------------------------------------------------- */
+:root {
+  --container-max: 80rem;      /* 1280 */
+  --container-prose: 44rem;    /* 704 — optimal 68ch for Inter at 16px */
+  --gutter: 1.25rem;
+  --nav-h: 4.5rem;             /* 72 */
+  --nav-h-scrolled: 3.5rem;    /* 56 — the shrink target */
+  --bottom-nav-h: 4rem;        /* 64 — mobile only */
+
+  /* Section rhythm — THE whitespace contract (D11). */
+  --section-y-sm: clamp(3rem, 6vw, 4.5rem);
+  --section-y:    clamp(4.5rem, 9vw, 8rem);
+  --section-y-lg: clamp(6rem, 12vw, 10rem);
+
+  /* Z-index — one scale, no magic numbers anywhere else. */
+  --z-base: 0;
+  --z-raised: 10;
+  --z-sticky: 20;      /* sticky purchase panel, filter bar */
+  --z-nav: 50;
+  --z-bottom-nav: 55;
+  --z-dropdown: 60;    /* mega menu */
+  --z-overlay: 70;     /* scrim */
+  --z-modal: 80;       /* dialogs, command palette, drawers */
+  --z-chat: 90;
+  --z-toast: 100;
+  --z-cursor: 9999;
+}
+
+@media (min-width: 40rem) { :root { --gutter: 2rem; } }
+@media (min-width: 64rem) { :root { --gutter: 2.5rem; } }

@@ -1,0 +1,211 @@
+/**
+ * Catalog domain types.
+ *
+ * These are the contract between the UI and *any* data source. Components
+ * import from here and never from a concrete data module — that indirection
+ * is what lets the seed adapter be swapped for Postgres/Supabase/Sanity/
+ * Payload/Shopify without touching a single component (D5, D7).
+ */
+
+export type Board = "state" | "cbse";
+export type Medium = "marathi" | "semi-english" | "english";
+export type Series = "kohinoor" | "spark" | "vidyamitra" | "winwings" | "ekatmik";
+export type Stream = "science-pcm" | "science-pcb" | "science-pcbm" | "commerce" | "arts";
+export type ClassId =
+  | "nursery" | "5" | "6" | "7" | "8" | "9" | "10" | "11" | "12" | "board-exam";
+export type ProductFormat = "book" | "combo" | "key-note";
+
+export interface Money {
+  /** Selling price in whole rupees. No paise anywhere in this catalog. */
+  price: number;
+  /** Printed MRP. Undefined when there is no discount. */
+  mrp?: number;
+}
+
+export interface CoverImage {
+  src: string;
+  alt: string;
+  /** front | back | inside spread — drives the gallery tabs (D10). */
+  kind: "front" | "back" | "inside";
+  width: number;
+  height: number;
+  /** base64 LQIP generated at build time. */
+  blurDataURL?: string;
+}
+
+export interface Book extends Money {
+  id: string;
+  slug: string;
+  title: string;
+  /** Devanagari title. Rendered with lang="mr" so it picks up --leading-deva. */
+  titleMr?: string;
+  series: Series;
+  board: Board;
+  classId: ClassId;
+  medium: Medium;
+  subject: string;
+  stream?: Stream;
+  images: CoverImage[];
+  /** Free preview pages — no sign-up required (D1). */
+  previewPages: string[];
+  pages: number;
+  isbn?: string;
+  edition: string;
+  description: string;
+  highlights: string[];
+  rating: number;
+  reviewCount: number;
+  inStock: boolean;
+  bestSellerRank?: number;
+  publishedAt: string;
+  /** Slugs of the same title in other mediums — powers the medium switch. */
+  variants?: string[];
+  related?: string[];
+}
+
+export interface Combo extends Money {
+  id: string;
+  slug: string;
+  title: string;
+  titleMr?: string;
+  board: Board;
+  classId: ClassId;
+  medium: Medium;
+  stream?: Stream;
+  /** Book slugs. Resolved to full books by the adapter. */
+  itemSlugs: string[];
+  images: CoverImage[];
+  highlights: string[];
+  description: string;
+  rating: number;
+  reviewCount: number;
+  inStock: boolean;
+  publishedAt: string;
+}
+
+/** Combo with its books resolved and the savings arithmetic done. */
+export interface ComboResolved extends Combo {
+  items: Book[];
+  itemsTotal: number;
+  savings: number;
+  savingsPct: number;
+}
+
+export interface KeyNote {
+  id: string;
+  slug: string;
+  title: string;
+  titleMr?: string;
+  classId: ClassId;
+  subject: string;
+  medium: Medium;
+  board: Board;
+  chapters: string[];
+  /** Free pages shown in-browser without login (D1). */
+  previewPages: string[];
+  totalPages: number;
+  /** The paid guide this note routes to — Phase 1 Flow C. */
+  relatedBookSlug?: string;
+  updatedAt: string;
+}
+
+export interface ClassNode {
+  id: ClassId;
+  label: string;
+  labelMr: string;
+  /** Short form for the class rail tiles. */
+  short: string;
+  boards: Board[];
+  subjects: string[];
+  streams?: Stream[];
+  description: string;
+  /** Board-year classes get a marker in the class rail. */
+  highlight?: boolean;
+}
+
+export interface Review {
+  id: string;
+  productSlug: string;
+  author: string;
+  rating: number;
+  title: string;
+  body: string;
+  date: string;
+  verified: boolean;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Query surface                                                             */
+/* ------------------------------------------------------------------------ */
+
+export interface CatalogQuery {
+  board?: Board;
+  classId?: ClassId | ClassId[];
+  medium?: Medium | Medium[];
+  subject?: string | string[];
+  series?: Series | Series[];
+  stream?: Stream;
+  minPrice?: number;
+  maxPrice?: number;
+  inStockOnly?: boolean;
+  q?: string;
+  sort?: SortKey;
+  page?: number;
+  perPage?: number;
+}
+
+export type SortKey =
+  | "relevance" | "popularity" | "rating" | "newest"
+  | "price-asc" | "price-desc";
+
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+
+export interface FacetCount {
+  value: string;
+  label: string;
+  count: number;
+}
+
+export interface Facets {
+  classId: FacetCount[];
+  medium: FacetCount[];
+  subject: FacetCount[];
+  series: FacetCount[];
+  priceRange: { min: number; max: number };
+}
+
+/* ------------------------------------------------------------------------ */
+/* Cart                                                                      */
+/* ------------------------------------------------------------------------ */
+
+export interface CartItem {
+  slug: string;
+  format: ProductFormat;
+  title: string;
+  titleMr?: string;
+  price: number;
+  mrp?: number;
+  image: string;
+  classId: ClassId;
+  medium: Medium;
+  qty: number;
+}
+
+export interface SearchHit {
+  slug: string;
+  title: string;
+  titleMr?: string;
+  subtitle: string;
+  format: ProductFormat;
+  href: string;
+  image?: string;
+  price?: number;
+  /** Present only on semantic results from the AI backend (D8). */
+  score?: number;
+}
