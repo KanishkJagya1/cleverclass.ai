@@ -1,8 +1,12 @@
-# About Kohinoor Tez
+# About CleverClass.AI
 
-Kohinoor Tez is the storefront of Adwani Publishing House, an educational
+CleverClass.AI is the storefront of Adwani Publishing House, an educational
 publisher based in Nagpur, Maharashtra. We have published study guides for
-Maharashtra students since 1998.
+Maharashtra students since 1998. Our tagline is "Learn smart. Grow bright."
+
+CleverClass.AI is the name of the online platform. Kohinoor is the name of our
+flagship book series — the two are different things, and a question about
+"Kohinoor" is a question about the books, not about the website.
 
 Our address is N87, MIDC, Hingna Road, Nagpur, Maharashtra 440016.
 Phone: +91 71042 99010 and +91 92090 01126. Email: kohinoortezz@gmail.com.

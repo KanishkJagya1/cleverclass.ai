@@ -1,6 +1,6 @@
-# Kohinoor Tez
+# CleverClass.AI
 
-A complete rebuild of [kohinoortez.com](https://kohinoortez.com) — the storefront of
+A complete rebuild of [kohinoortez.com](https://kohinoortez.com) as **CleverClass.AI** — the storefront of
 Adwani Publishing House, Nagpur. Educational guides, key notes and combo packs for
 Maharashtra State Board and CBSE, Classes Nursery to 12, in Marathi, Semi-English
 and English medium.
@@ -191,4 +191,4 @@ Stated plainly so nothing is mistaken for finished:
 
 ---
 
-© Adwani Publishing House. Code and design produced for Kohinoor Tez.
+© Adwani Publishing House. CleverClass.AI — Learn smart. Grow bright.

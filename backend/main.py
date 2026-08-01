@@ -1,4 +1,4 @@
-"""Kohinoor Tez — AI Learning Assistant backend.
+"""CleverClass.AI — AI Learning Assistant backend.
 
 Responsibilities: chatbot, RAG, embeddings, vector search. No ecommerce.
 
@@ -64,7 +64,7 @@ app = FastAPI(
     version="1.0.0",
     description=(
         "RAG-backed learning assistant and semantic catalogue search for "
-        "Kohinoor Tez. Answers strictly from the company's own knowledge base."
+        "CleverClass.AI. Answers strictly from the company's own knowledge base."
     ),
     lifespan=lifespan,
     docs_url="/docs" if settings.environment == "development" else None,

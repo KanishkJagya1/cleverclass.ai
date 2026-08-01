@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Mail, MapPin, Phone } from "lucide-react";
 import { CLASSES, SERIES, SITE } from "@/constants/catalog";
+import { Logo } from "@/components/brand/logo";
 import { NewsletterForm } from "@/components/forms/newsletter-form";
 
 /**
@@ -42,13 +43,13 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-[1.2fr_repeat(3,1fr)]">
           {/* Brand + newsletter */}
           <div>
-            <Link href="/" className="flex items-baseline gap-1.5">
-              <span className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-white">
-                KOHINOOR
-              </span>
-              <span className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--color-indigo-300)]">
-                Tez
-              </span>
+            <Link href="/" className="inline-flex" aria-label={`${SITE.name} — home`}>
+              <Logo
+                idPrefix="foot"
+                markClassName="size-9"
+                wordClassName="text-[length:var(--text-xl)] text-white"
+                showTagline
+              />
             </Link>
             <p className="mt-4 max-w-xs text-[length:var(--text-sm)] leading-[var(--leading-relaxed)]">
               {SITE.description}

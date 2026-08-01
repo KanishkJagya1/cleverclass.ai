@@ -9,6 +9,7 @@ import { useWishlistCount } from "@/lib/store/wishlist";
 import { useSearch } from "@/features/search/search-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/brand/logo";
 import { BoardSwitcher, MediumSwitcher } from "./switchers";
 import { MobileNav } from "./mobile-nav";
 
@@ -67,15 +68,17 @@ export function Navbar() {
           {/* Logo */}
           <Link
             href="/"
-            className="mr-auto flex shrink-0 items-baseline gap-1.5 lg:mr-8"
-            aria-label="Kohinoor Tez — home"
+            className="mr-auto flex shrink-0 items-center lg:mr-8"
+            aria-label="CleverClass.AI — home"
           >
-            <span className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold tracking-[var(--tracking-tight)] text-[var(--text-1)]">
-              KOHINOOR
-            </span>
-            <span className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--text-brand)]">
-              Tez
-            </span>
+            <Logo
+              idPrefix="nav"
+              markClassName={cn(
+                "transition-[width,height] duration-[var(--duration-base)]",
+                scrolled ? "size-7" : "size-8",
+              )}
+              wordClassName="text-[length:var(--text-lg)] text-[var(--text-1)]"
+            />
           </Link>
 
           {/* Desktop nav — shrink-0 + nowrap so long switcher labels can never

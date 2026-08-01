@@ -1,12 +1,17 @@
 import type { Board, ClassId, ClassNode, Medium, Series, Stream } from "@/types/catalog";
 
 export const SITE = {
-  name: "Kohinoor Tez",
+  name: "CleverClass.AI",
   legalName: "Adwani Publishing House",
-  tagline: "Every subject. Every class. One trusted guide.",
+  // From the logo lockup. Replaces the old headline tagline — the brand now
+  // carries it, so the hero doesn't have to.
+  tagline: "Learn smart. Grow bright.",
   description:
     "Educational guides, key notes and combo packs for Maharashtra State Board and CBSE — Classes Nursery to 12, in Marathi, Semi-English and English medium.",
-  url: "https://kohinoortez.com",
+  url: "https://cleverclass.ai",
+  // NOTE: still the Kohinoor Tez mailbox and social handles — these are real
+  // accounts. Swap them once the CleverClass equivalents exist; inventing an
+  // address that bounces is worse than showing one that works.
   email: "kohinoortezz@gmail.com",
   phones: ["+917104299010", "+919209001126"],
   address: {

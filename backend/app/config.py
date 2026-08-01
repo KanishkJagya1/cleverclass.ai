@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
-    app_name: str = "Kohinoor Tez Assistant"
+    app_name: str = "CleverClass.AI Assistant"
     environment: Literal["development", "production"] = "development"
     log_level: str = "INFO"
 
@@ -68,7 +68,9 @@ class Settings(BaseSettings):
     cache_size: int = 256
 
     # --- Business facts injected into prompts and fallbacks ------------------
-    company_name: str = "Kohinoor Tez"
+    # The platform brand. NOT the book series — "Kohinoor" remains one of the
+    # five imprints in the catalogue and must never be renamed.
+    company_name: str = "CleverClass.AI"
     company_phone: str = "+91 71042 99010"
     company_email: str = "kohinoortezz@gmail.com"
     free_shipping_threshold: int = 200
