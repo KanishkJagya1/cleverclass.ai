@@ -6,6 +6,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { AnimatedHeading, Magnetic, MeshBackground, TiltCard } from "@/components/motion";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { Book } from "@/types/catalog";
 
 const TRUST = [
@@ -31,9 +32,9 @@ export function Hero({ books }: { books: Book[] }) {
       <MeshBackground />
 
       <div className="container-page">
-        <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+        <div className="grid min-w-0 items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
           {/* ------------------------------------------------------ copy -- */}
-          <div>
+          <div className="min-w-0">
             <motion.p
               initial={reduced ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -116,11 +117,19 @@ export function Hero({ books }: { books: Book[] }) {
                         ease: [0.16, 1, 0.3, 1],
                       }}
                       style={{
-                        marginLeft: i === 0 ? 0 : "-3.5rem",
                         zIndex: i === 1 ? 3 : 1,
                         translateZ: i === 1 ? 40 : 0,
                       }}
-                      className="relative aspect-cover w-40 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-white shadow-[var(--shadow-xl)] sm:w-48"
+                      /* Width AND overlap both scale. At the old fixed
+                         w-40/-3.5rem the fan measured 368px against 320px of
+                         usable width on a 360px phone — clipped silently,
+                         because body uses overflow-x: clip. */
+                      className={cn(
+                        "relative aspect-cover shrink-0 overflow-hidden rounded-[var(--radius-md)]",
+                        "bg-white shadow-[var(--shadow-xl)]",
+                        "w-28 xs:w-32 sm:w-36 md:w-40",
+                        i > 0 && "-ml-8 xs:-ml-10 sm:-ml-12",
+                      )}
                     >
                       {book.images[0] && (
                         <Image

@@ -100,8 +100,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // Dark-only: the browser chrome should match the page, not the OS.
-  themeColor: "#0A0C14",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F8FAFC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0A0C14" },
+  ],
 };
 
 /** Organization + WebSite, emitted once site-wide. */
@@ -143,14 +145,13 @@ const orgSchema = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    /* Dark-only for now. The class is hardcoded rather than driven by
-       next-themes so there is no theme-resolution script and no flash — the
-       light token set in tokens.css stays intact, so re-enabling the toggle
-       later is a one-line change here plus restoring ThemeToggle. */
+    /* next-themes writes the theme class here before first paint. Light is the
+       default; suppressHydrationWarning is required because that script runs
+       before React hydrates. */
     <html
       lang="en-IN"
       suppressHydrationWarning
-      className={`dark ${spaceGrotesk.variable} ${inter.variable} ${notoDeva.variable} ${mukta.variable}`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${notoDeva.variable} ${mukta.variable}`}
     >
       <body>
         <a href="#main" className="skip-link">

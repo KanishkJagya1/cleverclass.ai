@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "sonner";
 import { SearchProvider } from "@/features/search/search-context";
 
@@ -65,22 +66,29 @@ export function Providers({ children }: { children: React.ReactNode }) {
   useDeviceCapability();
   useSmoothScroll();
 
-  // Dark-only: no ThemeProvider. `dark` is hardcoded on <html> in layout.tsx,
-  // so there is no resolution script, no flash, and no hydration branch.
   return (
-    <SearchProvider>
-      {children}
-      <Toaster
-        position="bottom-center"
-        offset={80}
-        theme="dark"
-        toastOptions={{
-          classNames: {
-            toast:
-              "glass-panel !rounded-[var(--radius-lg)] !text-[var(--text-1)] !border-[var(--border-glass)]",
-          },
-        }}
-      />
-    </SearchProvider>
+    // Light by default. `enableSystem={false}` is deliberate: the brand
+    // artwork is designed for light, and silently following an OS preference
+    // means most Android users would never see the intended default.
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="light"
+      enableSystem={false}
+      disableTransitionOnChange
+    >
+      <SearchProvider>
+        {children}
+        <Toaster
+          position="bottom-center"
+          offset={80}
+          toastOptions={{
+            classNames: {
+              toast:
+                "glass-panel !rounded-[var(--radius-lg)] !text-[var(--text-1)] !border-[var(--border-glass)]",
+            },
+          }}
+        />
+      </SearchProvider>
+    </ThemeProvider>
   );
 }

@@ -142,6 +142,15 @@ export function MobileBuyBar({ book }: { book: Book }) {
     return () => io.disconnect();
   }, []);
 
+  // Publish this bar's height so the floating assistant launcher can sit above
+  // it. Without this the launcher lands squarely on top of "Add to cart" — the
+  // single most important tap target on the page.
+  React.useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--sticky-bar-h", show ? "4.75rem" : "0px");
+    return () => root.style.setProperty("--sticky-bar-h", "0px");
+  }, [show]);
+
   return (
     <div
       className={cn(

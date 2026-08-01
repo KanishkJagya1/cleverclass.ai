@@ -100,9 +100,16 @@ function Launcher({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       aria-label="Open the AI learning assistant"
+      style={{
+        // Stacks above the mobile bottom nav AND any page-level sticky action
+        // bar. --sticky-bar-h is 0 unless a product page's buy bar is showing.
+        bottom:
+          "calc(var(--bottom-nav-h) + var(--sticky-bar-h, 0px) + 1rem + env(safe-area-inset-bottom))",
+      }}
       className={cn(
         "glass-panel glass-edge fixed right-5 z-[var(--z-chat)] grid size-14 place-items-center !rounded-full",
-        "bottom-[calc(var(--bottom-nav-h)+1rem)] lg:bottom-6 lg:right-6",
+        "transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-standard)]",
+        "lg:!bottom-6 lg:right-6",
         "text-[var(--brand-base)] transition-transform duration-[var(--duration-base)]",
         "hover:scale-105 active:scale-95 motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
         "animate-[ambientGlow_4.5s_ease-in-out_infinite] motion-reduce:animate-none",

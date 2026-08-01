@@ -78,9 +78,12 @@
   /* Fluid type scale. min = 360px viewport, max = 1280px.
      Ratio 1.200 mobile → 1.333 desktop, so headlines gain presence on
      desktop without body copy inflating. */
-  --text-2xs:  0.6875rem;                                  /* 11px  — legal, badges */
-  --text-xs:   0.75rem;                                    /* 12px  — meta, labels */
-  --text-sm:   0.8125rem;                                  /* 13px  — dense UI */
+  /* Floor is 12px. The responsive audit found 11px text on the mobile bottom
+     nav, badges and eyebrows — legible on a 27" display, not on a phone held
+     at arm's length. Ladder is now a clean 12/13/14/15/16. */
+  --text-2xs:  0.75rem;                                    /* 12px  — legal, badges */
+  --text-xs:   0.8125rem;                                  /* 13px  — meta, labels */
+  --text-sm:   0.875rem;                                   /* 14px  — dense UI */
   --text-base: 0.9375rem;                                  /* 15px  — UI default */
   --text-body: 1rem;                                       /* 16px  — prose */
   --text-lg:   clamp(1.0625rem, 0.98rem + 0.36vw, 1.25rem);
@@ -311,6 +314,10 @@
   --nav-h: 4.5rem;             /* 72 */
   --nav-h-scrolled: 3.5rem;    /* 56 — the shrink target */
   --bottom-nav-h: 4rem;        /* 64 — mobile only */
+  /* Height currently occupied by a page-level sticky action bar (the product
+     page's mobile buy bar). Set at runtime by whichever bar is visible, so
+     the floating assistant can stack above it instead of covering it. */
+  --sticky-bar-h: 0px;
 
   /* Section rhythm — THE whitespace contract (D11). */
   --section-y-sm: clamp(3rem, 6vw, 4.5rem);

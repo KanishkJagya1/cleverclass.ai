@@ -77,7 +77,7 @@ export default async function ComboPacksPage({
             href="/combo-packs"
             aria-current={!sp.class ? "true" : undefined}
             className={cn(
-              "rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
+              "chip-tap rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
               !sp.class
                 ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
                 : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
@@ -91,7 +91,7 @@ export default async function ComboPacksPage({
               href={`/combo-packs?class=${c.id}`}
               aria-current={sp.class === c.id ? "true" : undefined}
               className={cn(
-                "rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
+                "chip-tap rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
                 sp.class === c.id
                   ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
                   : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",

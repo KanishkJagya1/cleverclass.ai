@@ -17,7 +17,7 @@ export const POLICIES: Record<string, PolicyDoc> = {
     slug: "shipping",
     title: "Shipping",
     description:
-      "Delivery times, charges and coverage for orders from Kohinoor Tez, Nagpur.",
+      "Delivery times, charges and coverage for orders from CleverClass.AI, Nagpur.",
     updated: "1 July 2026",
     sections: [
       {
@@ -95,7 +95,7 @@ export const POLICIES: Record<string, PolicyDoc> = {
   privacy: {
     slug: "privacy",
     title: "Privacy policy",
-    description: "What data Kohinoor Tez collects, why, and how it is handled.",
+    description: "What data CleverClass.AI collects, why, and how it is handled.",
     updated: "1 July 2026",
     sections: [
       {
@@ -131,7 +131,7 @@ export const POLICIES: Record<string, PolicyDoc> = {
   terms: {
     slug: "terms",
     title: "Terms & conditions",
-    description: "The terms that apply when you buy from Kohinoor Tez.",
+    description: "The terms that apply when you buy from CleverClass.AI.",
     updated: "1 July 2026",
     sections: [
       {

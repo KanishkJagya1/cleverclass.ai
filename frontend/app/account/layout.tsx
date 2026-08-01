@@ -23,7 +23,14 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="grid gap-8 lg:grid-cols-[14rem_1fr]">
         {/* Sidebar on desktop; a horizontal scrolling rail on mobile, because
             a 7-item vertical nav above content pushes the page off-screen. */}
-        <nav aria-label="Account" className="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
+        {/* min-w-0 so this grid item may shrink: without it the seven-item
+            rail sets a min-content width of ~870px and drags the whole
+            document sideways. The .rail scroller cannot help once the
+            element itself has grown. */}
+        <nav
+          aria-label="Account"
+          className="min-w-0 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start"
+        >
           <ul className="rail -mx-[var(--gutter)] flex gap-2 px-[var(--gutter)] pb-2 lg:mx-0 lg:block lg:space-y-0.5 lg:px-0 lg:pb-0">
             {LINKS.map((l) => (
               <li key={l.href} className="shrink-0">

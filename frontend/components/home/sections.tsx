@@ -77,8 +77,8 @@ export function ComboSpotlight({ combo }: { combo: ComboResolved | null }) {
 
   return (
     <Section band="brand-dark" spacing="md" className="overflow-hidden">
-      <div className="grid items-center gap-12 lg:grid-cols-[1fr_1.1fr]">
-        <Reveal>
+      <div className="grid min-w-0 items-center gap-12 lg:grid-cols-[1fr_1.1fr]">
+        <Reveal className="min-w-0">
           <Badge variant="glass" size="md" className="!text-white">
             Save up to 30%
           </Badge>
@@ -101,7 +101,7 @@ export function ComboSpotlight({ combo }: { combo: ComboResolved | null }) {
           </div>
         </Reveal>
 
-        <Reveal delay={0.1}>
+        <Reveal delay={0.1} className="min-w-0">
           {/* The card renders on a light surface inside the dark band — the
               contrast is the point, it reads as an object placed on the band. */}
           <ComboCard combo={combo} featured />
@@ -320,8 +320,8 @@ export function NewArrivals({ books }: { books: Book[] }) {
 export function KeyNotesFunnel() {
   return (
     <Section band="brand-soft" spacing="md">
-      <div className="grid items-center gap-12 lg:grid-cols-2">
-        <Reveal>
+      <div className="grid min-w-0 items-center gap-12 lg:grid-cols-2">
+        <Reveal className="min-w-0">
           <div className="relative mx-auto max-w-sm">
             <div className="surface-card aspect-[1/1.25] overflow-hidden p-6">
               <div className="space-y-2.5">
@@ -348,7 +348,7 @@ export function KeyNotesFunnel() {
           </div>
         </Reveal>
 
-        <Reveal delay={0.1}>
+        <Reveal delay={0.1} className="min-w-0">
           <Badge variant="brand" size="md">
             Key Notes
           </Badge>
@@ -575,8 +575,8 @@ export function Testimonials() {
 export function AssistantPromo() {
   return (
     <Section band="brand-soft" spacing="md">
-      <div className="grid items-center gap-12 lg:grid-cols-2">
-        <Reveal>
+      <div className="grid min-w-0 items-center gap-12 lg:grid-cols-2">
+        <Reveal className="min-w-0">
           <Badge variant="brand" size="md">
             <Sparkles className="size-3" aria-hidden />
             AI Learning Assistant
@@ -605,7 +605,7 @@ export function AssistantPromo() {
           </ul>
         </Reveal>
 
-        <Reveal delay={0.1}>
+        <Reveal delay={0.1} className="min-w-0">
           <div className="glass-panel glass-edge p-5">
             <div className="flex justify-end">
               <p className="max-w-[80%] rounded-[var(--radius-lg)] rounded-br-sm bg-[var(--brand-base)] px-4 py-2.5 text-[length:var(--text-sm)] text-[var(--brand-on)]">

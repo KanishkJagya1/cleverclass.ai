@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { BOARDS, MEDIUMS } from "@/constants/catalog";
 import { usePreferences } from "@/lib/store/preferences";
 import { cn } from "@/lib/utils";
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
     remain the primary control because they change what the catalogue shows. */
 export default function SettingsPage() {
   const { board, medium, setBoard, setMedium } = usePreferences();
+  const { theme, setTheme } = useTheme();
 
   const Row = ({
     label,
@@ -59,8 +61,15 @@ export default function SettingsPage() {
           value={medium ?? "all"}
           onChange={(v) => setMedium(v === "all" ? null : (v as (typeof MEDIUMS)[number]["id"]))}
         />
-        {/* Appearance is dark-only for now — a control with one option is
-            worse than no control. Restore the Row when light mode returns. */}
+        <Row
+          label="Appearance"
+          options={[
+            { id: "light", label: "Light" },
+            { id: "dark", label: "Dark" },
+          ]}
+          value={theme ?? "light"}
+          onChange={setTheme}
+        />
       </div>
     </div>
   );

@@ -29,7 +29,7 @@ export async function generateMetadata({
 
   return {
     title: `${cls.label} books, notes & combo packs`,
-    description: `${cls.description} Available in Marathi, Semi-English and English medium from Kohinoor Tez.`,
+    description: `${cls.description} Available in Marathi, Semi-English and English medium from CleverClass.AI.`,
     alternates: { canonical: `/class/${classId}` },
   };
 }
@@ -98,7 +98,7 @@ export default async function ClassHubPage({
             href={`/class/${cls.id}`}
             aria-current={!activeMedium ? "true" : undefined}
             className={cn(
-              "rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
+              "chip-tap rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
               !activeMedium
                 ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
                 : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
@@ -112,7 +112,7 @@ export default async function ClassHubPage({
               href={`/class/${cls.id}?medium=${m.id}`}
               aria-current={activeMedium === m.id ? "true" : undefined}
               className={cn(
-                "rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
+                "chip-tap rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
                 activeMedium === m.id
                   ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
                   : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",

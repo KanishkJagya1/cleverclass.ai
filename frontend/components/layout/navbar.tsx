@@ -10,6 +10,7 @@ import { useSearch } from "@/features/search/search-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
+import { ThemeToggle } from "./theme-toggle";
 import { BoardSwitcher, MediumSwitcher } from "./switchers";
 import { MobileNav } from "./mobile-nav";
 
@@ -65,20 +66,14 @@ export function Navbar() {
         onMouseLeave={closeWithIntent}
       >
         <div className="container-page flex h-full items-center gap-2">
-          {/* Logo */}
+          {/* Logo. py-2 gives the link a 44px-tall hit area — the audit found
+              the bare image was only 28px, well under WCAG 2.5.5. */}
           <Link
             href="/"
-            className="mr-auto flex shrink-0 items-center lg:mr-8"
+            className="mr-auto flex shrink-0 items-center py-2 lg:mr-8"
             aria-label="CleverClass.AI — home"
           >
-            <Logo
-              idPrefix="nav"
-              markClassName={cn(
-                "transition-[width,height] duration-[var(--duration-base)]",
-                scrolled ? "size-7" : "size-8",
-              )}
-              wordClassName="text-[length:var(--text-lg)] text-[var(--text-1)]"
-            />
+            <Logo variant="mark" size={scrolled ? 34 : 40} priority />
           </Link>
 
           {/* Desktop nav — shrink-0 + nowrap so long switcher labels can never
@@ -132,9 +127,12 @@ export function Navbar() {
               </kbd>
             </button>
 
+            {/* Every icon control is 44px on touch and shrinks to 36px only
+                from lg up, where a mouse makes the smaller target fine. The
+                audit caught all of these sitting at 36px on a 360px phone. */}
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               className="md:hidden"
               onClick={() => setSearchOpen(true)}
               aria-label="Search"
@@ -142,21 +140,33 @@ export function Navbar() {
               <Search className="size-5" aria-hidden />
             </Button>
 
-            <Button asChild variant="ghost" size="icon-sm" className="relative hidden sm:inline-flex">
+            <ThemeToggle />
+
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="relative hidden sm:inline-flex lg:size-9"
+            >
               <Link href="/account/wishlist" aria-label={`Wishlist, ${wishCount} items`}>
                 <Heart className="size-5" aria-hidden />
                 {wishCount > 0 && <CountDot n={wishCount} />}
               </Link>
             </Button>
 
-            <Button asChild variant="ghost" size="icon-sm" className="relative">
+            <Button asChild variant="ghost" size="icon" className="relative lg:size-9">
               <Link href="/cart" aria-label={`Cart, ${cartCount} items`}>
                 <ShoppingBag className="size-5" aria-hidden />
                 {cartCount > 0 && <CountDot n={cartCount} />}
               </Link>
             </Button>
 
-            <Button asChild variant="ghost" size="icon-sm" className="hidden sm:inline-flex">
+            <Button
+              asChild
+              variant="ghost"
+              size="icon"
+              className="hidden sm:inline-flex lg:size-9"
+            >
               <Link href="/account" aria-label="Account">
                 <User className="size-5" aria-hidden />
               </Link>
@@ -164,7 +174,7 @@ export function Navbar() {
 
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               className="lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"

@@ -99,6 +99,35 @@
   .rail > * { scroll-snap-align: start; }
 }
 
+@layer base {
+  /* Breadcrumb links measured 36×16 in the responsive audit. Inline text
+     links are technically exempt from WCAG 2.5.5, but a 16px-tall tap target
+     in a row of them is a miss-tap machine on a phone. One rule, every page. */
+  nav[aria-label="Breadcrumb"] a {
+    display: inline-block;
+    padding-block: 0.75rem;
+  }
+
+  /* Same problem in link lists — footer columns, the Key Notes index. Those
+     measured 17-21px tall, under the WCAG 2.2 AA 24px minimum (2.5.8).
+     Applied at every width: a 19px target is awkward with a mouse too. */
+  footer nav a,
+  .link-list a {
+    display: inline-block;
+    padding-block: 0.375rem;
+  }
+
+  /* Pill filters and chips: 44px minimum on touch, natural size once a
+     pointer is available. */
+  @media (pointer: coarse) {
+    .chip-tap {
+      min-height: 2.75rem;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+}
+
 @layer utilities {
   .container-page {
     width: 100%;

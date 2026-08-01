@@ -130,7 +130,7 @@ export function SearchDialog() {
             "inset-0 sm:inset-auto sm:left-1/2 sm:top-[12vh] sm:w-[min(40rem,92vw)] sm:-translate-x-1/2",
           )}
         >
-          <Dialog.Title className="sr-only">Search Kohinoor Tez</Dialog.Title>
+          <Dialog.Title className="sr-only">Search CleverClass.AI</Dialog.Title>
           <Dialog.Description className="sr-only">
             Search books, combo packs, key notes and classes. Use arrow keys to
             move and Enter to open.

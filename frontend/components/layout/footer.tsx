@@ -43,13 +43,10 @@ export function Footer() {
         <div className="grid gap-12 lg:grid-cols-[1.2fr_repeat(3,1fr)]">
           {/* Brand + newsletter */}
           <div>
-            <Link href="/" className="inline-flex" aria-label={`${SITE.name} — home`}>
-              <Logo
-                idPrefix="foot"
-                markClassName="size-9"
-                wordClassName="text-[length:var(--text-xl)] text-white"
-                showTagline
-              />
+            {/* Full lockup here — the footer has room for the wordmark and
+                tagline, which the navbar does not. */}
+            <Link href="/" className="inline-flex py-1" aria-label={`${SITE.name} — home`}>
+              <Logo variant="full" width={190} onDarkSurface />
             </Link>
             <p className="mt-4 max-w-xs text-[length:var(--text-sm)] leading-[var(--leading-relaxed)]">
               {SITE.description}
