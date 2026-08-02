@@ -73,14 +73,14 @@ function FilterGroups({ facets }: { facets: Facets }) {
         return (
           <Accordion.Item key={group.key} value={group.key} className="py-4 first:pt-0">
             <Accordion.Trigger className="group flex w-full items-center justify-between text-left">
-              <span className="text-[length:var(--text-sm)] font-semibold text-[var(--text-1)]">
+              <span className="text-[length:var(--text-sm)] font-semibold text-[color:var(--text-1)]">
                 {group.label}
                 {active.length > 0 && (
-                  <span className="tabular ml-2 text-[var(--text-brand)]">({active.length})</span>
+                  <span className="tabular ml-2 text-[color:var(--text-brand)]">({active.length})</span>
                 )}
               </span>
               <ChevronDown
-                className="size-4 text-[var(--text-3)] transition-transform duration-[var(--duration-base)] group-data-[state=open]:rotate-180"
+                className="size-4 text-[color:var(--text-3)] transition-transform duration-[var(--duration-base)] group-data-[state=open]:rotate-180"
                 aria-hidden
               />
             </Accordion.Trigger>
@@ -102,10 +102,10 @@ function FilterGroups({ facets }: { facets: Facets }) {
                           onChange={() => toggle(group.key, opt.value)}
                           className="size-4 shrink-0 accent-[var(--brand-base)]"
                         />
-                        <span className="flex-1 text-[length:var(--text-sm)] text-[var(--text-2)]">
+                        <span className="flex-1 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                           {opt.label}
                         </span>
-                        <span className="tabular text-[length:var(--text-xs)] text-[var(--text-3)]">
+                        <span className="tabular text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                           {opt.count}
                         </span>
                       </label>
@@ -127,7 +127,7 @@ function FilterGroups({ facets }: { facets: Facets }) {
             onChange={(e) => set({ inStock: e.target.checked ? "1" : undefined })}
             className="size-4 accent-[var(--brand-base)]"
           />
-          <span className="text-[length:var(--text-sm)] text-[var(--text-2)]">In stock only</span>
+          <span className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">In stock only</span>
         </label>
       </div>
     </Accordion.Root>
@@ -144,7 +144,7 @@ export function FilterRail({ facets }: { facets: Facets }) {
     <aside className="hidden lg:block" aria-label="Filters">
       <div className="sticky top-[calc(var(--nav-h)+1.5rem)]">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-[length:var(--text-base)] font-semibold text-[var(--text-1)]">
+          <h2 className="text-[length:var(--text-base)] font-semibold text-[color:var(--text-1)]">
             Filters
           </h2>
           <Button asChild variant="link" size="sm">
@@ -173,7 +173,7 @@ export function FilterSheet({ facets, total }: { facets: Facets; total: number }
           <SlidersHorizontal className="size-4" aria-hidden />
           Filters
           {activeCount > 0 && (
-            <span className="tabular ml-1 grid size-5 place-items-center rounded-full bg-[var(--brand-base)] text-[length:var(--text-2xs)] font-semibold text-[var(--brand-on)]">
+            <span className="tabular ml-1 grid size-5 place-items-center rounded-full bg-[var(--brand-base)] text-[length:var(--text-2xs)] font-semibold text-[color:var(--brand-on)]">
               {activeCount}
             </span>
           )}
@@ -184,7 +184,7 @@ export function FilterSheet({ facets, total }: { facets: Facets; total: number }
         <Drawer.Content className="glass-panel fixed inset-x-0 bottom-0 z-[var(--z-modal)] flex max-h-[88vh] flex-col !rounded-b-none">
           <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-[var(--border-2)]" aria-hidden />
           <div className="flex items-center justify-between p-4">
-            <Drawer.Title className="text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+            <Drawer.Title className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
               Filters
             </Drawer.Title>
             <Drawer.Close asChild>
@@ -238,7 +238,7 @@ export function ActiveFilters({ facets }: { facets: Facets }) {
         <button
           key={`${c.key}-${c.value}`}
           onClick={() => toggle(c.key, c.value)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-1)] bg-[var(--surface-1)] py-1.5 pl-3 pr-2 text-[length:var(--text-xs)] font-medium text-[var(--text-2)] transition-colors hover:border-[var(--border-2)]"
+          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-1)] bg-[var(--surface-1)] py-1.5 pl-3 pr-2 text-[length:var(--text-xs)] font-medium text-[color:var(--text-2)] transition-colors hover:border-[var(--border-2)]"
         >
           {c.label}
           <X className="size-3.5" aria-hidden />
@@ -247,7 +247,7 @@ export function ActiveFilters({ facets }: { facets: Facets }) {
       ))}
       <Link
         href={pathname}
-        className="text-[length:var(--text-xs)] font-medium text-[var(--text-brand)] underline underline-offset-4"
+        className="text-[length:var(--text-xs)] font-medium text-[color:var(--text-brand)] underline underline-offset-4"
       >
         Clear all
       </Link>
@@ -272,8 +272,8 @@ export function ResultsToolbar({
 
   return (
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <p aria-live="polite" className="tabular text-[length:var(--text-sm)] text-[var(--text-2)]">
-        Showing <span className="font-medium text-[var(--text-1)]">{shown}</span> of {total} books
+      <p aria-live="polite" className="tabular text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+        Showing <span className="font-medium text-[color:var(--text-1)]">{shown}</span> of {total} books
       </p>
 
       <div className="flex items-center gap-2">
@@ -291,8 +291,8 @@ export function ResultsToolbar({
                 className={cn(
                   "grid size-8 place-items-center rounded-[var(--radius-sm)] transition-colors",
                   view === v
-                    ? "bg-[var(--surface-0)] text-[var(--text-1)]"
-                    : "text-[var(--text-3)] hover:text-[var(--text-2)]",
+                    ? "bg-[var(--surface-0)] text-[color:var(--text-1)]"
+                    : "text-[color:var(--text-3)] hover:text-[color:var(--text-2)]",
                 )}
               >
                 <Icon className="size-4" aria-hidden />
@@ -308,7 +308,7 @@ export function ResultsToolbar({
           id="sort"
           value={params.get("sort") ?? "relevance"}
           onChange={(e) => set({ sort: e.target.value === "relevance" ? undefined : e.target.value })}
-          className="h-9 rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3 text-[length:var(--text-sm)] text-[var(--text-2)]"
+          className="h-9 rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3 text-[length:var(--text-sm)] text-[color:var(--text-2)]"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -349,7 +349,7 @@ export function Pagination({ page, totalPages }: { page: number; totalPages: num
       {windowed.map((p, i) => (
         <React.Fragment key={p}>
           {i > 0 && windowed[i - 1]! < p - 1 && (
-            <span className="px-1 text-[var(--text-3)]" aria-hidden>
+            <span className="px-1 text-[color:var(--text-3)]" aria-hidden>
               …
             </span>
           )}
@@ -359,8 +359,8 @@ export function Pagination({ page, totalPages }: { page: number; totalPages: num
             className={cn(
               "tabular grid size-9 place-items-center rounded-[var(--radius-md)] text-[length:var(--text-sm)]",
               p === page
-                ? "bg-[var(--brand-base)] font-semibold text-[var(--brand-on)]"
-                : "text-[var(--text-2)] hover:bg-[var(--surface-0)]",
+                ? "bg-[var(--brand-base)] font-semibold text-[color:var(--brand-on)]"
+                : "text-[color:var(--text-2)] hover:bg-[var(--surface-0)]",
             )}
           >
             {p}

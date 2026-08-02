@@ -22,15 +22,15 @@ export default function Error({
     <div className="flex min-h-[60vh] items-center justify-center px-[var(--gutter)] py-20 text-center">
       <div className="max-w-md">
         <h1 className="text-[length:var(--text-2xl)]">Something went wrong</h1>
-        <p className="mt-3 text-[length:var(--text-body)] text-[var(--text-2)]">
+        <p className="mt-3 text-[length:var(--text-body)] text-[color:var(--text-2)]">
           This is on us, not you. Try again — and if it keeps happening, call{" "}
-          <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[var(--text-brand)]">
+          <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[color:var(--text-brand)]">
             {SITE.phones[0].replace("+91", "+91 ")}
           </a>{" "}
           and we'll take your order directly.
         </p>
         {error.digest && (
-          <p className="tabular mt-3 text-[length:var(--text-xs)] text-[var(--text-3)]">
+          <p className="tabular mt-3 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
             Reference: {error.digest}
           </p>
         )}

@@ -188,10 +188,10 @@ export function PreviewReader({
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+              <Dialog.Title className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                 {title}
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-[length:var(--text-sm)] text-[var(--text-2)]">
+              <Dialog.Description className="mt-1 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                 Free preview — {pages.length} of {totalPages} pages. No sign-up needed.
               </Dialog.Description>
             </div>
@@ -226,7 +226,7 @@ export function PreviewReader({
               <ChevronLeft className="size-4" aria-hidden />
               Previous
             </Button>
-            <p aria-live="polite" className="tabular text-[length:var(--text-sm)] text-[var(--text-2)]">
+            <p aria-live="polite" className="tabular text-[length:var(--text-sm)] text-[color:var(--text-2)]">
               Page {page + 1} of {pages.length}
             </p>
             <Button
@@ -243,7 +243,7 @@ export function PreviewReader({
           {page === pages.length - 1 && (
             <div className="mt-4 rounded-[var(--radius-lg)] bg-[var(--brand-soft)] p-4 text-center">
               <Badge variant="brand">End of free preview</Badge>
-              <p className="mt-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
+              <p className="mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                 The full book has {totalPages} pages with every exercise solved.
               </p>
             </div>

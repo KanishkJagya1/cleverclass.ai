@@ -17,7 +17,7 @@ export default function TrackOrderPage() {
   return (
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Track your order</h1>
-      <p className="mt-2 max-w-lg text-[length:var(--text-body)] text-[var(--text-2)]">
+      <p className="mt-2 max-w-lg text-[length:var(--text-body)] text-[color:var(--text-2)]">
         Enter your order reference and the mobile number you ordered with. No
         account needed.
       </p>
@@ -47,10 +47,10 @@ export default function TrackOrderPage() {
 
       {submitted && (
         <div className="surface-card mt-6 max-w-md p-5" role="status">
-          <p className="text-[length:var(--text-sm)] text-[var(--text-2)]">
+          <p className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">
             Order tracking connects to the fulfilment system, which is not wired
             in this build. For now, call{" "}
-            <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[var(--text-brand)]">
+            <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[color:var(--text-brand)]">
               {SITE.phones[0]}
             </a>{" "}
             with your reference and we'll check it for you.

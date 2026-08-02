@@ -8,27 +8,32 @@ import { cn } from "@/lib/utils";
 /**
  * CleverClass.AI logo — the supplied artwork, not a redraw.
  *
- * All four files are generated from one source image by `npm run brand:logo`
- * (scripts/prepare-logo.mjs). Save your logo to
- * `public/brand/logo-source.png` and run it.
+ * All variants are generated from one source file by `npm run brand:logo`
+ * (scripts/prepare-logo.mjs), which trims the export's white background and
+ * detects whether the lockup is horizontal or stacked.
  *
- * The navbar uses the emblem alone because the wordmark is illegible below
- * about 90px wide; the footer uses the full lockup, where there is room for it.
+ * The supplied artwork is a HORIZONTAL lockup (emblem left, wordmark right)
+ * at roughly 3.7:1, so the navbar can show the whole thing and still have the
+ * wordmark be readable — that is the default here.
  */
 
-const MARK_LIGHT = "/brand/logo-mark.png";
-const MARK_DARK = "/brand/logo-mark-dark.png";
 const FULL_LIGHT = "/brand/logo-full.png";
 const FULL_DARK = "/brand/logo-full-dark.png";
+const MARK_LIGHT = "/brand/logo-mark.png";
+const MARK_DARK = "/brand/logo-mark-dark.png";
+
+/** Trimmed lockup aspect ratio, from the generated asset (1200x321). */
+const LOCKUP_ASPECT = 1200 / 321;
 
 function useIsDark() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => setMounted(true), []);
-  // Light is the default, so light art is also the correct pre-hydration guess.
+  // Light is the default, so light art is the correct pre-hydration guess.
   return mounted && resolvedTheme === "dark";
 }
 
+/** Emblem only. For square slots — app icons, avatars, tight mobile chrome. */
 export function LogoMark({
   className,
   size = 40,
@@ -46,41 +51,45 @@ export function LogoMark({
       width={size}
       height={size}
       priority={priority}
-      className={cn("h-auto w-auto object-contain", className)}
+      className={cn("object-contain", className)}
       style={{ height: size, width: size }}
     />
   );
 }
 
-export function LogoFull({
+/**
+ * Full horizontal lockup, sized by HEIGHT — the only dimension chrome
+ * actually constrains. Width follows the artwork's own ratio.
+ */
+export function LogoLockup({
   className,
-  width = 190,
+  height = 38,
   priority,
   onDarkSurface,
 }: {
   className?: string;
-  width?: number;
+  height?: number;
   priority?: boolean;
   /**
-   * For surfaces that are dark regardless of theme — the footer band, the
-   * dark home sections. The artwork's wordmark is navy and disappears on
-   * those, so the original light artwork is shown on a white plaque instead.
-   * Recolouring the supplied logo would mean redrawing it.
+   * For surfaces that stay dark in BOTH themes — the footer band. The
+   * wordmark is navy and would vanish there, so the light artwork is shown
+   * on a white plaque instead. Recolouring it would mean redrawing the logo.
    */
   onDarkSurface?: boolean;
 }) {
   const dark = useIsDark();
   const src = onDarkSurface ? FULL_LIGHT : dark ? FULL_DARK : FULL_LIGHT;
+  const width = Math.round(height * LOCKUP_ASPECT);
 
   const img = (
     <Image
       src={src}
       alt="CleverClass.AI — Learn smart. Grow bright."
       width={width}
-      height={Math.round(width * 0.78)}
+      height={height}
       priority={priority}
-      className={cn("h-auto object-contain", !onDarkSurface && className)}
-      style={{ width }}
+      className={cn("object-contain", !onDarkSurface && className)}
+      style={{ height, width }}
     />
   );
 
@@ -89,7 +98,7 @@ export function LogoFull({
   return (
     <span
       className={cn(
-        "inline-flex rounded-[var(--radius-lg)] bg-white p-3 shadow-[var(--shadow-md)]",
+        "inline-flex rounded-[var(--radius-lg)] bg-white px-4 py-3 shadow-[var(--shadow-md)]",
         className,
       )}
     >
@@ -98,33 +107,29 @@ export function LogoFull({
   );
 }
 
-/**
- * Default lockup for chrome. `variant="mark"` in tight spaces (navbar),
- * `variant="full"` where the wordmark can actually be read (footer, auth).
- */
 export function Logo({
-  variant = "mark",
+  variant = "lockup",
   className,
   size,
-  width,
+  height,
   priority,
   onDarkSurface,
 }: {
-  variant?: "mark" | "full";
+  variant?: "lockup" | "mark";
   className?: string;
   size?: number;
-  width?: number;
+  height?: number;
   priority?: boolean;
   onDarkSurface?: boolean;
 }) {
-  return variant === "full" ? (
-    <LogoFull
+  return variant === "mark" ? (
+    <LogoMark className={className} size={size} priority={priority} />
+  ) : (
+    <LogoLockup
       className={className}
-      width={width}
+      height={height}
       priority={priority}
       onDarkSurface={onDarkSurface}
     />
-  ) : (
-    <LogoMark className={className} size={size} priority={priority} />
   );
 }

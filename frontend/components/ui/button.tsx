@@ -20,24 +20,24 @@ const button = cva(
     variants: {
       variant: {
         primary:
-          "bg-[var(--brand-base)] text-[var(--brand-on)] shadow-[var(--shadow-brand)] hover:bg-[var(--brand-hover)] hover:-translate-y-px motion-reduce:hover:translate-y-0",
+          "bg-[var(--brand-base)] text-[color:var(--brand-on)] shadow-[var(--shadow-brand)] hover:bg-[var(--brand-hover)] hover:-translate-y-px motion-reduce:hover:translate-y-0",
         secondary:
-          "bg-[var(--surface-1)] text-[var(--text-1)] border border-[var(--border-1)] shadow-[var(--shadow-sm)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-md)]",
+          "bg-[var(--surface-1)] text-[color:var(--text-1)] border border-[var(--border-1)] shadow-[var(--shadow-sm)] hover:border-[var(--border-2)] hover:shadow-[var(--shadow-md)]",
         outline:
-          "border border-[var(--border-2)] text-[var(--text-1)] hover:bg-[var(--surface-0)]",
-        ghost: "text-[var(--text-2)] hover:bg-[var(--surface-0)] hover:text-[var(--text-1)]",
+          "border border-[var(--border-2)] text-[color:var(--text-1)] hover:bg-[var(--surface-0)]",
+        ghost: "text-[color:var(--text-2)] hover:bg-[var(--surface-0)] hover:text-[color:var(--text-1)]",
         // The only button that carries glass — it sits on chrome, not content.
         glass:
-          "glass-panel !rounded-[var(--radius-md)] text-[var(--text-1)] hover:brightness-[1.04]",
+          "glass-panel !rounded-[var(--radius-md)] text-[color:var(--text-1)] hover:brightness-[1.04]",
         gain: "bg-[var(--signal-gain)] text-white hover:brightness-110",
         danger: "bg-[var(--signal-danger)] text-white hover:brightness-110",
-        link: "text-[var(--brand-base)] underline-offset-4 hover:underline p-0 h-auto",
+        link: "text-[color:var(--brand-base)] underline-offset-4 hover:underline p-0 h-auto",
       },
       size: {
         // 44px minimum on every tappable size — WCAG 2.5.5 / practical thumbs.
-        sm: "h-9 px-3.5 text-[var(--text-sm)]",
-        md: "h-11 px-5 text-[var(--text-base)]",
-        lg: "h-[3.25rem] px-7 text-[var(--text-lg)]",
+        sm: "h-9 px-3.5 text-[length:var(--text-sm)]",
+        md: "h-11 px-5 text-[length:var(--text-base)]",
+        lg: "h-[3.25rem] px-7 text-[length:var(--text-lg)]",
         icon: "size-11",
         "icon-sm": "size-9",
       },

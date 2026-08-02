@@ -71,22 +71,22 @@ export default async function ClassHubPage({
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/" className="hover:text-[var(--text-2)]">Home</Link>
+      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/" className="hover:text-[color:var(--text-2)]">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/class" className="hover:text-[var(--text-2)]">Classes</Link>
+        <Link href="/class" className="hover:text-[color:var(--text-2)]">Classes</Link>
         <span className="mx-2">/</span>
-        <span className="text-[var(--text-2)]">{cls.label}</span>
+        <span className="text-[color:var(--text-2)]">{cls.label}</span>
       </nav>
 
       <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div className="max-w-2xl">
           {cls.highlight && <Badge variant="brand">Board year</Badge>}
           <h1 className="mt-3 text-[length:var(--text-4xl)]">{cls.label}</h1>
-          <p lang="mr" className="mt-1 text-[length:var(--text-lg)] text-[var(--text-3)]">
+          <p lang="mr" className="mt-1 text-[length:var(--text-lg)] text-[color:var(--text-3)]">
             {cls.labelMr}
           </p>
-          <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             {cls.description}
           </p>
         </div>
@@ -100,8 +100,8 @@ export default async function ClassHubPage({
             className={cn(
               "chip-tap rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
               !activeMedium
-                ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
-                : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
+                ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]"
+                : "border-[var(--border-1)] text-[color:var(--text-2)] hover:border-[var(--border-2)]",
             )}
           >
             All
@@ -114,8 +114,8 @@ export default async function ClassHubPage({
               className={cn(
                 "chip-tap rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
                 activeMedium === m.id
-                  ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
-                  : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
+                  ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]"
+                  : "border-[var(--border-1)] text-[color:var(--text-2)] hover:border-[var(--border-2)]",
               )}
             >
               <span lang={m.id === "english" ? undefined : "mr"}>{m.labelNative}</span>
@@ -139,7 +139,7 @@ export default async function ClassHubPage({
             <li key={s}>
               <Link
                 href={`/shop?class=${cls.id}&subject=${encodeURIComponent(s)}`}
-                className="inline-block rounded-full border border-[var(--border-1)] bg-[var(--surface-1)] px-4 py-2 text-[length:var(--text-sm)] text-[var(--text-2)] transition-colors hover:border-[var(--border-2)] hover:text-[var(--text-1)]"
+                className="inline-block rounded-full border border-[var(--border-1)] bg-[var(--surface-1)] px-4 py-2 text-[length:var(--text-sm)] text-[color:var(--text-2)] transition-colors hover:border-[var(--border-2)] hover:text-[color:var(--text-1)]"
               >
                 {s}
               </Link>
@@ -153,7 +153,7 @@ export default async function ClassHubPage({
         <div className="mb-5 flex items-end justify-between gap-4">
           <h2 id="books" className="text-[length:var(--text-xl)]">
             All {cls.label} books
-            <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[var(--text-3)]">
+            <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[color:var(--text-3)]">
               {books.total}
             </span>
           </h2>
@@ -190,7 +190,7 @@ export default async function ClassHubPage({
               <h2 id="notes" className="text-[length:var(--text-xl)]">
                 {cls.label} key notes
               </h2>
-              <p className="mt-2 max-w-lg text-[length:var(--text-sm)] text-[var(--text-2)]">
+              <p className="mt-2 max-w-lg text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                 Chapter-wise summaries for {notes.length} subject sets. Preview
                 free — no sign-up needed.
               </p>
@@ -207,10 +207,10 @@ export default async function ClassHubPage({
 
       {/* Assistant handoff */}
       <section className="mt-12 rounded-[var(--radius-xl)] bg-[var(--brand-soft)] p-6 text-center">
-        <p className="text-[length:var(--text-base)] text-[var(--text-1)]">
+        <p className="text-[length:var(--text-base)] text-[color:var(--text-1)]">
           Not sure which set your child needs for {cls.label}?
         </p>
-        <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+        <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
           Ask the assistant — it knows the syllabus and the catalogue.
         </p>
       </section>

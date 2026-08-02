@@ -52,17 +52,17 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-4 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/" className="hover:text-[var(--text-2)]">
+      <nav aria-label="Breadcrumb" className="mb-4 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/" className="hover:text-[color:var(--text-2)]">
           Home
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-[var(--text-2)]">Shop</span>
+        <span className="text-[color:var(--text-2)]">Shop</span>
       </nav>
 
       <header className="mb-8">
         <h1 className="text-[length:var(--text-4xl)]">All books</h1>
-        <p className="mt-2 max-w-2xl text-[length:var(--text-body)] text-[var(--text-2)]">
+        <p className="mt-2 max-w-2xl text-[length:var(--text-body)] text-[color:var(--text-2)]">
           Every guide, note and combo pack we publish — filter by class, medium,
           subject or series.
         </p>

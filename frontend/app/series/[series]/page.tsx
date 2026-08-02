@@ -44,10 +44,10 @@ export default async function SeriesPage({
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/" className="hover:text-[var(--text-2)]">Home</Link>
+      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/" className="hover:text-[color:var(--text-2)]">Home</Link>
         <span className="mx-2">/</span>
-        <span className="text-[var(--text-2)]">{s.label}</span>
+        <span className="text-[color:var(--text-2)]">{s.label}</span>
       </nav>
 
       <header className="mb-10 max-w-2xl">
@@ -57,10 +57,10 @@ export default async function SeriesPage({
           style={{ backgroundColor: s.accent }}
         />
         <h1 className="text-[length:var(--text-4xl)]">{s.label}</h1>
-        <p className="mt-3 text-[length:var(--text-lg)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+        <p className="mt-3 text-[length:var(--text-lg)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
           {s.positioning}
         </p>
-        <p className="tabular mt-4 text-[length:var(--text-sm)] text-[var(--text-3)]">
+        <p className="tabular mt-4 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
           {books.total} titles in this series
         </p>
       </header>

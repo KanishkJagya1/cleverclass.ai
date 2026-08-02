@@ -45,13 +45,13 @@ export default function CheckoutPage() {
   if (orderId) {
     return (
       <div className="container-prose py-16 text-center">
-        <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[var(--signal-gain)]">
+        <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[color:var(--signal-gain)]">
           <PackageCheck className="size-6" aria-hidden />
         </span>
         <h1 className="mt-6 text-[length:var(--text-3xl)]">Order placed</h1>
-        <p className="mt-3 text-[length:var(--text-body)] text-[var(--text-2)]">
+        <p className="mt-3 text-[length:var(--text-body)] text-[color:var(--text-2)]">
           Your order reference is{" "}
-          <span className="tabular font-semibold text-[var(--text-1)]">{orderId}</span>. We've
+          <span className="tabular font-semibold text-[color:var(--text-1)]">{orderId}</span>. We've
           sent a confirmation to your email and will call if anything needs checking.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -63,9 +63,9 @@ export default function CheckoutPage() {
           </Button>
         </div>
         {/* Account creation is offered AFTER the order, never as a gate before it. */}
-        <p className="mt-10 text-[length:var(--text-sm)] text-[var(--text-3)]">
+        <p className="mt-10 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
           Want your orders and downloads in one place?{" "}
-          <Link href="/signup" className="text-[var(--text-brand)] underline underline-offset-4">
+          <Link href="/signup" className="text-[color:var(--text-brand)] underline underline-offset-4">
             Create an account
           </Link>
         </p>
@@ -116,8 +116,8 @@ export default function CheckoutPage() {
                 i < step
                   ? "bg-[var(--signal-gain)] text-white"
                   : i === step
-                    ? "bg-[var(--brand-base)] text-[var(--brand-on)]"
-                    : "bg-[var(--surface-0)] text-[var(--text-3)]",
+                    ? "bg-[var(--brand-base)] text-[color:var(--brand-on)]"
+                    : "bg-[var(--surface-0)] text-[color:var(--text-3)]",
               )}
             >
               {i < step ? <Check className="size-3.5" aria-hidden /> : i + 1}
@@ -125,7 +125,7 @@ export default function CheckoutPage() {
             <span
               className={cn(
                 "text-[length:var(--text-sm)]",
-                i === step ? "font-medium text-[var(--text-1)]" : "text-[var(--text-3)]",
+                i === step ? "font-medium text-[color:var(--text-1)]" : "text-[color:var(--text-3)]",
               )}
             >
               {label}
@@ -141,7 +141,7 @@ export default function CheckoutPage() {
         <form onSubmit={place} className="surface-card p-6" noValidate>
           {step === 0 && (
             <fieldset>
-              <legend className="text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+              <legend className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                 Your details
               </legend>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -176,7 +176,7 @@ export default function CheckoutPage() {
 
           {step === 1 && (
             <fieldset>
-              <legend className="text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+              <legend className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                 Shipping address
               </legend>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -224,15 +224,15 @@ export default function CheckoutPage() {
 
           {step === 2 && (
             <fieldset>
-              <legend className="text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+              <legend className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                 Payment
               </legend>
               <div className="mt-5 rounded-[var(--radius-lg)] border border-dashed border-[var(--border-2)] bg-[var(--surface-0)]/60 p-5">
-                <p className="flex items-center gap-2 text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">
+                <p className="flex items-center gap-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                   <CreditCard className="size-4" aria-hidden />
                   Payment gateway not yet connected
                 </p>
-                <p className="mt-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
+                <p className="mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                   This build routes through a stubbed payment provider. Wiring
                   Razorpay, PhonePe or Stripe means implementing one interface —
                   the checkout flow above stays exactly as it is.
@@ -253,14 +253,14 @@ export default function CheckoutPage() {
 
         <aside className="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
           <div className="surface-card p-5">
-            <h2 className="text-[length:var(--text-base)] font-semibold text-[var(--text-1)]">
+            <h2 className="text-[length:var(--text-base)] font-semibold text-[color:var(--text-1)]">
               Order summary
             </h2>
             <ul className="mt-4 space-y-3">
               {items.map((i) => (
                 <li key={i.slug} className="flex justify-between gap-3 text-[length:var(--text-sm)]">
-                  <span className="clamp-2 text-[var(--text-2)]">
-                    {i.title} <span className="text-[var(--text-3)]">× {i.qty}</span>
+                  <span className="clamp-2 text-[color:var(--text-2)]">
+                    {i.title} <span className="text-[color:var(--text-3)]">× {i.qty}</span>
                   </span>
                   <span className="tabular shrink-0 font-medium">{formatPrice(i.price * i.qty)}</span>
                 </li>
@@ -268,14 +268,14 @@ export default function CheckoutPage() {
             </ul>
             <dl className="mt-4 space-y-2 border-t border-[var(--border-1)] pt-4 text-[length:var(--text-sm)]">
               <div className="flex justify-between">
-                <dt className="text-[var(--text-2)]">Subtotal</dt>
+                <dt className="text-[color:var(--text-2)]">Subtotal</dt>
                 <dd className="tabular">{formatPrice(totals.subtotal)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[var(--text-2)]">Shipping</dt>
+                <dt className="text-[color:var(--text-2)]">Shipping</dt>
                 <dd className="tabular">
                   {totals.shipping === 0 ? (
-                    <span className="text-[var(--signal-gain)]">Free</span>
+                    <span className="text-[color:var(--signal-gain)]">Free</span>
                   ) : (
                     formatPrice(totals.shipping)
                   )}

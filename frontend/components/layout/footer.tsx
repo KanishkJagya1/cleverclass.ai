@@ -38,7 +38,7 @@ export function Footer() {
   ];
 
   return (
-    <footer className="relative border-t border-[var(--border-1)] bg-[var(--color-indigo-950)] text-[var(--color-ink-300)]">
+    <footer className="relative border-t border-[var(--border-1)] bg-[var(--color-indigo-950)] text-[color:var(--color-ink-300)]">
       <div className="container-page py-16 md:py-20">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_repeat(3,1fr)]">
           {/* Brand + newsletter */}
@@ -46,7 +46,7 @@ export function Footer() {
             {/* Full lockup here — the footer has room for the wordmark and
                 tagline, which the navbar does not. */}
             <Link href="/" className="inline-flex py-1" aria-label={`${SITE.name} — home`}>
-              <Logo variant="full" width={190} onDarkSurface />
+              <Logo height={44} onDarkSurface />
             </Link>
             <p className="mt-4 max-w-xs text-[length:var(--text-sm)] leading-[var(--leading-relaxed)]">
               {SITE.description}
@@ -85,7 +85,7 @@ export function Footer() {
             name/address/phone across a site is a real local-SEO penalty. */}
         <div className="mt-14 grid gap-6 border-t border-white/10 pt-10 sm:grid-cols-3">
           <p className="flex items-start gap-3 text-[length:var(--text-sm)]">
-            <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--color-indigo-300)]" aria-hidden />
+            <MapPin className="mt-0.5 size-4 shrink-0 text-[color:var(--color-indigo-300)]" aria-hidden />
             <span>
               {SITE.legalName}
               <br />
@@ -95,7 +95,7 @@ export function Footer() {
             </span>
           </p>
           <p className="flex items-start gap-3 text-[length:var(--text-sm)]">
-            <Phone className="mt-0.5 size-4 shrink-0 text-[var(--color-indigo-300)]" aria-hidden />
+            <Phone className="mt-0.5 size-4 shrink-0 text-[color:var(--color-indigo-300)]" aria-hidden />
             <span>
               {SITE.phones.map((p) => (
                 <a key={p} href={`tel:${p}`} className="block hover:text-white">
@@ -105,7 +105,7 @@ export function Footer() {
             </span>
           </p>
           <p className="flex items-start gap-3 text-[length:var(--text-sm)]">
-            <Mail className="mt-0.5 size-4 shrink-0 text-[var(--color-indigo-300)]" aria-hidden />
+            <Mail className="mt-0.5 size-4 shrink-0 text-[color:var(--color-indigo-300)]" aria-hidden />
             <a href={`mailto:${SITE.email}`} className="hover:text-white">
               {SITE.email}
             </a>

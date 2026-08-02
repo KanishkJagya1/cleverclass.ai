@@ -5,7 +5,7 @@ export default function ProfilePage() {
   return (
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Profile</h1>
-      <p className="mt-2 text-[length:var(--text-body)] text-[var(--text-2)]">
+      <p className="mt-2 text-[length:var(--text-body)] text-[color:var(--text-2)]">
         Your name, contact details and default delivery address.
       </p>
 
@@ -39,7 +39,7 @@ export default function ProfilePage() {
         <Button type="button" className="mt-6" disabled>
           Save changes
         </Button>
-        <p className="mt-3 text-[length:var(--text-xs)] text-[var(--text-3)]">
+        <p className="mt-3 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
           Saving is disabled until the auth backend is connected.
         </p>
       </form>

@@ -74,12 +74,12 @@ export default async function KeyNoteDetailPage({
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/key-notes" className="hover:text-[var(--text-2)]">Key Notes</Link>
+      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/key-notes" className="hover:text-[color:var(--text-2)]">Key Notes</Link>
         <span className="mx-2">/</span>
-        <Link href={`/key-notes/${cls.id}`} className="hover:text-[var(--text-2)]">{cls.label}</Link>
+        <Link href={`/key-notes/${cls.id}`} className="hover:text-[color:var(--text-2)]">{cls.label}</Link>
         <span className="mx-2">/</span>
-        <span className="text-[var(--text-2)]">{primary.subject}</span>
+        <span className="text-[color:var(--text-2)]">{primary.subject}</span>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
@@ -89,12 +89,12 @@ export default async function KeyNoteDetailPage({
             {cls.label} {primary.subject} Key Notes
           </h1>
           {primary.titleMr && (
-            <p lang="mr" className="mt-2 text-[length:var(--text-lg)] text-[var(--text-2)]">
+            <p lang="mr" className="mt-2 text-[length:var(--text-lg)] text-[color:var(--text-2)]">
               {primary.titleMr}
             </p>
           )}
 
-          <p className="mt-5 max-w-xl text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-5 max-w-xl text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             Concise, chapter-wise notes covering the complete {cls.label}{" "}
             {primary.subject} syllabus. Read the first{" "}
             {primary.previewPages.length} pages free — no account, no email.
@@ -125,7 +125,7 @@ export default async function KeyNoteDetailPage({
           <section className="mt-12" aria-labelledby="chapters">
             <h2 id="chapters" className="text-[length:var(--text-xl)]">
               Chapters covered
-              <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[var(--text-3)]">
+              <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[color:var(--text-3)]">
                 {primary.chapters.length}
               </span>
             </h2>
@@ -133,9 +133,9 @@ export default async function KeyNoteDetailPage({
               {primary.chapters.map((c, i) => (
                 <li
                   key={c}
-                  className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--border-1)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[var(--text-2)]"
+                  className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[var(--border-1)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]"
                 >
-                  <span className="tabular text-[var(--text-3)]">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="tabular text-[color:var(--text-3)]">{String(i + 1).padStart(2, "0")}</span>
                   {c}
                 </li>
               ))}
@@ -146,7 +146,7 @@ export default async function KeyNoteDetailPage({
         {/* ------------------------------------------------- conversion -- */}
         <aside className="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:self-start">
           <div className="surface-card p-6">
-            <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+            <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
               Notes cover the syllabus. The guide gets you through the exam.
             </h2>
             <ul className="mt-4 space-y-2.5">
@@ -156,8 +156,8 @@ export default async function KeyNoteDetailPage({
                 "Previous years' questions marked",
                 "Full-length practice papers",
               ].map((t) => (
-                <li key={t} className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
-                  <Check className="mt-0.5 size-4 shrink-0 text-[var(--signal-gain)]" aria-hidden />
+                <li key={t} className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+                  <Check className="mt-0.5 size-4 shrink-0 text-[color:var(--signal-gain)]" aria-hidden />
                   {t}
                 </li>
               ))}

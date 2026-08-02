@@ -12,7 +12,7 @@ export default function AccountOverviewPage() {
   return (
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Your account</h1>
-      <p className="mt-2 text-[length:var(--text-body)] text-[var(--text-2)]">
+      <p className="mt-2 text-[length:var(--text-body)] text-[color:var(--text-2)]">
         Orders, saved books and downloads in one place.
       </p>
 
@@ -20,24 +20,24 @@ export default function AccountOverviewPage() {
         {tiles.map((t) => (
           <li key={t.href}>
             <Link href={t.href} className="surface-card lift flex h-full flex-col p-5">
-              <t.icon className="size-5 text-[var(--brand-base)]" aria-hidden />
-              <span className="tabular mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[var(--text-1)]">
+              <t.icon className="size-5 text-[color:var(--brand-base)]" aria-hidden />
+              <span className="tabular mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[color:var(--text-1)]">
                 {t.value}
               </span>
-              <span className="mt-0.5 text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">
+              <span className="mt-0.5 text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                 {t.label}
               </span>
-              <span className="mt-0.5 text-[length:var(--text-xs)] text-[var(--text-3)]">{t.hint}</span>
+              <span className="mt-0.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">{t.hint}</span>
             </Link>
           </li>
         ))}
       </ul>
 
       <div className="surface-card mt-8 p-6">
-        <h2 className="text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+        <h2 className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
           Accounts are not connected yet
         </h2>
-        <p className="mt-2 max-w-lg text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+        <p className="mt-2 max-w-lg text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
           Every account screen is built against a typed <code>AuthProvider</code>{" "}
           interface backed by a stub. Connecting NextAuth, Clerk or Supabase Auth
           replaces one module — no screen changes.

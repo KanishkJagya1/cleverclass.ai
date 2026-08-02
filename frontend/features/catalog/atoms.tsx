@@ -33,16 +33,16 @@ export function PriceBlock({
 
   return (
     <div className={cn("flex flex-wrap items-baseline gap-x-2 gap-y-1", className)}>
-      <span className={cn("tabular font-semibold text-[var(--text-1)]", sizes[size])}>
+      <span className={cn("tabular font-semibold text-[color:var(--text-1)]", sizes[size])}>
         {formatPrice(price)}
       </span>
       {off !== null && (
         <>
-          <span className="tabular text-[length:var(--text-sm)] text-[var(--text-3)] line-through">
+          <span className="tabular text-[length:var(--text-sm)] text-[color:var(--text-3)] line-through">
             {formatPrice(mrp!)}
           </span>
           {/* Emerald-700 token — the AA-passing one. See design system §3. */}
-          <span className="tabular text-[length:var(--text-sm)] font-semibold text-[var(--signal-gain)]">
+          <span className="tabular text-[length:var(--text-sm)] font-semibold text-[color:var(--signal-gain)]">
             {off}% off
           </span>
         </>
@@ -91,7 +91,7 @@ export function WishlistButton({
       <Heart
         className={cn(
           "size-4 transition-colors",
-          saved ? "fill-[var(--signal-danger)] text-[var(--signal-danger)]" : "text-[var(--text-2)]",
+          saved ? "fill-[var(--signal-danger)] text-[color:var(--signal-danger)]" : "text-[color:var(--text-2)]",
         )}
         aria-hidden
       />
@@ -213,7 +213,7 @@ export function SavingsMeter({
   ];
 
   return (
-    <div className={cn("text-[length:var(--text-sm)]", invert ? "text-[var(--color-ink-300)]" : "text-[var(--text-2)]")}>
+    <div className={cn("text-[length:var(--text-sm)]", invert ? "text-[color:var(--color-ink-300)]" : "text-[color:var(--text-2)]")}>
       {rows.map((r) => (
         <div key={r.label} className="flex items-baseline justify-between py-1.5">
           <span>{r.label}</span>
@@ -223,7 +223,7 @@ export function SavingsMeter({
       <div
         className={cn(
           "mt-1 flex items-baseline justify-between border-t pt-2.5 font-semibold",
-          invert ? "border-white/15 text-white" : "border-[var(--border-1)] text-[var(--signal-gain)]",
+          invert ? "border-white/15 text-white" : "border-[var(--border-1)] text-[color:var(--signal-gain)]",
         )}
       >
         <span>You save</span>

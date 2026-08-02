@@ -49,7 +49,7 @@ export default function CartPage() {
   return (
     <div className="container-page py-8 md:py-12">
       <h1 className="text-[length:var(--text-3xl)]">Your cart</h1>
-      <p className="tabular mt-1.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+      <p className="tabular mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
         {items.reduce((n, i) => n + i.qty, 0)} item
         {items.reduce((n, i) => n + i.qty, 0) === 1 ? "" : "s"}
       </p>
@@ -76,11 +76,11 @@ export default function CartPage() {
 
                   <div className="flex min-w-0 flex-1 flex-col">
                     <Link href={href}>
-                      <p className="clamp-2 text-[length:var(--text-base)] font-medium text-[var(--text-1)]">
+                      <p className="clamp-2 text-[length:var(--text-base)] font-medium text-[color:var(--text-1)]">
                         {item.title}
                       </p>
                     </Link>
-                    <p className="mt-1 text-[length:var(--text-xs)] text-[var(--text-3)]">
+                    <p className="mt-1 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                       {cls?.label} · {mediumById(item.medium)?.label}
                     </p>
 
@@ -89,7 +89,7 @@ export default function CartPage() {
                         <button
                           onClick={() => setQty(item.slug, item.qty - 1)}
                           aria-label={`Decrease quantity of ${item.title}`}
-                          className="grid size-9 place-items-center text-[var(--text-2)] hover:bg-[var(--surface-0)]"
+                          className="grid size-9 place-items-center text-[color:var(--text-2)] hover:bg-[var(--surface-0)]"
                         >
                           <Minus className="size-3.5" aria-hidden />
                         </button>
@@ -99,7 +99,7 @@ export default function CartPage() {
                         <button
                           onClick={() => setQty(item.slug, item.qty + 1)}
                           aria-label={`Increase quantity of ${item.title}`}
-                          className="grid size-9 place-items-center text-[var(--text-2)] hover:bg-[var(--surface-0)]"
+                          className="grid size-9 place-items-center text-[color:var(--text-2)] hover:bg-[var(--surface-0)]"
                         >
                           <Plus className="size-3.5" aria-hidden />
                         </button>
@@ -107,7 +107,7 @@ export default function CartPage() {
 
                       <button
                         onClick={() => remove(item.slug)}
-                        className="inline-flex items-center gap-1.5 text-[length:var(--text-xs)] text-[var(--text-3)] hover:text-[var(--signal-danger)]"
+                        className="inline-flex items-center gap-1.5 text-[length:var(--text-xs)] text-[color:var(--text-3)] hover:text-[color:var(--signal-danger)]"
                       >
                         <Trash2 className="size-3.5" aria-hidden />
                         Remove
@@ -115,7 +115,7 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <p className="tabular shrink-0 text-[length:var(--text-base)] font-semibold text-[var(--text-1)]">
+                  <p className="tabular shrink-0 text-[length:var(--text-base)] font-semibold text-[color:var(--text-1)]">
                     {formatPrice(item.price * item.qty)}
                   </p>
                 </li>
@@ -134,14 +134,14 @@ export default function CartPage() {
             {/* Free-shipping meter */}
             <div className="mb-5">
               {totals.qualifies ? (
-                <p className="flex items-center gap-2 text-[length:var(--text-sm)] font-medium text-[var(--signal-gain)]">
+                <p className="flex items-center gap-2 text-[length:var(--text-sm)] font-medium text-[color:var(--signal-gain)]">
                   <Truck className="size-4" aria-hidden />
                   Free shipping unlocked
                 </p>
               ) : (
-                <p className="text-[length:var(--text-sm)] text-[var(--text-2)]">
+                <p className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                   Add{" "}
-                  <span className="tabular font-semibold text-[var(--text-1)]">
+                  <span className="tabular font-semibold text-[color:var(--text-1)]">
                     {formatPrice(totals.amountToFreeShipping)}
                   </span>{" "}
                   more for free shipping
@@ -164,14 +164,14 @@ export default function CartPage() {
 
             <dl className="space-y-2.5 border-t border-[var(--border-1)] pt-4 text-[length:var(--text-sm)]">
               <div className="flex justify-between">
-                <dt className="text-[var(--text-2)]">Subtotal</dt>
+                <dt className="text-[color:var(--text-2)]">Subtotal</dt>
                 <dd className="tabular font-medium">{formatPrice(totals.subtotal)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-[var(--text-2)]">Shipping</dt>
+                <dt className="text-[color:var(--text-2)]">Shipping</dt>
                 <dd className="tabular font-medium">
                   {totals.shipping === 0 ? (
-                    <span className="text-[var(--signal-gain)]">Free</span>
+                    <span className="text-[color:var(--signal-gain)]">Free</span>
                   ) : (
                     formatPrice(totals.shipping)
                   )}
@@ -190,15 +190,15 @@ export default function CartPage() {
               </Link>
             </Button>
 
-            <p className="mt-3 text-center text-[length:var(--text-xs)] text-[var(--text-3)]">
+            <p className="mt-3 text-center text-[length:var(--text-xs)] text-[color:var(--text-3)]">
               7-day returns · Ships from Nagpur
             </p>
           </div>
 
           {!totals.qualifies && (
-            <p className="mt-4 text-center text-[length:var(--text-xs)] text-[var(--text-3)]">
+            <p className="mt-4 text-center text-[length:var(--text-xs)] text-[color:var(--text-3)]">
               Tip: most combo packs ship free on their own.{" "}
-              <Link href="/combo-packs" className="text-[var(--text-brand)] underline underline-offset-2">
+              <Link href="/combo-packs" className="text-[color:var(--text-brand)] underline underline-offset-2">
                 See packs
               </Link>
             </p>

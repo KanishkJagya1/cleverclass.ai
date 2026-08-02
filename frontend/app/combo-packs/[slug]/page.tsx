@@ -68,10 +68,10 @@ export default async function ComboDetailPage({
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-6 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/" className="hover:text-[var(--text-2)]">Home</Link>
+      <nav aria-label="Breadcrumb" className="mb-6 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/" className="hover:text-[color:var(--text-2)]">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/combo-packs" className="hover:text-[var(--text-2)]">Combo packs</Link>
+        <Link href="/combo-packs" className="hover:text-[color:var(--text-2)]">Combo packs</Link>
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
@@ -84,21 +84,21 @@ export default async function ComboDetailPage({
 
           <h1 className="mt-4 text-[length:var(--text-4xl)]">{combo.title}</h1>
           {combo.titleMr && (
-            <p lang="mr" className="mt-1.5 text-[length:var(--text-lg)] text-[var(--text-2)]">
+            <p lang="mr" className="mt-1.5 text-[length:var(--text-lg)] text-[color:var(--text-2)]">
               {combo.titleMr}
             </p>
           )}
 
           <Rating value={combo.rating} count={combo.reviewCount} size={16} className="mt-4" />
 
-          <p className="mt-6 max-w-2xl text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-6 max-w-2xl text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             {combo.description}
           </p>
 
           <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
             {combo.highlights.map((h) => (
-              <li key={h} className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
-                <Check className="mt-0.5 size-4 shrink-0 text-[var(--signal-gain)]" aria-hidden />
+              <li key={h} className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+                <Check className="mt-0.5 size-4 shrink-0 text-[color:var(--signal-gain)]" aria-hidden />
                 {h}
               </li>
             ))}
@@ -109,7 +109,7 @@ export default async function ComboDetailPage({
           <section className="mt-12" aria-labelledby="contents">
             <h2 id="contents" className="text-[length:var(--text-2xl)]">
               What's in this pack
-              <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[var(--text-3)]">
+              <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[color:var(--text-3)]">
                 {combo.items.length} books
               </span>
             </h2>
@@ -127,15 +127,15 @@ export default async function ComboDetailPage({
                   </Link>
                   <div className="min-w-0 flex-1">
                     <Link href={`/shop/${b.slug}`} className="block">
-                      <p className="clamp-2 text-[length:var(--text-sm)] font-medium text-[var(--text-1)] hover:text-[var(--brand-base)]">
+                      <p className="clamp-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)] hover:text-[color:var(--brand-base)]">
                         {b.title}
                       </p>
                     </Link>
-                    <p className="mt-0.5 text-[length:var(--text-xs)] text-[var(--text-3)]">
+                    <p className="mt-0.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                       {b.subject} · {b.pages} pages
                     </p>
                   </div>
-                  <p className="tabular shrink-0 text-[length:var(--text-sm)] text-[var(--text-2)]">
+                  <p className="tabular shrink-0 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                     {formatPrice(b.price)}
                   </p>
                 </li>
@@ -191,13 +191,13 @@ export default async function ComboDetailPage({
             />
 
             {combo.price >= SITE.freeShippingThreshold && (
-              <p className="mt-3 flex items-center justify-center gap-2 text-[length:var(--text-sm)] font-medium text-[var(--signal-gain)]">
+              <p className="mt-3 flex items-center justify-center gap-2 text-[length:var(--text-sm)] font-medium text-[color:var(--signal-gain)]">
                 <Truck className="size-4" aria-hidden />
                 Free shipping included
               </p>
             )}
 
-            <p className="mt-4 border-t border-[var(--border-1)] pt-4 text-center text-[length:var(--text-xs)] text-[var(--text-3)]">
+            <p className="mt-4 border-t border-[var(--border-1)] pt-4 text-center text-[length:var(--text-xs)] text-[color:var(--text-3)]">
               Matched editions · one delivery · 7-day returns
             </p>
           </div>

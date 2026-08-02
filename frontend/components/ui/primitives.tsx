@@ -11,17 +11,17 @@ const badge = cva(
   {
     variants: {
       variant: {
-        neutral: "bg-[var(--surface-0)] text-[var(--text-2)] border border-[var(--border-1)]",
-        brand: "bg-[var(--brand-soft)] text-[var(--text-brand)]",
+        neutral: "bg-[var(--surface-0)] text-[color:var(--text-2)] border border-[var(--border-1)]",
+        brand: "bg-[var(--brand-soft)] text-[color:var(--text-brand)]",
         // Emerald-700 — the AA-passing token. See design system §3.
-        gain: "bg-[var(--signal-gain-soft)] text-[var(--signal-gain)]",
-        solid: "bg-[var(--brand-base)] text-[var(--brand-on)]",
-        danger: "bg-[var(--surface-0)] text-[var(--signal-danger)]",
-        glass: "glass-panel !rounded-full text-[var(--text-1)]",
+        gain: "bg-[var(--signal-gain-soft)] text-[color:var(--signal-gain)]",
+        solid: "bg-[var(--brand-base)] text-[color:var(--brand-on)]",
+        danger: "bg-[var(--surface-0)] text-[color:var(--signal-danger)]",
+        glass: "glass-panel !rounded-full text-[color:var(--text-1)]",
       },
       size: {
-        sm: "px-2 py-1 text-[var(--text-2xs)]",
-        md: "px-2.5 py-1.5 text-[var(--text-xs)]",
+        sm: "px-2 py-1 text-[length:var(--text-2xs)]",
+        md: "px-2.5 py-1.5 text-[length:var(--text-xs)]",
       },
     },
     defaultVariants: { variant: "neutral", size: "sm" },
@@ -42,8 +42,8 @@ export function Badge({
 /* -------------------------------------------------------------------------- */
 const fieldBase = [
   "w-full rounded-[var(--radius-md)] bg-[var(--surface-1)]",
-  "border border-[var(--border-1)] px-3.5 text-[var(--text-base)]",
-  "text-[var(--text-1)] placeholder:text-[var(--text-3)]",
+  "border border-[var(--border-1)] px-3.5 text-[length:var(--text-base)]",
+  "text-[color:var(--text-1)] placeholder:text-[color:var(--text-3)]",
   "transition-[border-color,box-shadow] duration-[var(--duration-fast)]",
   "focus:border-[var(--focus-ring)] focus:outline-none",
   "focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--focus-ring)_18%,transparent)]",
@@ -67,7 +67,7 @@ Textarea.displayName = "Textarea";
 export function Label({ className, ...props }: React.ComponentProps<"label">) {
   return (
     <label
-      className={cn("block text-[var(--text-sm)] font-medium text-[var(--text-2)] mb-1.5", className)}
+      className={cn("block text-[length:var(--text-sm)] font-medium text-[color:var(--text-2)] mb-1.5", className)}
       {...props}
     />
   );
@@ -76,7 +76,7 @@ export function Label({ className, ...props }: React.ComponentProps<"label">) {
 export function FieldError({ children }: { children?: React.ReactNode }) {
   if (!children) return null;
   return (
-    <p role="alert" className="mt-1.5 text-[var(--text-xs)] text-[var(--signal-danger)]">
+    <p role="alert" className="mt-1.5 text-[length:var(--text-xs)] text-[color:var(--signal-danger)]">
       {children}
     </p>
   );
@@ -125,16 +125,16 @@ export function Rating({
             aria-hidden
             className={
               i <= Math.round(value)
-                ? "fill-[var(--signal-rating)] text-[var(--signal-rating)]"
-                : "text-[var(--border-2)]"
+                ? "fill-[var(--signal-rating)] text-[color:var(--signal-rating)]"
+                : "text-[color:var(--border-2)]"
             }
           />
         ))}
       </div>
-      <span className="tabular text-[var(--text-xs)] text-[var(--text-2)]">
+      <span className="tabular text-[length:var(--text-xs)] text-[color:var(--text-2)]">
         {value.toFixed(1)}
         {count !== undefined && (
-          <span className="text-[var(--text-3)]"> ({count})</span>
+          <span className="text-[color:var(--text-3)]"> ({count})</span>
         )}
       </span>
     </div>
@@ -159,7 +159,11 @@ export function Section({
   const bands = {
     canvas: "bg-[var(--surface-canvas)]",
     white: "bg-[var(--surface-1)]",
-    "brand-dark": "bg-[var(--color-indigo-950)] text-[var(--color-ink-100)]",
+    // .on-dark-band forces the dark glass recipe for descendants — see
+    // glass.css. Without it, glass buttons and badges here render white-on-
+    // white in light mode.
+    "brand-dark":
+      "on-dark-band bg-[var(--color-indigo-950)] text-[color:var(--color-ink-100)]",
     "brand-soft": "bg-[var(--brand-soft)]",
   } as const;
   const widths = {
@@ -202,8 +206,8 @@ export function SectionHeader({
         {eyebrow && (
           <p
             className={cn(
-              "mb-3 text-[var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)]",
-              invert ? "text-[var(--color-indigo-300)]" : "text-[var(--text-brand)]",
+              "mb-3 text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)]",
+              invert ? "text-[color:var(--color-indigo-300)]" : "text-[color:var(--text-brand)]",
             )}
           >
             {eyebrow}
@@ -212,7 +216,7 @@ export function SectionHeader({
         <h2
           className={cn(
             "text-[length:var(--text-3xl)]",
-            invert ? "text-white" : "text-[var(--text-1)]",
+            invert ? "text-white" : "text-[color:var(--text-1)]",
           )}
         >
           {title}
@@ -221,7 +225,7 @@ export function SectionHeader({
           <p
             className={cn(
               "mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)]",
-              invert ? "text-[var(--color-ink-300)]" : "text-[var(--text-2)]",
+              invert ? "text-[color:var(--color-ink-300)]" : "text-[color:var(--text-2)]",
             )}
           >
             {description}

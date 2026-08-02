@@ -39,23 +39,23 @@ export function Hero({ books }: { books: Book[] }) {
               initial={reduced ? false : { opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              className="glass-panel !rounded-full inline-flex items-center gap-2 !border-[var(--border-glass)] px-3.5 py-1.5 text-[length:var(--text-xs)] font-medium text-[var(--text-2)]"
+              className="glass-panel !rounded-full inline-flex items-center gap-2 !border-[var(--border-glass)] px-3.5 py-1.5 text-[length:var(--text-xs)] font-medium text-[color:var(--text-2)]"
             >
-              <Sparkles className="size-3.5 text-[var(--brand-base)]" aria-hidden />
+              <Sparkles className="size-3.5 text-[color:var(--brand-base)]" aria-hidden />
               Maharashtra State Board · CBSE · Nursery to 12th
             </motion.p>
 
             <AnimatedHeading
               text="Every subject. Every class. One trusted guide."
               delay={0.1}
-              className="mt-6 max-w-[15ch] text-[length:var(--text-6xl)] font-semibold text-[var(--text-1)]"
+              className="mt-6 max-w-[15ch] text-[length:var(--text-6xl)] font-semibold text-[color:var(--text-1)]"
             />
 
             <motion.p
               initial={reduced ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.42, ease: [0.16, 1, 0.3, 1] }}
-              className="mt-6 max-w-lg text-[length:var(--text-lg)] leading-[var(--leading-relaxed)] text-[var(--text-2)]"
+              className="mt-6 max-w-lg text-[length:var(--text-lg)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]"
             >
               Chapter-wise guides, key notes and combo packs published in Nagpur
               since 1998 — in Marathi, Semi-English and English medium.
@@ -91,10 +91,10 @@ export function Hero({ books }: { books: Book[] }) {
             >
               {TRUST.map((t) => (
                 <li key={t.label}>
-                  <p className="tabular font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[var(--text-1)]">
+                  <p className="tabular font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[color:var(--text-1)]">
                     {t.value}
                   </p>
-                  <p className="mt-0.5 text-[length:var(--text-xs)] text-[var(--text-3)]">{t.label}</p>
+                  <p className="mt-0.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">{t.label}</p>
                 </li>
               ))}
             </motion.ul>
@@ -159,13 +159,13 @@ export function Hero({ books }: { books: Book[] }) {
               transition={{ duration: 0.7, delay: 0.9, ease: [0.16, 1, 0.3, 1] }}
               className="glass-panel glass-edge absolute -bottom-2 left-0 hidden !rounded-[var(--radius-lg)] px-4 py-3 sm:block"
             >
-              <p className="text-[length:var(--text-2xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--signal-gain)]">
+              <p className="text-[length:var(--text-2xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--signal-gain)]">
                 Combo saving
               </p>
-              <p className="tabular mt-0.5 font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[var(--text-1)]">
+              <p className="tabular mt-0.5 font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[color:var(--text-1)]">
                 ₹140
               </p>
-              <p className="text-[length:var(--text-xs)] text-[var(--text-3)]">on the Class 10 set</p>
+              <p className="text-[length:var(--text-xs)] text-[color:var(--text-3)]">on the Class 10 set</p>
             </motion.div>
           </div>
         </div>

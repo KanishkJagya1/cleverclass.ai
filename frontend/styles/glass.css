@@ -47,6 +47,28 @@
   }
 
   /* ------------------------------------------------------------------------
+     Glass on a permanently-dark band.
+
+     Glass tokens follow the THEME, not the surrounding surface. So in LIGHT
+     mode a .glass-panel sitting on a brand-dark section renders white — and
+     any white text on it (badges, glass buttons) becomes invisible. Sections
+     with band="brand-dark" carry .on-dark-band, which forces the dark glass
+     recipe there regardless of theme.
+
+     Scoped to .glass-panel only: overriding --text-1 for the whole subtree
+     would also flip the text inside opaque surface-cards placed on the band.
+     ------------------------------------------------------------------------ */
+  .on-dark-band .glass-panel,
+  .on-dark-band .glass-chrome {
+    background-color: rgb(255 255 255 / 0.12);
+    border-color: rgb(255 255 255 / 0.22);
+    color: #f1f5f9;
+  }
+  .on-dark-band .glass-panel:hover {
+    background-color: rgb(255 255 255 / 0.18);
+  }
+
+  /* ------------------------------------------------------------------------
      Tier 3 — VEIL. The scrim behind a panel. Cheap, low blur, no saturation.
      ------------------------------------------------------------------------ */
   .glass-veil {

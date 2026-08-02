@@ -42,14 +42,14 @@ export function MapEmbed() {
                 backgroundSize: "28px 28px",
               }}
             />
-            <MapPin className="relative size-6 text-[var(--brand-base)]" aria-hidden />
-            <p className="relative text-[length:var(--text-sm)] text-[var(--text-2)]">
+            <MapPin className="relative size-6 text-[color:var(--brand-base)]" aria-hidden />
+            <p className="relative text-[length:var(--text-sm)] text-[color:var(--text-2)]">
               {SITE.address.street}, {SITE.address.city}
             </p>
             <Button size="sm" variant="secondary" onClick={() => setLoaded(true)} className="relative">
               Load map
             </Button>
-            <p className="relative text-[length:var(--text-2xs)] text-[var(--text-3)]">
+            <p className="relative text-[length:var(--text-2xs)] text-[color:var(--text-3)]">
               Loads Google Maps and sets third-party cookies
             </p>
           </div>

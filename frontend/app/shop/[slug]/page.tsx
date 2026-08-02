@@ -122,12 +122,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-6 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/" className="hover:text-[var(--text-2)]">Home</Link>
+      <nav aria-label="Breadcrumb" className="mb-6 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/" className="hover:text-[color:var(--text-2)]">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/shop" className="hover:text-[var(--text-2)]">Shop</Link>
+        <Link href="/shop" className="hover:text-[color:var(--text-2)]">Shop</Link>
         <span className="mx-2">/</span>
-        <Link href={`/class/${book.classId}`} className="hover:text-[var(--text-2)]">
+        <Link href={`/class/${book.classId}`} className="hover:text-[color:var(--text-2)]">
           {cls?.label}
         </Link>
       </nav>
@@ -145,14 +145,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
           <h1 className="mt-4 text-[length:var(--text-3xl)]">{book.title}</h1>
           {book.titleMr && (
-            <p lang="mr" className="mt-1.5 text-[length:var(--text-lg)] text-[var(--text-2)]">
+            <p lang="mr" className="mt-1.5 text-[length:var(--text-lg)] text-[color:var(--text-2)]">
               {book.titleMr}
             </p>
           )}
 
           <Rating value={book.rating} count={book.reviewCount} size={16} className="mt-4" />
 
-          <p className="mt-6 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-6 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             {book.description}
           </p>
 
@@ -160,9 +160,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {book.highlights.map((h) => (
               <li
                 key={h}
-                className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[var(--text-2)]"
+                className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]"
               >
-                <span className="mt-1 grid size-4 shrink-0 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[var(--signal-gain)]">
+                <span className="mt-1 grid size-4 shrink-0 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[color:var(--signal-gain)]">
                   <svg viewBox="0 0 10 10" className="size-2.5" aria-hidden>
                     <path d="M2 5l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -177,8 +177,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <dl className="mt-4 divide-y divide-[var(--border-1)] border-y border-[var(--border-1)]">
               {specs.map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-6 py-2.5">
-                  <dt className="text-[length:var(--text-sm)] text-[var(--text-3)]">{k}</dt>
-                  <dd className="text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">{v}</dd>
+                  <dt className="text-[length:var(--text-sm)] text-[color:var(--text-3)]">{k}</dt>
+                  <dd className="text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">{v}</dd>
                 </div>
               ))}
             </dl>
@@ -207,16 +207,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {reviews.map((r) => (
               <li key={r.id} className="surface-card p-5">
                 <Rating value={r.rating} />
-                <p className="mt-3 text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">
+                <p className="mt-3 text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                   {r.title}
                 </p>
-                <p className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+                <p className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                   {r.body}
                 </p>
-                <p className="mt-4 text-[length:var(--text-xs)] text-[var(--text-3)]">
+                <p className="mt-4 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                   {r.author}
                   {r.verified && (
-                    <span className="ml-2 text-[var(--signal-gain)]">Verified purchase</span>
+                    <span className="ml-2 text-[color:var(--signal-gain)]">Verified purchase</span>
                   )}
                 </p>
               </li>

@@ -45,7 +45,7 @@ export function NewsletterForm({
       <p
         className={cn(
           "flex items-center gap-2 text-[length:var(--text-sm)]",
-          dark ? "text-white" : "text-[var(--signal-gain)]",
+          dark ? "text-white" : "text-[color:var(--signal-gain)]",
           className,
         )}
         role="status"
@@ -76,7 +76,7 @@ export function NewsletterForm({
               "focus:outline-none focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--focus-ring)_25%,transparent)]",
               dark
                 ? "border border-white/15 bg-white/10 text-white placeholder:text-white/45 focus:border-white/40"
-                : "border border-[var(--border-1)] bg-[var(--surface-1)] text-[var(--text-1)] placeholder:text-[var(--text-3)] focus:border-[var(--focus-ring)]",
+                : "border border-[var(--border-1)] bg-[var(--surface-1)] text-[color:var(--text-1)] placeholder:text-[color:var(--text-3)] focus:border-[var(--focus-ring)]",
             )}
             {...register("email")}
           />
@@ -89,8 +89,8 @@ export function NewsletterForm({
             "transition-transform duration-[var(--duration-fast)] active:scale-95",
             "disabled:opacity-60 motion-reduce:active:scale-100",
             dark
-              ? "bg-white text-[var(--color-indigo-950)] hover:bg-white/90"
-              : "bg-[var(--brand-base)] text-[var(--brand-on)] hover:bg-[var(--brand-hover)]",
+              ? "bg-white text-[color:var(--color-indigo-950)] hover:bg-white/90"
+              : "bg-[var(--brand-base)] text-[color:var(--brand-on)] hover:bg-[var(--brand-hover)]",
           )}
           aria-label="Subscribe"
         >
@@ -103,7 +103,7 @@ export function NewsletterForm({
           role="alert"
           className={cn(
             "mt-2 text-[length:var(--text-xs)]",
-            dark ? "text-rose-300" : "text-[var(--signal-danger)]",
+            dark ? "text-rose-300" : "text-[color:var(--signal-danger)]",
           )}
         >
           {errors.email.message}

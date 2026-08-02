@@ -50,7 +50,7 @@ export function BookCard({
         )}
       >
         <span
-          className="tabular w-8 shrink-0 text-right font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[var(--text-3)] transition-colors group-hover:text-[var(--brand-base)]"
+          className="tabular w-8 shrink-0 text-right font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[color:var(--text-3)] transition-colors group-hover:text-[color:var(--brand-base)]"
           aria-hidden
         >
           {String((index ?? 0) + 1).padStart(2, "0")}
@@ -62,11 +62,11 @@ export function BookCard({
         </Link>
         <div className="min-w-0 flex-1">
           <Link href={href} className="block">
-            <p className="clamp-2 text-[length:var(--text-sm)] font-medium text-[var(--text-1)] group-hover:text-[var(--brand-base)]">
+            <p className="clamp-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)] group-hover:text-[color:var(--brand-base)]">
               {book.title}
             </p>
           </Link>
-          <p className="mt-0.5 text-[length:var(--text-xs)] text-[var(--text-3)]">
+          <p className="mt-0.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
             {book.subject} · {medium?.label}
           </p>
         </div>
@@ -95,16 +95,16 @@ export function BookCard({
             {off !== null && <Badge variant="gain">{off}% off</Badge>}
           </div>
           <Link href={href} className="mt-2">
-            <h3 className="clamp-2 text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+            <h3 className="clamp-2 text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
               {book.title}
             </h3>
           </Link>
           {book.titleMr && (
-            <p lang="mr" className="clamp-2 mt-0.5 text-[length:var(--text-sm)] text-[var(--text-3)]">
+            <p lang="mr" className="clamp-2 mt-0.5 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
               {book.titleMr}
             </p>
           )}
-          <p className="clamp-2 mt-2 hidden text-[length:var(--text-sm)] text-[var(--text-2)] sm:block">
+          <p className="clamp-2 mt-2 hidden text-[length:var(--text-sm)] text-[color:var(--text-2)] sm:block">
             {book.description}
           </p>
           <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
@@ -131,7 +131,7 @@ export function BookCard({
             <Image src={cover.src} alt={cover.alt} fill sizes="144px" className="object-cover" />
           )}
         </div>
-        <p className="clamp-2 text-[length:var(--text-sm)] font-medium leading-snug text-[var(--text-1)]">
+        <p className="clamp-2 text-[length:var(--text-sm)] font-medium leading-snug text-[color:var(--text-1)]">
           {book.title}
         </p>
         <PriceBlock price={book.price} mrp={book.mrp} size="sm" />
@@ -174,7 +174,7 @@ export function BookCard({
         </div>
 
         <div className="flex flex-1 flex-col p-4">
-          <p className="text-[length:var(--text-2xs)] font-medium uppercase tracking-[var(--tracking-wide)] text-[var(--text-3)]">
+          <p className="text-[length:var(--text-2xs)] font-medium uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-3)]">
             {cls?.short === "Nur" ? "Nursery" : `Class ${cls?.short}`} · {book.subject}
           </p>
 
@@ -182,13 +182,13 @@ export function BookCard({
             {/* Stretched link: the whole card is the hit target, but the
                 accessible name stays just the title. */}
             <span className="absolute inset-0" aria-hidden />
-            <h3 className="clamp-2 text-[length:var(--text-base)] font-semibold leading-snug text-[var(--text-1)]">
+            <h3 className="clamp-2 text-[length:var(--text-base)] font-semibold leading-snug text-[color:var(--text-1)]">
               {book.title}
             </h3>
           </Link>
 
           {book.titleMr && (
-            <p lang="mr" className="clamp-2 mt-1 text-[length:var(--text-xs)] text-[var(--text-3)]">
+            <p lang="mr" className="clamp-2 mt-1 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
               {book.titleMr}
             </p>
           )}

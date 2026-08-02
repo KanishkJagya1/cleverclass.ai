@@ -142,25 +142,25 @@ export function SearchDialog() {
           >
             <div className="flex items-center gap-3 border-b border-[var(--border-1)] px-4">
               {loading ? (
-                <Loader2 className="size-4 shrink-0 animate-spin text-[var(--text-3)]" aria-hidden />
+                <Loader2 className="size-4 shrink-0 animate-spin text-[color:var(--text-3)]" aria-hidden />
               ) : (
-                <Search className="size-4 shrink-0 text-[var(--text-3)]" aria-hidden />
+                <Search className="size-4 shrink-0 text-[color:var(--text-3)]" aria-hidden />
               )}
               <Command.Input
                 autoFocus
                 value={query}
                 onValueChange={setQuery}
                 placeholder="Search books, classes, combo packs…"
-                className="h-14 flex-1 bg-transparent text-[length:var(--text-base)] text-[var(--text-1)] outline-none placeholder:text-[var(--text-3)]"
+                className="h-14 flex-1 bg-transparent text-[length:var(--text-base)] text-[color:var(--text-1)] outline-none placeholder:text-[color:var(--text-3)]"
               />
-              <kbd className="hidden rounded border border-[var(--border-1)] bg-[var(--surface-0)] px-1.5 py-0.5 text-[length:var(--text-2xs)] text-[var(--text-3)] sm:block">
+              <kbd className="hidden rounded border border-[var(--border-1)] bg-[var(--surface-0)] px-1.5 py-0.5 text-[length:var(--text-2xs)] text-[color:var(--text-3)] sm:block">
                 Esc
               </kbd>
             </div>
 
             <Command.List className="max-h-[70vh] flex-1 overflow-y-auto overscroll-contain p-2 sm:max-h-[24rem]">
               {semantic && (
-                <p className="mb-1 flex items-center gap-2 px-3 py-2 text-[length:var(--text-xs)] text-[var(--text-brand)]">
+                <p className="mb-1 flex items-center gap-2 px-3 py-2 text-[length:var(--text-xs)] text-[color:var(--text-brand)]">
                   <Sparkles className="size-3.5" aria-hidden />
                   Understood as a question — showing the closest matches
                 </p>
@@ -228,17 +228,17 @@ export function SearchDialog() {
 
               {query.length >= 2 && !loading && hits.length === 0 && classMatches.length === 0 && (
                 <Command.Empty className="px-3 py-10 text-center">
-                  <p className="text-[length:var(--text-sm)] text-[var(--text-2)]">
+                  <p className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                     Nothing matched "{query}".
                   </p>
-                  <p className="mt-1.5 text-[length:var(--text-xs)] text-[var(--text-3)]">
+                  <p className="mt-1.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                     Try a class and subject, like "class 10 science".
                   </p>
                 </Command.Empty>
               )}
             </Command.List>
 
-            <div className="hidden items-center gap-4 border-t border-[var(--border-1)] px-4 py-2.5 text-[length:var(--text-2xs)] text-[var(--text-3)] sm:flex">
+            <div className="hidden items-center gap-4 border-t border-[var(--border-1)] px-4 py-2.5 text-[length:var(--text-2xs)] text-[color:var(--text-3)] sm:flex">
               <span>↑↓ to navigate</span>
               <span>↵ to open</span>
               <span className="ml-auto">Ask a full question in the assistant</span>
@@ -252,8 +252,8 @@ export function SearchDialog() {
 
 const itemCls = cn(
   "flex cursor-pointer items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5",
-  "text-[length:var(--text-sm)] text-[var(--text-2)]",
-  "data-[selected=true]:bg-[var(--surface-0)] data-[selected=true]:text-[var(--text-1)]",
+  "text-[length:var(--text-sm)] text-[color:var(--text-2)]",
+  "data-[selected=true]:bg-[var(--surface-0)] data-[selected=true]:text-[color:var(--text-1)]",
 );
 
 function Item({
@@ -267,7 +267,7 @@ function Item({
 }) {
   return (
     <Command.Item onSelect={onSelect} className={itemCls}>
-      <Icon className="size-4 shrink-0 text-[var(--text-3)]" aria-hidden />
+      <Icon className="size-4 shrink-0 text-[color:var(--text-3)]" aria-hidden />
       {children}
     </Command.Item>
   );
@@ -281,16 +281,16 @@ function ResultItem({ hit, onSelect }: { hit: SearchHit; onSelect: () => void })
           <Image src={hit.image} alt="" fill sizes="30px" className="object-cover" />
         </span>
       ) : (
-        <Layers className="size-4 shrink-0 text-[var(--text-3)]" aria-hidden />
+        <Layers className="size-4 shrink-0 text-[color:var(--text-3)]" aria-hidden />
       )}
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium text-[var(--text-1)]">{hit.title}</span>
-        <span className="block truncate text-[length:var(--text-xs)] text-[var(--text-3)]">
+        <span className="block truncate font-medium text-[color:var(--text-1)]">{hit.title}</span>
+        <span className="block truncate text-[length:var(--text-xs)] text-[color:var(--text-3)]">
           {hit.subtitle}
         </span>
       </span>
       {hit.price !== undefined && (
-        <span className="tabular shrink-0 text-[length:var(--text-sm)] font-medium text-[var(--text-2)]">
+        <span className="tabular shrink-0 text-[length:var(--text-sm)] font-medium text-[color:var(--text-2)]">
           {formatPrice(hit.price)}
         </span>
       )}

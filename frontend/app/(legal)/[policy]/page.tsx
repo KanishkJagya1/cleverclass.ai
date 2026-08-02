@@ -34,7 +34,7 @@ export default async function PolicyPage({
   return (
     <div className="container-prose py-12 md:py-16">
       <h1 className="text-[length:var(--text-4xl)]">{doc.title}</h1>
-      <p className="mt-3 text-[length:var(--text-sm)] text-[var(--text-3)]">
+      <p className="mt-3 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
         Last updated {doc.updated}
       </p>
 
@@ -46,7 +46,7 @@ export default async function PolicyPage({
               {s.body.map((p, i) => (
                 <p
                   key={i}
-                  className="text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]"
+                  className="text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]"
                 >
                   {p}
                 </p>

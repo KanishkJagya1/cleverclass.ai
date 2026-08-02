@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Heart, Menu, Search, ShoppingBag, User } from "lucide-react";
+import { Heart, Menu, Search, ShoppingCart, User } from "lucide-react";
 import { CLASSES, MEDIUMS, SERIES, SUBJECTS } from "@/constants/catalog";
 import { useCartCount } from "@/lib/store/cart";
 import { useWishlistCount } from "@/lib/store/wishlist";
@@ -73,7 +73,7 @@ export function Navbar() {
             className="mr-auto flex shrink-0 items-center py-2 lg:mr-8"
             aria-label="CleverClass.AI — home"
           >
-            <Logo variant="mark" size={scrolled ? 34 : 40} priority />
+            <Logo height={scrolled ? 30 : 36} priority />
           </Link>
 
           {/* Desktop nav — shrink-0 + nowrap so long switcher labels can never
@@ -88,9 +88,9 @@ export function Navbar() {
                   href={item.href}
                   className={cn(
                     "rounded-[var(--radius-sm)] px-3 py-2 text-[length:var(--text-base)] font-medium",
-                    "text-[var(--text-2)] transition-colors duration-[var(--duration-fast)]",
-                    "hover:text-[var(--text-1)]",
-                    openMenu === item.menu && "text-[var(--text-1)]",
+                    "text-[color:var(--text-2)] transition-colors duration-[var(--duration-fast)]",
+                    "hover:text-[color:var(--text-1)]",
+                    openMenu === item.menu && "text-[color:var(--text-1)]",
                   )}
                   aria-expanded={item.menu ? openMenu === item.menu : undefined}
                   aria-haspopup={item.menu ? "true" : undefined}
@@ -115,14 +115,14 @@ export function Navbar() {
               onClick={() => setSearchOpen(true)}
               className={cn(
                 "hidden md:flex h-9 shrink-0 items-center gap-2 rounded-[var(--radius-md)] pl-3 pr-2",
-                "border border-[var(--border-1)] bg-[var(--surface-1)]/60 text-[var(--text-3)]",
-                "transition-colors hover:border-[var(--border-2)] hover:text-[var(--text-2)]",
+                "border border-[var(--border-1)] bg-[var(--surface-1)]/60 text-[color:var(--text-3)]",
+                "transition-colors hover:border-[var(--border-2)] hover:text-[color:var(--text-2)]",
               )}
               aria-label="Search books — press Control K"
             >
               <Search className="size-4" aria-hidden />
               <span className="text-[length:var(--text-sm)]">Search…</span>
-              <kbd className="ml-4 rounded border border-[var(--border-1)] bg-[var(--surface-0)] px-1.5 py-0.5 text-[length:var(--text-2xs)] font-medium text-[var(--text-3)]">
+              <kbd className="ml-4 rounded border border-[var(--border-1)] bg-[var(--surface-0)] px-1.5 py-0.5 text-[length:var(--text-2xs)] font-medium text-[color:var(--text-3)]">
                 ⌘K
               </kbd>
             </button>
@@ -156,7 +156,7 @@ export function Navbar() {
 
             <Button asChild variant="ghost" size="icon" className="relative lg:size-9">
               <Link href="/cart" aria-label={`Cart, ${cartCount} items`}>
-                <ShoppingBag className="size-5" aria-hidden />
+                <ShoppingCart className="size-5" aria-hidden />
                 {cartCount > 0 && <CountDot n={cartCount} />}
               </Link>
             </Button>
@@ -198,7 +198,7 @@ function CountDot({ n }: { n: number }) {
   return (
     <span
       aria-hidden
-      className="tabular absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-[var(--brand-base)] px-1 text-[length:var(--text-2xs)] font-semibold leading-4 text-[var(--brand-on)]"
+      className="tabular absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-[var(--brand-base)] px-1 text-[length:var(--text-2xs)] font-semibold leading-4 text-[color:var(--brand-on)]"
     >
       {n > 99 ? "99+" : n}
     </span>
@@ -261,7 +261,7 @@ function MegaMenu({ menu, onClose }: { menu: string; onClose: () => void }) {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))_320px] gap-8">
         {content.columns.map((col) => (
           <div key={col.title}>
-            <h3 className="mb-3 text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--text-3)]">
+            <h3 className="mb-3 text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-3)]">
               {col.title}
             </h3>
             <ul className="space-y-0.5">
@@ -270,7 +270,7 @@ function MegaMenu({ menu, onClose }: { menu: string; onClose: () => void }) {
                   <Link
                     href={l.href}
                     onClick={onClose}
-                    className="block rounded-[var(--radius-sm)] px-2 py-1.5 text-[length:var(--text-sm)] text-[var(--text-2)] transition-colors hover:bg-[var(--surface-0)] hover:text-[var(--text-1)]"
+                    className="block rounded-[var(--radius-sm)] px-2 py-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)] transition-colors hover:bg-[var(--surface-0)] hover:text-[color:var(--text-1)]"
                   >
                     {l.label}
                   </Link>
@@ -283,13 +283,13 @@ function MegaMenu({ menu, onClose }: { menu: string; onClose: () => void }) {
         {/* Merchandising panel — a mega menu with dead space wastes the
             highest-traffic 400×300 area on the site. */}
         <div className="rounded-[var(--radius-lg)] bg-[var(--brand-soft)] p-6">
-          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--text-brand)]">
+          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-brand)]">
             Save up to 30%
           </p>
-          <p className="mt-2 font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[var(--text-1)]">
+          <p className="mt-2 font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[color:var(--text-1)]">
             Class 10 Complete Set
           </p>
-          <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+          <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
             Every core subject in one pack. Free shipping included.
           </p>
           <Button asChild size="sm" className="mt-4">

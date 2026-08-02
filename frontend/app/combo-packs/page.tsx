@@ -52,13 +52,13 @@ export default async function ComboPacksPage({
       {/* Dark hero — combos are the site's highest-value surface. */}
       <Section band="brand-dark" spacing="sm">
         <div className="max-w-2xl">
-          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--color-indigo-300)]">
+          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--color-indigo-300)]">
             Save 15–30%
           </p>
           <h1 className="mt-4 text-[length:var(--text-4xl)] text-white">
             One pack. Every subject. One delivery.
           </h1>
-          <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--color-ink-300)]">
+          <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--color-ink-300)]">
             Combo packs bundle every core subject for a class into a single
             order — matched editions, one shipment, and free shipping included.
             Across the catalogue they save families{" "}
@@ -79,8 +79,8 @@ export default async function ComboPacksPage({
             className={cn(
               "chip-tap rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
               !sp.class
-                ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
-                : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
+                ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]"
+                : "border-[var(--border-1)] text-[color:var(--text-2)] hover:border-[var(--border-2)]",
             )}
           >
             All classes
@@ -93,8 +93,8 @@ export default async function ComboPacksPage({
               className={cn(
                 "chip-tap rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
                 sp.class === c.id
-                  ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
-                  : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
+                  ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]"
+                  : "border-[var(--border-1)] text-[color:var(--text-2)] hover:border-[var(--border-2)]",
               )}
             >
               {c.short === "Board" ? "Board Exam" : `Class ${c.short}`}
@@ -107,7 +107,7 @@ export default async function ComboPacksPage({
           <h2 id="streams" className="text-[length:var(--text-lg)]">
             Classes 11 & 12 — choose your stream
           </h2>
-          <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+          <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
             Junior college sets differ by subject combination, so pick the one
             your college follows.
           </p>
@@ -118,10 +118,10 @@ export default async function ComboPacksPage({
                   href={`/combo-packs?stream=${s.id}`}
                   className="lift block h-full rounded-[var(--radius-lg)] border border-[var(--border-1)] p-4"
                 >
-                  <span className="block text-[length:var(--text-sm)] font-semibold text-[var(--text-1)]">
+                  <span className="block text-[length:var(--text-sm)] font-semibold text-[color:var(--text-1)]">
                     {s.label}
                   </span>
-                  <span className="mt-1.5 block text-[length:var(--text-xs)] leading-relaxed text-[var(--text-3)]">
+                  <span className="mt-1.5 block text-[length:var(--text-xs)] leading-relaxed text-[color:var(--text-3)]">
                     {s.subjects.join(" · ")}
                   </span>
                 </Link>

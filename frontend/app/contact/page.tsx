@@ -49,7 +49,7 @@ export default function ContactPage() {
       <div className="container-page py-10 md:py-16">
         <header className="mb-12 max-w-2xl">
           <h1 className="text-[length:var(--text-4xl)]">Talk to us</h1>
-          <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             Questions about an order, unsure which book fits your syllabus, or
             supplying a school? We answer within one working day — and the phone
             is always faster.
@@ -61,22 +61,22 @@ export default function ContactPage() {
 
           <aside className="space-y-4">
             <div className="surface-card p-6">
-              <h2 className="text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+              <h2 className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                 Reach us directly
               </h2>
 
               <ul className="mt-5 space-y-5">
                 <li className="flex gap-3.5">
-                  <Phone className="mt-0.5 size-4 shrink-0 text-[var(--brand-base)]" aria-hidden />
+                  <Phone className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-base)]" aria-hidden />
                   <div>
-                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[var(--text-3)]">
+                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-3)]">
                       Phone
                     </p>
                     {SITE.phones.map((p) => (
                       <a
                         key={p}
                         href={`tel:${p}`}
-                        className="tabular block text-[length:var(--text-base)] font-medium text-[var(--text-1)] hover:text-[var(--brand-base)]"
+                        className="tabular block text-[length:var(--text-base)] font-medium text-[color:var(--text-1)] hover:text-[color:var(--brand-base)]"
                       >
                         {p.replace("+91", "+91 ")}
                       </a>
@@ -85,14 +85,14 @@ export default function ContactPage() {
                 </li>
 
                 <li className="flex gap-3.5">
-                  <Mail className="mt-0.5 size-4 shrink-0 text-[var(--brand-base)]" aria-hidden />
+                  <Mail className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-base)]" aria-hidden />
                   <div>
-                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[var(--text-3)]">
+                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-3)]">
                       Email
                     </p>
                     <a
                       href={`mailto:${SITE.email}`}
-                      className="text-[length:var(--text-base)] font-medium text-[var(--text-1)] hover:text-[var(--brand-base)]"
+                      className="text-[length:var(--text-base)] font-medium text-[color:var(--text-1)] hover:text-[color:var(--brand-base)]"
                     >
                       {SITE.email}
                     </a>
@@ -100,12 +100,12 @@ export default function ContactPage() {
                 </li>
 
                 <li className="flex gap-3.5">
-                  <MapPin className="mt-0.5 size-4 shrink-0 text-[var(--brand-base)]" aria-hidden />
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-base)]" aria-hidden />
                   <div>
-                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[var(--text-3)]">
+                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-3)]">
                       Office
                     </p>
-                    <address className="not-italic text-[length:var(--text-base)] text-[var(--text-1)]">
+                    <address className="not-italic text-[length:var(--text-base)] text-[color:var(--text-1)]">
                       {SITE.legalName}
                       <br />
                       {SITE.address.street}
@@ -116,12 +116,12 @@ export default function ContactPage() {
                 </li>
 
                 <li className="flex gap-3.5">
-                  <Clock className="mt-0.5 size-4 shrink-0 text-[var(--brand-base)]" aria-hidden />
+                  <Clock className="mt-0.5 size-4 shrink-0 text-[color:var(--brand-base)]" aria-hidden />
                   <div>
-                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[var(--text-3)]">
+                    <p className="text-[length:var(--text-xs)] uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-3)]">
                       Hours
                     </p>
-                    <p className="text-[length:var(--text-base)] text-[var(--text-1)]">
+                    <p className="text-[length:var(--text-base)] text-[color:var(--text-1)]">
                       Mon–Sat, 10:00 – 19:00
                     </p>
                   </div>

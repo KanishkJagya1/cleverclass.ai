@@ -65,11 +65,24 @@ await mkdir(BRAND_DIR, { recursive: true });
 await mkdir(ICONS_DIR, { recursive: true });
 
 /* -------------------------------------------------------------------------- */
-/* 1. Trim the flat background the artwork was exported on                     */
+/* 1. Trim the flat background the artwork was exported on.                    */
+/* An explicit white background + a generous threshold is needed: exports часто */
+/* carry a faint gradient or JPEG noise, and the default corner-pixel trim then */
+/* removes nothing at all.                                                     */
 /* -------------------------------------------------------------------------- */
-const trimmed = await sharp(SRC).trim({ threshold: 12 }).toBuffer();
+const trimmed = await sharp(SRC)
+  .trim({ background: "#ffffff", threshold: 28 })
+  .toBuffer();
 const meta = await sharp(trimmed).metadata();
-console.log(`  source trimmed to ${meta.width}x${meta.height}`);
+
+const srcMeta = await sharp(SRC).metadata();
+console.log(`  source ${srcMeta.width}x${srcMeta.height} → trimmed ${meta.width}x${meta.height}`);
+
+/* Layout detection. A wide lockup puts the emblem on the LEFT of the wordmark;
+   a square/tall one stacks it ON TOP. Cropping the wrong axis is what makes a
+   navbar mark look like a smudge. */
+const isHorizontal = meta.width / meta.height > 1.6;
+console.log(`  layout: ${isHorizontal ? "horizontal (emblem left)" : "stacked (emblem top)"}`);
 
 /* -------------------------------------------------------------------------- */
 /* 2. Full lockup                                                             */
@@ -84,10 +97,20 @@ await sharp(trimmed)
 /* The wordmark is unreadable at navbar size, so the navbar uses the mark      */
 /* alone. Crop the top band, then re-trim so it is tight on its own bounds.    */
 /* -------------------------------------------------------------------------- */
-const markBand = Math.round(meta.height * MARK_FRACTION);
+const markRegion = isHorizontal
+  ? // Emblem sits left of the wordmark. It is roughly as wide as the lockup
+    // is tall, plus a little slack.
+    {
+      left: 0,
+      top: 0,
+      width: Math.min(meta.width, Math.round(meta.height * 1.25)),
+      height: meta.height,
+    }
+  : { left: 0, top: 0, width: meta.width, height: Math.round(meta.height * MARK_FRACTION) };
+
 const markBuf = await sharp(trimmed)
-  .extract({ left: 0, top: 0, width: meta.width, height: markBand })
-  .trim({ threshold: 12 })
+  .extract(markRegion)
+  .trim({ background: "#ffffff", threshold: 28 })
   .toBuffer();
 
 const markMeta = await sharp(markBuf).metadata();

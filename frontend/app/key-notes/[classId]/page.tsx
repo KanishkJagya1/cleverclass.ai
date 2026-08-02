@@ -52,17 +52,17 @@ export default async function KeyNotesClassPage({
 
   return (
     <div className="container-page py-8 md:py-12">
-      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[var(--text-3)]">
-        <Link href="/" className="hover:text-[var(--text-2)]">Home</Link>
+      <nav aria-label="Breadcrumb" className="mb-5 text-[length:var(--text-sm)] text-[color:var(--text-3)]">
+        <Link href="/" className="hover:text-[color:var(--text-2)]">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/key-notes" className="hover:text-[var(--text-2)]">Key Notes</Link>
+        <Link href="/key-notes" className="hover:text-[color:var(--text-2)]">Key Notes</Link>
         <span className="mx-2">/</span>
-        <span className="text-[var(--text-2)]">{cls.label}</span>
+        <span className="text-[color:var(--text-2)]">{cls.label}</span>
       </nav>
 
       <header className="mb-10 max-w-2xl">
         <h1 className="text-[length:var(--text-4xl)]">{cls.label} Key Notes</h1>
-        <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+        <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
           Chapter-wise summaries for every unit of the {cls.label} syllabus.
           Preview free — no sign-up.
         </p>
@@ -82,11 +82,11 @@ export default async function KeyNotesClassPage({
                 href={`/key-notes/${cls.id}/${slugify(subject)}`}
                 className="surface-card lift flex h-full flex-col p-5"
               >
-                <FileText className="size-5 text-[var(--brand-base)]" aria-hidden />
-                <h2 className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+                <FileText className="size-5 text-[color:var(--brand-base)]" aria-hidden />
+                <h2 className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                   {subject}
                 </h2>
-                <p className="tabular mt-1.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+                <p className="tabular mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                   {entries[0]?.chapters.length ?? 0} chapters
                 </p>
                 <div className="mt-4 flex flex-wrap gap-1.5">

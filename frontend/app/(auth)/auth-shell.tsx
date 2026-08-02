@@ -51,14 +51,14 @@ export function AuthShell({ mode }: { mode: AuthMode }) {
       <MeshBackground />
 
       <div className="glass-panel glass-edge w-full max-w-md p-7 md:p-8">
-        <h1 className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-semibold text-[var(--text-1)]">
+        <h1 className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-semibold text-[color:var(--text-1)]">
           {copy.title}
         </h1>
-        <p className="mt-2 text-[length:var(--text-sm)] text-[var(--text-2)]">{copy.sub}</p>
+        <p className="mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">{copy.sub}</p>
 
         {done ? (
           <div className="mt-6 rounded-[var(--radius-lg)] bg-[var(--signal-gain-soft)] p-4" role="status">
-            <p className="text-[length:var(--text-sm)] text-[var(--signal-gain)]">
+            <p className="text-[length:var(--text-sm)] text-[color:var(--signal-gain)]">
               {mode === "forgot"
                 ? "If that email is registered, a reset link is on its way."
                 : "Signed in — accounts are running against a stubbed provider in this build."}
@@ -90,7 +90,7 @@ export function AuthShell({ mode }: { mode: AuthMode }) {
                   {mode === "login" && (
                     <Link
                       href="/forgot-password"
-                      className="mb-1.5 text-[length:var(--text-xs)] text-[var(--text-brand)] hover:underline"
+                      className="mb-1.5 text-[length:var(--text-xs)] text-[color:var(--text-brand)] hover:underline"
                     >
                       Forgot?
                     </Link>
@@ -112,18 +112,18 @@ export function AuthShell({ mode }: { mode: AuthMode }) {
           </form>
         )}
 
-        <p className="mt-6 text-center text-[length:var(--text-sm)] text-[var(--text-2)]">
+        <p className="mt-6 text-center text-[length:var(--text-sm)] text-[color:var(--text-2)]">
           {mode === "login" ? (
             <>
               New here?{" "}
-              <Link href="/signup" className="font-medium text-[var(--text-brand)] underline underline-offset-4">
+              <Link href="/signup" className="font-medium text-[color:var(--text-brand)] underline underline-offset-4">
                 Create an account
               </Link>
             </>
           ) : (
             <>
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-[var(--text-brand)] underline underline-offset-4">
+              <Link href="/login" className="font-medium text-[color:var(--text-brand)] underline underline-offset-4">
                 Sign in
               </Link>
             </>

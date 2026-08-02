@@ -30,14 +30,14 @@ export function EmptyState({
         className,
       )}
     >
-      <div className="mb-4 grid size-12 place-items-center rounded-full bg-[var(--surface-1)] text-[var(--text-3)] shadow-[var(--shadow-sm)]">
+      <div className="mb-4 grid size-12 place-items-center rounded-full bg-[var(--surface-1)] text-[color:var(--text-3)] shadow-[var(--shadow-sm)]">
         <Icon className="size-5" aria-hidden />
       </div>
-      <p className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+      <p className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
         {title}
       </p>
       {description && (
-        <p className="mt-2 max-w-sm text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+        <p className="mt-2 max-w-sm text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
           {description}
         </p>
       )}

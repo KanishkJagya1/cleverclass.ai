@@ -50,10 +50,10 @@ export function ClassRail() {
               href={`/class/${c.id}`}
               className="surface-card lift group flex h-24 w-20 flex-col items-center justify-center gap-1 lg:w-full"
             >
-              <span className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[var(--text-1)] transition-colors group-hover:text-[var(--brand-base)]">
+              <span className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[color:var(--text-1)] transition-colors group-hover:text-[color:var(--brand-base)]">
                 {c.short}
               </span>
-              <span className="text-[length:var(--text-2xs)] text-[var(--text-3)]">
+              <span className="text-[length:var(--text-2xs)] text-[color:var(--text-3)]">
                 {c.id === "nursery" ? "Pre-primary" : c.id === "board-exam" ? "Special" : "Class"}
               </span>
               {c.highlight && (
@@ -85,7 +85,7 @@ export function ComboSpotlight({ combo }: { combo: ComboResolved | null }) {
           <h2 className="mt-5 text-[length:var(--text-4xl)] text-white">
             One pack. Every subject. One delivery.
           </h2>
-          <p className="mt-4 max-w-md text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--color-ink-300)]">
+          <p className="mt-4 max-w-md text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--color-ink-300)]">
             Assembling a full year of books one title at a time is how families
             end up with mismatched editions and three separate shipments. The
             combo packs solve both — and they clear the free-shipping threshold
@@ -151,15 +151,15 @@ export function FeaturedBooks({ books }: { books: Book[] }) {
             </div>
             <div className="flex flex-1 flex-col p-6 lg:p-8">
               <Badge variant="brand">Editor's pick</Badge>
-              <h3 className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-semibold text-[var(--text-1)]">
+              <h3 className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-semibold text-[color:var(--text-1)]">
                 {lead.title}
               </h3>
-              <p className="clamp-3 mt-3 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+              <p className="clamp-3 mt-3 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                 {lead.description}
               </p>
               <ul className="mt-5 space-y-1.5">
                 {lead.highlights.slice(0, 3).map((h) => (
-                  <li key={h} className="flex items-start gap-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
+                  <li key={h} className="flex items-start gap-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                     <span className="mt-1.5 size-1 shrink-0 rounded-full bg-[var(--brand-base)]" aria-hidden />
                     {h}
                   </li>
@@ -227,14 +227,14 @@ export function SubjectGrid({ counts }: { counts: Record<string, number> }) {
                   href={`/shop?subject=${encodeURIComponent(s)}`}
                   className="surface-card lift flex h-full items-center gap-3 p-4"
                 >
-                  <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--brand-soft)] text-[var(--text-brand)]">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-[var(--radius-md)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]">
                     <Icon className="size-4" aria-hidden />
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">
+                    <span className="block truncate text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                       {s}
                     </span>
-                    <span className="tabular block text-[length:var(--text-xs)] text-[var(--text-3)]">
+                    <span className="tabular block text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                       {counts[s] ?? 0} titles
                     </span>
                   </span>
@@ -336,12 +336,12 @@ export function KeyNotesFunnel() {
                 <div className="h-2 w-full rounded bg-[var(--surface-0)]" />
                 <div className="h-2 w-3/4 rounded bg-[var(--surface-0)]" />
               </div>
-              <p className="tabular mt-6 text-center text-[length:var(--text-xs)] text-[var(--text-3)]">
+              <p className="tabular mt-6 text-center text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                 page 12 of 96
               </p>
             </div>
             <div className="glass-panel glass-edge absolute -right-3 top-8 !rounded-[var(--radius-md)] px-3 py-2 md:-right-8">
-              <p className="text-[length:var(--text-xs)] font-medium text-[var(--signal-gain)]">
+              <p className="text-[length:var(--text-xs)] font-medium text-[color:var(--signal-gain)]">
                 Free to read
               </p>
             </div>
@@ -355,7 +355,7 @@ export function KeyNotesFunnel() {
           <h2 className="mt-5 text-[length:var(--text-3xl)]">
             Read the chapter before you buy the book.
           </h2>
-          <p className="mt-4 max-w-md text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-4 max-w-md text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             Concise, chapter-wise notes aligned to the Maharashtra State Board
             syllabus — Classes 5 to 10, in Marathi and Semi-English medium.
           </p>
@@ -365,7 +365,7 @@ export function KeyNotesFunnel() {
               "Marathi and Semi-English medium",
               "No sign-up needed to preview",
             ].map((t) => (
-              <li key={t} className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+              <li key={t} className="flex items-start gap-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                 <span className="mt-1 grid size-4 shrink-0 place-items-center rounded-full bg-[var(--signal-gain)] text-white">
                   <svg viewBox="0 0 10 10" className="size-2.5" aria-hidden>
                     <path d="M2 5l2 2 4-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -414,13 +414,13 @@ export function SeriesStrip() {
                   className="mb-4 h-1 w-9 rounded-full"
                   style={{ backgroundColor: s.accent }}
                 />
-                <span className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+                <span className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                   {s.label}
                 </span>
-                <span className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+                <span className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                   {s.positioning}
                 </span>
-                <span className="mt-4 inline-flex items-center gap-1 text-[length:var(--text-sm)] font-medium text-[var(--text-brand)]">
+                <span className="mt-4 inline-flex items-center gap-1 text-[length:var(--text-sm)] font-medium text-[color:var(--text-brand)]">
                   Browse series
                   <ArrowRight className="size-3.5" aria-hidden />
                 </span>
@@ -454,7 +454,7 @@ export function Statistics() {
               <p className="font-[family-name:var(--font-display)] text-[length:var(--text-4xl)] font-bold text-white">
                 <CountUp to={s.to} suffix={s.suffix} />
               </p>
-              <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--color-ink-400)]">
+              <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--color-ink-400)]">
                 {s.label}
               </p>
             </li>
@@ -488,11 +488,11 @@ export function Resources() {
           <RevealItem key={r.title} index={i} className="h-full">
             <li className="h-full">
               <Link href={r.href} className="surface-card lift flex h-full flex-col p-5">
-                <r.icon className="size-5 text-[var(--brand-base)]" aria-hidden />
-                <span className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-base)] font-semibold text-[var(--text-1)]">
+                <r.icon className="size-5 text-[color:var(--brand-base)]" aria-hidden />
+                <span className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-base)] font-semibold text-[color:var(--text-1)]">
                   {r.title}
                 </span>
-                <span className="mt-1.5 text-[length:var(--text-sm)] text-[var(--text-2)]">{r.desc}</span>
+                <span className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">{r.desc}</span>
               </Link>
             </li>
           </RevealItem>
@@ -518,12 +518,12 @@ const QUOTES = [
 function QuoteCard({ q, a, r }: { q: string; a: string; r: string }) {
   return (
     <figure className="surface-card w-[19rem] shrink-0 p-5">
-      <Quote className="size-4 text-[var(--brand-base)]" aria-hidden />
-      <blockquote className="mt-3 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-1)]">
+      <Quote className="size-4 text-[color:var(--brand-base)]" aria-hidden />
+      <blockquote className="mt-3 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-1)]">
         {q}
       </blockquote>
-      <figcaption className="mt-4 text-[length:var(--text-xs)] text-[var(--text-3)]">
-        <span className="font-medium text-[var(--text-2)]">{a}</span> · {r}
+      <figcaption className="mt-4 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
+        <span className="font-medium text-[color:var(--text-2)]">{a}</span> · {r}
       </figcaption>
     </figure>
   );
@@ -584,7 +584,7 @@ export function AssistantPromo() {
           <h2 className="mt-5 text-[length:var(--text-3xl)]">
             Not sure which book? Just ask.
           </h2>
-          <p className="mt-4 max-w-md text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-4 max-w-md text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             Ask about syllabus coverage, the difference between two series, which
             medium to choose, shipping, or returns. It answers from our own
             catalogue — and recommends the actual book, ready to add to your cart.
@@ -597,7 +597,7 @@ export function AssistantPromo() {
             ].map((q) => (
               <li
                 key={q}
-                className="surface-card px-3 py-1.5 text-[length:var(--text-xs)] text-[var(--text-2)]"
+                className="surface-card px-3 py-1.5 text-[length:var(--text-xs)] text-[color:var(--text-2)]"
               >
                 {q}
               </li>
@@ -608,16 +608,16 @@ export function AssistantPromo() {
         <Reveal delay={0.1} className="min-w-0">
           <div className="glass-panel glass-edge p-5">
             <div className="flex justify-end">
-              <p className="max-w-[80%] rounded-[var(--radius-lg)] rounded-br-sm bg-[var(--brand-base)] px-4 py-2.5 text-[length:var(--text-sm)] text-[var(--brand-on)]">
+              <p className="max-w-[80%] rounded-[var(--radius-lg)] rounded-br-sm bg-[var(--brand-base)] px-4 py-2.5 text-[length:var(--text-sm)] text-[color:var(--brand-on)]">
                 Which set should I buy for Class 12 Science, PCM?
               </p>
             </div>
             <div className="mt-4 flex gap-2.5">
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--brand-soft)] text-[var(--text-brand)]">
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--brand-soft)] text-[color:var(--text-brand)]">
                 <Sparkles className="size-3.5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <p className="text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-1)]">
+                <p className="text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-1)]">
                   For 12th Science PCM you need Physics, Chemistry and Mathematics.
                   The Spark series covers all three in English medium — and the
                   combo saves ₹95 over buying them separately.
@@ -625,10 +625,10 @@ export function AssistantPromo() {
                 <div className="surface-card mt-3 flex items-center gap-3 p-3">
                   <div className="aspect-cover w-10 shrink-0 rounded-[var(--radius-xs)] bg-[var(--brand-soft)]" />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">
+                    <p className="truncate text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                       Class 12 Science PCM Set
                     </p>
-                    <p className="tabular text-[length:var(--text-xs)] text-[var(--text-3)]">
+                    <p className="tabular text-[length:var(--text-xs)] text-[color:var(--text-3)]">
                       3 books · ₹200
                     </p>
                   </div>
@@ -682,24 +682,24 @@ export function FAQ() {
       <div className="divide-y divide-[var(--border-1)]">
         {FAQS.map((f) => (
           <details key={f.q} className="group py-4">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[length:var(--text-base)] font-medium text-[var(--text-1)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[length:var(--text-base)] font-medium text-[color:var(--text-1)]">
               {f.q}
               <span
                 aria-hidden
-                className="grid size-6 shrink-0 place-items-center rounded-full border border-[var(--border-1)] text-[var(--text-3)] transition-transform duration-[var(--duration-base)] group-open:rotate-45"
+                className="grid size-6 shrink-0 place-items-center rounded-full border border-[var(--border-1)] text-[color:var(--text-3)] transition-transform duration-[var(--duration-base)] group-open:rotate-45"
               >
                 +
               </span>
             </summary>
-            <p className="mt-3 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+            <p className="mt-3 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
               {f.a}
             </p>
           </details>
         ))}
       </div>
-      <p className="mt-8 text-center text-[length:var(--text-sm)] text-[var(--text-2)]">
+      <p className="mt-8 text-center text-[length:var(--text-sm)] text-[color:var(--text-2)]">
         Still have a question?{" "}
-        <Link href="/contact" className="font-medium text-[var(--text-brand)] underline underline-offset-4">
+        <Link href="/contact" className="font-medium text-[color:var(--text-brand)] underline underline-offset-4">
           Contact us
         </Link>{" "}
         or ask the assistant.

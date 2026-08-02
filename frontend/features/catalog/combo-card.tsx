@@ -78,7 +78,7 @@ export function ComboCard({
           <span className="absolute inset-0" aria-hidden />
           <h3
             className={cn(
-              "font-[family-name:var(--font-display)] font-semibold text-[var(--text-1)]",
+              "font-[family-name:var(--font-display)] font-semibold text-[color:var(--text-1)]",
               featured ? "text-[length:var(--text-2xl)]" : "text-[length:var(--text-lg)]",
             )}
           >
@@ -87,7 +87,7 @@ export function ComboCard({
         </Link>
 
         {featured && (
-          <p className="mt-2 max-w-md text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-2 max-w-md text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             {combo.description}
           </p>
         )}
@@ -109,7 +109,7 @@ export function ComboCard({
             </Link>
           </Button>
           {combo.price >= 200 && (
-            <span className="text-[length:var(--text-xs)] font-medium text-[var(--signal-gain)]">
+            <span className="text-[length:var(--text-xs)] font-medium text-[color:var(--signal-gain)]">
               Free shipping
             </span>
           )}
@@ -140,23 +140,23 @@ export function ComboBanner({ combo }: { combo: ComboResolved }) {
       </div>
 
       <div className="relative flex-1">
-        <p className="text-[length:var(--text-2xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--text-brand)]">
+        <p className="text-[length:var(--text-2xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-brand)]">
           Recommended · save {formatPrice(combo.savings)}
         </p>
-        <h3 className="mt-1 font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+        <h3 className="mt-1 font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
           {combo.title}
         </h3>
-        <p className="mt-0.5 text-[length:var(--text-sm)] text-[var(--text-2)]">
+        <p className="mt-0.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
           {combo.items.length} books covering every core subject · one delivery
         </p>
       </div>
 
       <div className="relative flex items-center gap-4">
         <div className="text-right">
-          <p className="tabular text-[length:var(--text-xl)] font-semibold text-[var(--text-1)]">
+          <p className="tabular text-[length:var(--text-xl)] font-semibold text-[color:var(--text-1)]">
             {formatPrice(combo.price)}
           </p>
-          <p className="tabular text-[length:var(--text-xs)] text-[var(--text-3)] line-through">
+          <p className="tabular text-[length:var(--text-xs)] text-[color:var(--text-3)] line-through">
             {formatPrice(combo.itemsTotal)}
           </p>
         </div>

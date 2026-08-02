@@ -110,7 +110,7 @@ function Launcher({ onClick }: { onClick: () => void }) {
         "glass-panel glass-edge fixed right-5 z-[var(--z-chat)] grid size-14 place-items-center !rounded-full",
         "transition-[bottom] duration-[var(--duration-base)] ease-[var(--ease-standard)]",
         "lg:!bottom-6 lg:right-6",
-        "text-[var(--brand-base)] transition-transform duration-[var(--duration-base)]",
+        "text-[color:var(--brand-base)] transition-transform duration-[var(--duration-base)]",
         "hover:scale-105 active:scale-95 motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
         "animate-[ambientGlow_4.5s_ease-in-out_infinite] motion-reduce:animate-none",
       )}
@@ -147,14 +147,14 @@ function Panel({ onClose }: { onClose: () => void }) {
   return (
     <>
       <header className="flex items-center gap-3 border-b border-[var(--border-1)] px-4 py-3">
-        <span className="grid size-8 place-items-center rounded-full bg-[var(--brand-soft)] text-[var(--text-brand)]">
+        <span className="grid size-8 place-items-center rounded-full bg-[var(--brand-soft)] text-[color:var(--text-brand)]">
           <Sparkles className="size-4" aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="text-[length:var(--text-sm)] font-semibold text-[var(--text-1)]">
+          <p className="text-[length:var(--text-sm)] font-semibold text-[color:var(--text-1)]">
             Learning Assistant
           </p>
-          <p className="text-[length:var(--text-2xs)] text-[var(--text-3)]">
+          <p className="text-[length:var(--text-2xs)] text-[color:var(--text-3)]">
             Answers from our own catalogue
           </p>
         </div>
@@ -171,7 +171,7 @@ function Panel({ onClose }: { onClose: () => void }) {
       <div ref={listRef} className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
         {messages.length === 0 ? (
           <div className="py-6">
-            <p className="text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+            <p className="text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
               Ask about a book, a syllabus, which medium to choose, shipping or
               returns. I'll answer from our catalogue and suggest the right
               title.
@@ -181,7 +181,7 @@ function Panel({ onClose }: { onClose: () => void }) {
                 <li key={s}>
                   <button
                     onClick={() => void send(s)}
-                    className="w-full rounded-[var(--radius-md)] border border-[var(--border-1)] px-3.5 py-2.5 text-left text-[length:var(--text-sm)] text-[var(--text-2)] transition-colors hover:border-[var(--border-2)] hover:text-[var(--text-1)]"
+                    className="w-full rounded-[var(--radius-md)] border border-[var(--border-1)] px-3.5 py-2.5 text-left text-[length:var(--text-sm)] text-[color:var(--text-2)] transition-colors hover:border-[var(--border-2)] hover:text-[color:var(--text-1)]"
                   >
                     {s}
                   </button>
@@ -219,7 +219,7 @@ function Panel({ onClose }: { onClose: () => void }) {
             }}
             rows={1}
             placeholder="Ask about books, classes, shipping…"
-            className="max-h-28 flex-1 resize-none rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[var(--text-1)] outline-none placeholder:text-[var(--text-3)] focus:border-[var(--focus-ring)]"
+            className="max-h-28 flex-1 resize-none rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[color:var(--text-1)] outline-none placeholder:text-[color:var(--text-3)] focus:border-[var(--focus-ring)]"
           />
           <Button type="submit" size="icon" disabled={!input.trim() || busy} aria-label="Send">
             <Send className="size-4" aria-hidden />
@@ -247,7 +247,7 @@ function Message({
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <p className="max-w-[85%] rounded-[var(--radius-lg)] rounded-br-sm bg-[var(--brand-base)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[var(--brand-on)]">
+        <p className="max-w-[85%] rounded-[var(--radius-lg)] rounded-br-sm bg-[var(--brand-base)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[color:var(--brand-on)]">
           {message.content}
         </p>
       </div>
@@ -256,7 +256,7 @@ function Message({
 
   return (
     <div className="flex gap-2.5">
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--brand-soft)] text-[var(--text-brand)]">
+      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--brand-soft)] text-[color:var(--text-brand)]">
         <Sparkles className="size-3.5" aria-hidden />
       </span>
 
@@ -267,7 +267,7 @@ function Message({
           aria-live={message.streaming ? "polite" : "off"}
           className={cn(
             "prose-assistant text-[length:var(--text-sm)] leading-[var(--leading-relaxed)]",
-            message.error ? "text-[var(--signal-danger)]" : "text-[var(--text-1)]",
+            message.error ? "text-[color:var(--signal-danger)]" : "text-[color:var(--text-1)]",
           )}
         >
           {message.content ? (
@@ -278,12 +278,12 @@ function Message({
                 ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-4">{children}</ul>,
                 ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-4">{children}</ol>,
                 strong: ({ children }) => (
-                  <strong className="font-semibold text-[var(--text-1)]">{children}</strong>
+                  <strong className="font-semibold text-[color:var(--text-1)]">{children}</strong>
                 ),
                 a: ({ href, children }) => (
                   <Link
                     href={href ?? "#"}
-                    className="text-[var(--text-brand)] underline underline-offset-2"
+                    className="text-[color:var(--text-brand)] underline underline-offset-2"
                   >
                     {children}
                   </Link>
@@ -312,7 +312,7 @@ function Message({
         {message.error && (
           <a
             href={`tel:${SITE.phones[0]}`}
-            className="mt-3 inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-1)] px-3 py-2 text-[length:var(--text-xs)] font-medium text-[var(--text-1)]"
+            className="mt-3 inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--border-1)] px-3 py-2 text-[length:var(--text-xs)] font-medium text-[color:var(--text-1)]"
           >
             <Phone className="size-3.5" aria-hidden />
             Call {SITE.phones[0].replace("+91", "+91 ")}
@@ -374,8 +374,8 @@ function IconAction({
       className={cn(
         "grid size-7 place-items-center rounded-[var(--radius-sm)] transition-colors",
         active
-          ? "text-[var(--brand-base)]"
-          : "text-[var(--text-3)] hover:bg-[var(--surface-0)] hover:text-[var(--text-2)]",
+          ? "text-[color:var(--brand-base)]"
+          : "text-[color:var(--text-3)] hover:bg-[var(--surface-0)] hover:text-[color:var(--text-2)]",
       )}
     >
       {children}
@@ -411,12 +411,12 @@ function ProductCardInline({ hit }: { hit: SearchHit }) {
       </Link>
       <div className="min-w-0 flex-1">
         <Link href={hit.href} className="block">
-          <p className="clamp-2 text-[length:var(--text-xs)] font-medium text-[var(--text-1)]">
+          <p className="clamp-2 text-[length:var(--text-xs)] font-medium text-[color:var(--text-1)]">
             {hit.title}
           </p>
         </Link>
         {hit.price !== undefined && (
-          <p className="tabular text-[length:var(--text-2xs)] text-[var(--text-3)]">
+          <p className="tabular text-[length:var(--text-2xs)] text-[color:var(--text-3)]">
             {formatPrice(hit.price)}
           </p>
         )}

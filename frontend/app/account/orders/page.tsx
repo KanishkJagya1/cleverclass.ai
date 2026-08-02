@@ -5,7 +5,7 @@ export default function OrdersPage() {
   return (
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Orders</h1>
-      <p className="mt-2 text-[length:var(--text-body)] text-[var(--text-2)]">
+      <p className="mt-2 text-[length:var(--text-body)] text-[color:var(--text-2)]">
         Every order you place, with its delivery status.
       </p>
       <div className="mt-8">

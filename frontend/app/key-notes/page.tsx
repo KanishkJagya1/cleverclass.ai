@@ -31,13 +31,13 @@ export default async function KeyNotesPage() {
     <>
       <Section band="brand-soft" spacing="sm">
         <div className="max-w-2xl">
-          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--text-brand)]">
+          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-brand)]">
             Key Notes
           </p>
           <h1 className="mt-4 text-[length:var(--text-4xl)]">
             Read the chapter before you buy the book.
           </h1>
-          <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             Chapter-wise summaries aligned to the Maharashtra State Board
             syllabus for Classes 5 to 10, in Marathi and Semi-English medium.
             Preview any set free — no sign-up, no email required.
@@ -52,13 +52,13 @@ export default async function KeyNotesPage() {
               <div className="mb-4 flex items-end justify-between gap-4">
                 <h2 id={`kn-${cls.id}`} className="text-[length:var(--text-xl)]">
                   {cls.label}
-                  <span lang="mr" className="ml-2 text-[length:var(--text-sm)] font-normal text-[var(--text-3)]">
+                  <span lang="mr" className="ml-2 text-[length:var(--text-sm)] font-normal text-[color:var(--text-3)]">
                     {cls.labelMr}
                   </span>
                 </h2>
                 <Link
                   href={`/key-notes/${cls.id}`}
-                  className="inline-flex items-center gap-1 text-[length:var(--text-sm)] font-medium text-[var(--text-brand)]"
+                  className="inline-flex items-center gap-1 text-[length:var(--text-sm)] font-medium text-[color:var(--text-brand)]"
                 >
                   All {cls.label} notes
                   <ArrowRight className="size-3.5" aria-hidden />
@@ -72,8 +72,8 @@ export default async function KeyNotesPage() {
                       href={`/key-notes/${cls.id}/${slugify(s)}`}
                       className="surface-card lift flex items-center gap-3 p-4"
                     >
-                      <FileText className="size-4 shrink-0 text-[var(--brand-base)]" aria-hidden />
-                      <span className="text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">
+                      <FileText className="size-4 shrink-0 text-[color:var(--brand-base)]" aria-hidden />
+                      <span className="text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                         {s}
                       </span>
                     </Link>

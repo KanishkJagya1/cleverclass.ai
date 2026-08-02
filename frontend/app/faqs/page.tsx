@@ -43,23 +43,23 @@ export default function FaqsPage() {
   return (
     <div className="container-prose py-12 md:py-16">
       <h1 className="text-[length:var(--text-4xl)]">Frequently asked questions</h1>
-      <p className="mt-3 text-[length:var(--text-body)] text-[var(--text-2)]">
+      <p className="mt-3 text-[length:var(--text-body)] text-[color:var(--text-2)]">
         If your question isn't here, the assistant can answer it — or call us.
       </p>
 
       <div className="mt-10 divide-y divide-[var(--border-1)]">
         {ALL.map((f) => (
           <details key={f.q} className="group py-5">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[length:var(--text-base)] font-medium text-[var(--text-1)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[length:var(--text-base)] font-medium text-[color:var(--text-1)]">
               {f.q}
               <span
                 aria-hidden
-                className="grid size-6 shrink-0 place-items-center rounded-full border border-[var(--border-1)] text-[var(--text-3)] transition-transform duration-[var(--duration-base)] group-open:rotate-45"
+                className="grid size-6 shrink-0 place-items-center rounded-full border border-[var(--border-1)] text-[color:var(--text-3)] transition-transform duration-[var(--duration-base)] group-open:rotate-45"
               >
                 +
               </span>
             </summary>
-            <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+            <p className="mt-3 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
               {f.a}
             </p>
           </details>
@@ -67,14 +67,14 @@ export default function FaqsPage() {
       </div>
 
       <div className="surface-card mt-12 p-6 text-center">
-        <p className="text-[length:var(--text-base)] text-[var(--text-1)]">Still stuck?</p>
-        <p className="mt-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
+        <p className="text-[length:var(--text-base)] text-[color:var(--text-1)]">Still stuck?</p>
+        <p className="mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
           Call{" "}
-          <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[var(--text-brand)]">
+          <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[color:var(--text-brand)]">
             {SITE.phones[0].replace("+91", "+91 ")}
           </a>{" "}
           or{" "}
-          <Link href="/contact" className="font-medium text-[var(--text-brand)] underline underline-offset-4">
+          <Link href="/contact" className="font-medium text-[color:var(--text-brand)] underline underline-offset-4">
             send us a message
           </Link>
           .

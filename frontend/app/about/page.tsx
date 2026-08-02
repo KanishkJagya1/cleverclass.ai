@@ -33,13 +33,13 @@ export default function AboutPage() {
     <>
       <Section spacing="md">
         <div className="max-w-3xl">
-          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[var(--text-brand)]">
+          <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--text-brand)]">
             {SITE.legalName} · Nagpur
           </p>
           <h1 className="mt-5 text-[length:var(--text-5xl)]">
             Twenty-seven years of getting students through the exam.
           </h1>
-          <p className="mt-6 text-[length:var(--text-lg)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+          <p className="mt-6 text-[length:var(--text-lg)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             We publish study guides for the Maharashtra State Board and CBSE from
             a single building on Hingna Road. Five series, 325 titles, three
             mediums — written by teachers who take the same syllabus into a
@@ -62,7 +62,7 @@ export default function AboutPage() {
                 <p className="font-[family-name:var(--font-display)] text-[length:var(--text-4xl)] font-bold text-white">
                   <CountUp to={s.to} suffix={s.suffix} />
                 </p>
-                <p className="mt-1.5 text-[length:var(--text-sm)] text-[var(--color-ink-400)]">{s.label}</p>
+                <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--color-ink-400)]">{s.label}</p>
               </li>
             </RevealItem>
           ))}
@@ -80,13 +80,13 @@ export default function AboutPage() {
                   aria-hidden
                   className="absolute -left-[5px] top-1.5 size-2.5 rounded-full bg-[var(--brand-base)] ring-4 ring-[var(--surface-1)]"
                 />
-                <p className="tabular font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-bold text-[var(--text-brand)]">
+                <p className="tabular font-[family-name:var(--font-display)] text-[length:var(--text-sm)] font-bold text-[color:var(--text-brand)]">
                   {t.year}
                 </p>
-                <h3 className="mt-1 text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+                <h3 className="mt-1 text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                   {t.title}
                 </h3>
-                <p className="mt-2 max-w-xl text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+                <p className="mt-2 max-w-xl text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                   {t.body}
                 </p>
               </li>
@@ -100,9 +100,9 @@ export default function AboutPage() {
         <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
           <Reveal>
             <div className="surface-card h-full p-8">
-              <Eye className="size-5 text-[var(--brand-base)]" aria-hidden />
+              <Eye className="size-5 text-[color:var(--brand-base)]" aria-hidden />
               <h2 className="mt-5 text-[length:var(--text-2xl)]">Our vision</h2>
-              <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+              <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                 That no student in Maharashtra fails an exam because the right
                 book was too expensive, out of print, or written in a language
                 they were never taught in.
@@ -111,9 +111,9 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={0.08}>
             <div className="h-full rounded-[var(--radius-xl)] bg-[var(--brand-soft)] p-8">
-              <Compass className="size-5 text-[var(--text-brand)]" aria-hidden />
+              <Compass className="size-5 text-[color:var(--text-brand)]" aria-hidden />
               <h2 className="mt-5 text-[length:var(--text-2xl)]">Our mission</h2>
-              <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+              <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                 Publish accurate, syllabus-matched guides in every medium
                 Maharashtra teaches in — and keep them affordable enough that
                 buying the full set is a normal decision, not a stretch.
@@ -126,11 +126,11 @@ export default function AboutPage() {
           {VALUES.map((v, i) => (
             <RevealItem key={v.title} index={i} className="h-full">
               <li className="surface-card h-full p-6">
-                <v.icon className="size-5 text-[var(--brand-base)]" aria-hidden />
-                <h3 className="mt-4 text-[length:var(--text-lg)] font-semibold text-[var(--text-1)]">
+                <v.icon className="size-5 text-[color:var(--brand-base)]" aria-hidden />
+                <h3 className="mt-4 text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                   {v.title}
                 </h3>
-                <p className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[var(--text-2)]">
+                <p className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                   {v.body}
                 </p>
               </li>
@@ -144,7 +144,7 @@ export default function AboutPage() {
           <h2 className="text-[length:var(--text-2xl)] text-white">
             Supplying a school or a bookshop?
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[length:var(--text-sm)] text-[var(--color-ink-300)]">
+          <p className="mx-auto mt-3 max-w-md text-[length:var(--text-sm)] text-[color:var(--color-ink-300)]">
             We supply over 1,400 schools and retailers across Maharashtra. Call
             us for institutional pricing.
           </p>

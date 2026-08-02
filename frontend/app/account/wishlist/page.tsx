@@ -21,7 +21,7 @@ export default function WishlistPage() {
   return (
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Wishlist</h1>
-      <p className="tabular mt-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
+      <p className="tabular mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
         {ready ? `${books.length} saved` : "Loading…"}
       </p>
 

@@ -109,7 +109,7 @@ export default async function HomePage() {
           <h2 className="text-[length:var(--text-2xl)] text-white">
             New editions, twice a term.
           </h2>
-          <p className="mx-auto mt-3 max-w-md text-[length:var(--text-sm)] text-[var(--color-ink-300)]">
+          <p className="mx-auto mt-3 max-w-md text-[length:var(--text-sm)] text-[color:var(--color-ink-300)]">
             Syllabus changes, new titles and combo offers. No more than four
             emails a year.
           </p>

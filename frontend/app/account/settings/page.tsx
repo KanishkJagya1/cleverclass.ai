@@ -23,7 +23,7 @@ export default function SettingsPage() {
     onChange: (v: string) => void;
   }) => (
     <div className="border-b border-[var(--border-1)] py-5 last:border-0">
-      <p className="text-[length:var(--text-sm)] font-medium text-[var(--text-1)]">{label}</p>
+      <p className="text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">{label}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         {options.map((o) => (
           <button
@@ -33,8 +33,8 @@ export default function SettingsPage() {
             className={cn(
               "rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] transition-colors",
               value === o.id
-                ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
-                : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)]",
+                ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]"
+                : "border-[var(--border-1)] text-[color:var(--text-2)] hover:border-[var(--border-2)]",
             )}
           >
             {o.label}

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Drawer } from "vaul";
 import * as Accordion from "@radix-ui/react-accordion";
-import { ChevronDown, Home, Search, ShoppingBag, Store, User, X } from "lucide-react";
+import { ChevronDown, Home, Search, ShoppingCart, Store, User, X } from "lucide-react";
 import { CLASSES, MEDIUMS, SERIES } from "@/constants/catalog";
 import { useCartCount } from "@/lib/store/cart";
 import { useSearch } from "@/features/search/search-context";
@@ -22,7 +22,7 @@ const TABS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/shop", label: "Shop", icon: Store },
   { href: "__search", label: "Search", icon: Search },
-  { href: "/cart", label: "Cart", icon: ShoppingBag },
+  { href: "/cart", label: "Cart", icon: ShoppingCart },
   { href: "/account", label: "Account", icon: User },
 ] as const;
 
@@ -48,7 +48,7 @@ export function MobileBottomNav() {
               <span className="relative">
                 <Icon className="size-5" aria-hidden />
                 {href === "/cart" && cartCount > 0 && (
-                  <span className="tabular absolute -right-2 -top-1 grid min-w-4 place-items-center rounded-full bg-[var(--brand-base)] px-1 text-[length:var(--text-2xs)] font-semibold leading-4 text-[var(--brand-on)]">
+                  <span className="tabular absolute -right-2 -top-1 grid min-w-4 place-items-center rounded-full bg-[var(--brand-base)] px-1 text-[length:var(--text-2xs)] font-semibold leading-4 text-[color:var(--brand-on)]">
                     {cartCount > 9 ? "9+" : cartCount}
                   </span>
                 )}
@@ -59,7 +59,7 @@ export function MobileBottomNav() {
           const cls = cn(
             "flex h-full w-full flex-col items-center justify-center gap-1",
             "transition-colors duration-[var(--duration-fast)]",
-            active ? "text-[var(--brand-base)]" : "text-[var(--text-3)]",
+            active ? "text-[color:var(--brand-base)]" : "text-[color:var(--text-3)]",
           );
 
           return (
@@ -122,7 +122,7 @@ export function MobileNav({
             <button
               onClick={() => onOpenChange(false)}
               aria-label="Close menu"
-              className="grid size-11 place-items-center rounded-[var(--radius-md)] text-[var(--text-2)] hover:bg-[var(--surface-0)]"
+              className="grid size-11 place-items-center rounded-[var(--radius-md)] text-[color:var(--text-2)] hover:bg-[var(--surface-0)]"
             >
               <X className="size-5" aria-hidden />
             </button>
@@ -132,10 +132,10 @@ export function MobileNav({
             <Accordion.Root type="single" collapsible className="space-y-1">
               {groups.map((g) => (
                 <Accordion.Item key={g.id} value={g.id} className="border-b border-[var(--border-1)]">
-                  <Accordion.Trigger className="group flex w-full items-center justify-between py-3.5 text-left text-[length:var(--text-lg)] font-medium text-[var(--text-1)]">
+                  <Accordion.Trigger className="group flex w-full items-center justify-between py-3.5 text-left text-[length:var(--text-lg)] font-medium text-[color:var(--text-1)]">
                     {g.title}
                     <ChevronDown
-                      className="size-4 text-[var(--text-3)] transition-transform duration-[var(--duration-base)] group-data-[state=open]:rotate-180"
+                      className="size-4 text-[color:var(--text-3)] transition-transform duration-[var(--duration-base)] group-data-[state=open]:rotate-180"
                       aria-hidden
                     />
                   </Accordion.Trigger>
@@ -146,7 +146,7 @@ export function MobileNav({
                           <Link
                             href={l.href}
                             onClick={() => onOpenChange(false)}
-                            className="block rounded-[var(--radius-sm)] px-2 py-2.5 text-[length:var(--text-sm)] text-[var(--text-2)] hover:bg-[var(--surface-0)]"
+                            className="block rounded-[var(--radius-sm)] px-2 py-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)] hover:bg-[var(--surface-0)]"
                           >
                             {l.label}
                           </Link>
@@ -164,7 +164,7 @@ export function MobileNav({
                   <Link
                     href={l.href}
                     onClick={() => onOpenChange(false)}
-                    className="block py-3.5 text-[length:var(--text-lg)] font-medium text-[var(--text-1)]"
+                    className="block py-3.5 text-[length:var(--text-lg)] font-medium text-[color:var(--text-1)]"
                   >
                     {l.label}
                   </Link>

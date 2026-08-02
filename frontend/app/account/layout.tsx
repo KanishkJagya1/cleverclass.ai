@@ -36,7 +36,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
               <li key={l.href} className="shrink-0">
                 <Link
                   href={l.href}
-                  className="flex items-center gap-2.5 whitespace-nowrap rounded-[var(--radius-md)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[var(--text-2)] transition-colors hover:bg-[var(--surface-0)] hover:text-[var(--text-1)]"
+                  className="flex items-center gap-2.5 whitespace-nowrap rounded-[var(--radius-md)] px-3.5 py-2.5 text-[length:var(--text-sm)] text-[color:var(--text-2)] transition-colors hover:bg-[var(--surface-0)] hover:text-[color:var(--text-1)]"
                 >
                   <l.icon className="size-4 shrink-0" aria-hidden />
                   {l.label}

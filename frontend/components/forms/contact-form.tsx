@@ -44,13 +44,13 @@ export function ContactForm() {
   if (sent) {
     return (
       <div className="glass-panel glass-edge p-8 text-center" role="status">
-        <span className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[var(--signal-gain)]">
+        <span className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[color:var(--signal-gain)]">
           <Check className="size-5" aria-hidden />
         </span>
-        <h2 className="mt-5 font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[var(--text-1)]">
+        <h2 className="mt-5 font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[color:var(--text-1)]">
           Message sent
         </h2>
-        <p className="mt-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
+        <p className="mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
           We reply within one working day. For anything urgent, call us — the
           numbers are on the right.
         </p>
@@ -90,7 +90,7 @@ export function ContactForm() {
           <select
             id="c-topic"
             {...register("topic")}
-            className="h-11 w-full rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3.5 text-[length:var(--text-base)] text-[var(--text-1)]"
+            className="h-11 w-full rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3.5 text-[length:var(--text-base)] text-[color:var(--text-1)]"
           >
             {TOPICS.map((t) => (
               <option key={t.value} value={t.value}>

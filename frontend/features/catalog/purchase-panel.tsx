@@ -27,7 +27,7 @@ export function MediumSwitch({ book, variants }: { book: Book; variants: Book[] 
 
   return (
     <div>
-      <p className="mb-2 text-[length:var(--text-sm)] font-medium text-[var(--text-2)]">
+      <p className="mb-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-2)]">
         Medium
       </p>
       <div className="flex flex-wrap gap-2" role="group" aria-label="Choose medium">
@@ -43,12 +43,12 @@ export function MediumSwitch({ book, variants }: { book: Book; variants: Book[] 
                 "rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium",
                 "transition-colors duration-[var(--duration-fast)]",
                 current
-                  ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[var(--text-brand)]"
-                  : "border-[var(--border-1)] text-[var(--text-2)] hover:border-[var(--border-2)] hover:text-[var(--text-1)]",
+                  ? "border-[var(--brand-base)] bg-[var(--brand-soft)] text-[color:var(--text-brand)]"
+                  : "border-[var(--border-1)] text-[color:var(--text-2)] hover:border-[var(--border-2)] hover:text-[color:var(--text-1)]",
               )}
             >
               <span lang={v.medium === "english" ? undefined : "mr"}>{m?.labelNative}</span>
-              <span className="ml-1.5 text-[var(--text-3)]">{m?.label.replace(" Medium", "")}</span>
+              <span className="ml-1.5 text-[color:var(--text-3)]">{m?.label.replace(" Medium", "")}</span>
             </Link>
           );
         })}
@@ -75,13 +75,13 @@ export function PurchasePanel({ book, variants }: { book: Book; variants: Book[]
         <MediumSwitch book={book} variants={variants} />
 
         <div>
-          <p className="mb-2 text-[length:var(--text-sm)] font-medium text-[var(--text-2)]">Quantity</p>
+          <p className="mb-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-2)]">Quantity</p>
           <div className="inline-flex items-center rounded-[var(--radius-md)] border border-[var(--border-1)]">
             <button
               onClick={() => setQty((q) => Math.max(1, q - 1))}
               disabled={qty <= 1}
               aria-label="Decrease quantity"
-              className="grid size-11 place-items-center text-[var(--text-2)] disabled:opacity-40 hover:bg-[var(--surface-0)] rounded-l-[var(--radius-md)]"
+              className="grid size-11 place-items-center text-[color:var(--text-2)] disabled:opacity-40 hover:bg-[var(--surface-0)] rounded-l-[var(--radius-md)]"
             >
               <Minus className="size-4" aria-hidden />
             </button>
@@ -91,7 +91,7 @@ export function PurchasePanel({ book, variants }: { book: Book; variants: Book[]
             <button
               onClick={() => setQty((q) => Math.min(20, q + 1))}
               aria-label="Increase quantity"
-              className="grid size-11 place-items-center text-[var(--text-2)] hover:bg-[var(--surface-0)] rounded-r-[var(--radius-md)]"
+              className="grid size-11 place-items-center text-[color:var(--text-2)] hover:bg-[var(--surface-0)] rounded-r-[var(--radius-md)]"
             >
               <Plus className="size-4" aria-hidden />
             </button>
@@ -109,10 +109,10 @@ export function PurchasePanel({ book, variants }: { book: Book; variants: Book[]
 
         <div className="flex items-center justify-between gap-3 border-t border-[var(--border-1)] pt-4">
           <WishlistButton slug={book.slug} title={book.title} />
-          <p className="flex items-center gap-2 text-[length:var(--text-sm)] text-[var(--text-2)]">
-            <Truck className="size-4 text-[var(--signal-gain)]" aria-hidden />
+          <p className="flex items-center gap-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+            <Truck className="size-4 text-[color:var(--signal-gain)]" aria-hidden />
             {shortfall === 0 ? (
-              <span className="font-medium text-[var(--signal-gain)]">Free shipping on this order</span>
+              <span className="font-medium text-[color:var(--signal-gain)]">Free shipping on this order</span>
             ) : (
               <span>
                 Add {formatPrice(shortfall)} more for free shipping
@@ -185,7 +185,7 @@ export function FrequentlyBoughtTogether({ anchor, others }: { anchor: Book; oth
     <section className="surface-card p-5 md:p-6" aria-labelledby="fbt-heading">
       <h2
         id="fbt-heading"
-        className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[var(--text-1)]"
+        className="font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-semibold text-[color:var(--text-1)]"
       >
         Frequently bought together
       </h2>
@@ -194,7 +194,7 @@ export function FrequentlyBoughtTogether({ anchor, others }: { anchor: Book; oth
         <div className="flex flex-wrap items-center gap-3">
           {[anchor, ...others].map((b, i) => (
             <React.Fragment key={b.slug}>
-              {i > 0 && <Plus className="size-4 shrink-0 text-[var(--text-3)]" aria-hidden />}
+              {i > 0 && <Plus className="size-4 shrink-0 text-[color:var(--text-3)]" aria-hidden />}
               <div
                 className={cn(
                   "relative aspect-cover w-20 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--surface-0)]",
@@ -210,8 +210,8 @@ export function FrequentlyBoughtTogether({ anchor, others }: { anchor: Book; oth
         <ul className="flex-1 space-y-2.5">
           <li className="flex items-center gap-2.5 text-[length:var(--text-sm)]">
             <input type="checkbox" checked disabled className="size-4 accent-[var(--brand-base)]" />
-            <span className="text-[var(--text-2)]">
-              This item: <span className="text-[var(--text-1)]">{anchor.title}</span>
+            <span className="text-[color:var(--text-2)]">
+              This item: <span className="text-[color:var(--text-1)]">{anchor.title}</span>
             </span>
             <span className="tabular ml-auto font-medium">{formatPrice(anchor.price)}</span>
           </li>
@@ -228,7 +228,7 @@ export function FrequentlyBoughtTogether({ anchor, others }: { anchor: Book; oth
                 }
                 className="size-4 accent-[var(--brand-base)]"
               />
-              <label htmlFor={`fbt-${b.slug}`} className="cursor-pointer text-[var(--text-2)]">
+              <label htmlFor={`fbt-${b.slug}`} className="cursor-pointer text-[color:var(--text-2)]">
                 {b.title}
               </label>
               <span className="tabular ml-auto font-medium">{formatPrice(b.price)}</span>
@@ -237,10 +237,10 @@ export function FrequentlyBoughtTogether({ anchor, others }: { anchor: Book; oth
         </ul>
 
         <div className="shrink-0 border-t border-[var(--border-1)] pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-          <p className="text-[length:var(--text-sm)] text-[var(--text-2)]">
+          <p className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">
             Total for {chosen.length + 1} item{chosen.length ? "s" : ""}
           </p>
-          <p className="tabular mt-1 text-[length:var(--text-2xl)] font-semibold text-[var(--text-1)]">
+          <p className="tabular mt-1 text-[length:var(--text-2xl)] font-semibold text-[color:var(--text-1)]">
             {formatPrice(total)}
           </p>
           {qualifies && (
