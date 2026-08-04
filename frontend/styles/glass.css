@@ -269,6 +269,45 @@
       transform var(--duration-reveal) var(--ease-out-expo);
   }
   [data-reveal][data-revealed="true"] { opacity: 1; transform: none; }
+
+  /* ------------------------------------------------------------------------
+     Tier 2a — SOLID. A panel you READ in, so it is opaque.
+
+     `.glass-panel` is 80% alpha and leans on `backdrop-filter` to stay
+     legible. That works for a modal or the command palette: they sit over a
+     `.glass-veil` and last a second. Two surfaces do neither, and both were
+     reported as unreadable:
+
+       * the assistant — on desktop it is `fixed` with NO veil behind it (only
+         the mobile Drawer gets one), so the catalogue scrolls visibly through
+         the conversation the whole time it is open;
+       * the navbar mega menu — a large panel opening straight onto the page,
+         with headings and filter text showing through the links.
+
+     Blurred moving text under live text is unreadable, and menu labels and
+     message text are the last things here that should be hard to read.
+
+     This is not a new opinion: all three capability fallbacks below already
+     resolve `.glass-panel` to an opaque `--surface-1`. The blur was covering
+     for the alpha, not justifying it.
+
+     Dropping `backdrop-filter` is also free performance — it is the most
+     expensive effect on the site, and there is nothing left to blur once the
+     background is opaque.
+
+     Declared last so it beats `.on-dark-band .glass-panel`, which carries the
+     same specificity and would otherwise repaint the chat at 12% white.
+     ------------------------------------------------------------------------ */
+  .glass-panel.panel-solid,
+  .on-dark-band .glass-panel.panel-solid {
+    background-color: var(--surface-1);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    /* The border is what still reads as "glass". Use the theme token, not the
+       translucent glass one, which vanishes against an opaque fill. */
+    border-color: var(--border-1);
+    color: var(--text-1);
+  }
 }
 
 /* ==========================================================================

@@ -27,7 +27,7 @@ export default function Error({
           <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[color:var(--text-brand)]">
             {SITE.phones[0].replace("+91", "+91 ")}
           </a>{" "}
-          and we'll take your order directly.
+          and we&apos;ll take your order directly.
         </p>
         {error.digest && (
           <p className="tabular mt-3 text-[length:var(--text-xs)] text-[color:var(--text-3)]">

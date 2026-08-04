@@ -3,13 +3,12 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Truck } from "lucide-react";
+import { BookOpen, Minus, Plus, Truck } from "lucide-react";
 import { SITE, mediumById } from "@/constants/catalog";
 import { useCart } from "@/lib/store/cart";
 import { Badge } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { AddToCartButton, PriceBlock, StockBadge, WishlistButton, toCartItem } from "./atoms";
-import { PreviewReader } from "./product-gallery";
 import { cn, formatPrice } from "@/lib/utils";
 import type { Book } from "@/types/catalog";
 
@@ -38,7 +37,7 @@ export function MediumSwitch({ book, variants }: { book: Book; variants: Book[] 
             <Link
               key={v.slug}
               href={`/shop/${v.slug}`}
-              aria-current={current ? "true" : undefined}
+              aria-current={current ? "page" : undefined}
               className={cn(
                 "rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium",
                 "transition-colors duration-[var(--duration-fast)]",
@@ -100,11 +99,20 @@ export function PurchasePanel({ book, variants }: { book: Book; variants: Book[]
 
         <div className="space-y-2.5">
           <AddToCartButton item={book} qty={qty} size="lg" full />
-          <PreviewReader
-            pages={book.previewPages}
-            totalPages={book.pages}
-            title={book.title}
-          />
+
+          {/* The sample CTA appears only when the book actually HAS one, and
+              states the real page count rather than a guess. It used to render
+              unconditionally against `book.previewPages`, which pointed at
+              /previews/*.jpg files that had never existed — so every book on
+              the site advertised a sample that opened a modal of broken images. */}
+          {book.freePageCount ? (
+            <Button asChild variant="secondary" size="lg" full className="lift-glow">
+              <Link href={`/shop/${book.slug}/preview`}>
+                <BookOpen className="size-4" aria-hidden />
+                Read {book.freePageCount} pages free
+              </Link>
+            </Button>
+          ) : null}
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-[var(--border-1)] pt-4">
@@ -160,7 +168,11 @@ export function MobileBuyBar({ book }: { book: Book }) {
         show ? "translate-y-0" : "translate-y-full",
       )}
       style={{ bottom: "var(--bottom-nav-h)" }}
-      aria-hidden={!show}
+      // `inert`, not `aria-hidden`. aria-hidden removed the bar from the
+      // accessibility tree while leaving its buttons in the tab order, so a
+      // keyboard user could focus an "Add to cart" button that was translated
+      // off-screen and invisible. `inert` removes it from both.
+      inert={!show}
     >
       <PriceBlock price={book.price} mrp={book.mrp} size="sm" className="flex-1" />
       <AddToCartButton item={book} size="md" className="flex-1" />

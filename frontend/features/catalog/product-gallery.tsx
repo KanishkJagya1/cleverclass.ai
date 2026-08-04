@@ -6,8 +6,9 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { BookOpen, ChevronLeft, ChevronRight, X, ZoomIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/primitives";
+import { CoverImage as CoverPicture } from "@/components/ui/cover-image";
 import { cn } from "@/lib/utils";
-import type { CoverImage } from "@/types/catalog";
+import type { CoverImage, Series } from "@/types/catalog";
 
 const KIND_LABEL: Record<CoverImage["kind"], string> = {
   front: "Front cover",
@@ -21,8 +22,25 @@ const KIND_LABEL: Record<CoverImage["kind"], string> = {
  * labelling the tab is what tells them they can.
  *
  * Flip: front↔back uses a CSS 3D rotation, not R3F (D6).
+ *
+ * Every control here is conditional on the image actually existing. This
+ * previously rendered three thumbnails and a flip button unconditionally, while
+ * only front covers were ever present on disk — so two thumbnails and the whole
+ * flip resolved to 404s on every product page.
  */
-export function ProductGallery({ images, title }: { images: CoverImage[]; title: string }) {
+export function ProductGallery({
+  images,
+  title,
+  titleMr,
+  series,
+  slug,
+}: {
+  images: CoverImage[];
+  title: string;
+  titleMr?: string;
+  series?: Series;
+  slug: string;
+}) {
   const [active, setActive] = React.useState(0);
   const [flipped, setFlipped] = React.useState(false);
   const [zoom, setZoom] = React.useState(false);
@@ -30,6 +48,10 @@ export function ProductGallery({ images, title }: { images: CoverImage[]; title:
   const current = images[active];
   const back = images.find((i) => i.kind === "back");
   const canFlip = active === 0 && Boolean(back);
+  // One image is not a gallery — a lone thumbnail below a picture of itself is
+  // noise, not navigation.
+  const showThumbnails = images.length > 1;
+  const identity = { title, titleMr, series, slug };
 
   return (
     <div className="lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)]">
@@ -49,16 +71,13 @@ export function ProductGallery({ images, title }: { images: CoverImage[]; title:
             style={{ transform: flipped && canFlip ? "rotateY(180deg)" : undefined }}
           >
             <div className="absolute inset-0 [backface-visibility:hidden]">
-              {current && (
-                <Image
-                  src={current.src}
-                  alt={current.alt || `${title} — ${KIND_LABEL[current.kind]}`}
-                  fill
-                  priority
-                  sizes="(max-width: 1024px) 92vw, 42vw"
-                  className="object-cover"
-                />
-              )}
+              <CoverPicture
+                {...identity}
+                src={current?.src}
+                alt={current?.alt || `${title} — ${current ? KIND_LABEL[current.kind] : "cover"}`}
+                priority
+                sizes="(max-width: 1024px) 92vw, 42vw"
+              />
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-y-0 left-0 w-5 bg-gradient-to-r from-black/20 to-transparent"
@@ -96,8 +115,13 @@ export function ProductGallery({ images, title }: { images: CoverImage[]; title:
         </div>
       </div>
 
-      {/* Thumbnails, labelled by kind */}
-      <div className="mt-4 flex gap-2.5" role="tablist" aria-label="Product images">
+      {/* Thumbnails, labelled by kind. Rendered only when there is more than
+          one real image — see the note on `showThumbnails`. */}
+      <div
+        className={cn("mt-4 flex gap-2.5", !showThumbnails && "hidden")}
+        role="tablist"
+        aria-label="Product images"
+      >
         {images.map((img, i) => (
           <button
             key={img.src}
@@ -114,7 +138,7 @@ export function ProductGallery({ images, title }: { images: CoverImage[]; title:
               i === active ? "border-[var(--brand-base)]" : "border-transparent hover:border-[var(--border-2)]",
             )}
           >
-            <Image src={img.src} alt="" fill sizes="64px" className="object-cover" />
+            <CoverPicture {...identity} src={img.src} alt="" sizes="64px" />
           </button>
         ))}
       </div>
@@ -125,9 +149,13 @@ export function ProductGallery({ images, title }: { images: CoverImage[]; title:
           <Dialog.Content className="fixed inset-4 z-[var(--z-modal)] grid place-items-center focus:outline-none md:inset-10">
             <Dialog.Title className="sr-only">{title} — enlarged image</Dialog.Title>
             <div className="relative h-full w-full max-w-2xl">
-              {current && (
-                <Image src={current.src} alt={current.alt} fill sizes="90vw" className="object-contain" />
-              )}
+              <CoverPicture
+                {...identity}
+                src={current?.src}
+                alt={current?.alt ?? title}
+                sizes="90vw"
+                className="object-contain"
+              />
             </div>
             <Dialog.Close asChild>
               <Button variant="glass" size="icon" className="absolute right-0 top-0" aria-label="Close">
@@ -159,6 +187,11 @@ export function PreviewReader({
   const [page, setPage] = React.useState(0);
 
   React.useEffect(() => {
+    // Clamp when the page set shrinks (medium switch, narrowed free range).
+    setPage((p) => Math.min(p, Math.max(0, pages.length - 1)));
+  }, [pages.length]);
+
+  React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") setPage((p) => Math.min(pages.length - 1, p + 1));
@@ -168,13 +201,20 @@ export function PreviewReader({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, pages.length]);
 
+  // No free sample means no CTA. Rendering "Preview 0 pages free" and opening a
+  // modal of broken images is how this component behaved for every book in the
+  // catalogue, because the pages it was handed had never existed on disk.
+  // Free pages now come from an uploaded PDF plus admin-set ranges; until a book
+  // has them, the button is simply absent.
+  if (pages.length === 0) return null;
+
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
         {trigger ?? (
           <Button variant="secondary" full>
             <BookOpen className="size-4" aria-hidden />
-            Preview {pages.length} pages free
+            Read {pages.length} pages free
           </Button>
         )}
       </Dialog.Trigger>

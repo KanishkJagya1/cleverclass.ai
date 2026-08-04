@@ -46,9 +46,22 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     // Proxy the FastAPI backend so the browser never needs CORS or a second
-    // origin. In production this points at the Render/AWS deployment.
-    const api = process.env.BACKEND_URL ?? "http://localhost:8000";
-    return [{ source: "/api/ai/:path*", destination: `${api}/:path*` }];
+    // origin. In production this points at the container on the same host.
+    const api = process.env.CATALOG_API_URL ?? process.env.BACKEND_URL ?? "http://localhost:8000";
+    return [
+      { source: "/api/ai/:path*", destination: `${api}/:path*` },
+      // The admin API rides the same origin ON PURPOSE. Its session is an
+      // HttpOnly cookie, and a cookie set by a different origin would need CORS
+      // with credentials, a second cookie domain, and SameSite=None — i.e. the
+      // exact configuration that makes CSRF easy. Same-origin keeps
+      // SameSite=Lax meaningful. Next's rewrite passes Set-Cookie through in
+      // both directions.
+      { source: "/admin-api/:path*", destination: `${api}/admin-api/:path*` },
+      // Preview page images (Phase 8) are served by the backend, which enforces
+      // the free-page ranges. Routed here so the storage origin is never
+      // exposed to the browser.
+      { source: "/preview/:path*", destination: `${api}/preview/:path*` },
+    ];
   },
 };
 

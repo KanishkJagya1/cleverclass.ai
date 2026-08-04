@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Check, Truck } from "lucide-react";
 import { catalog } from "@/lib/data";
 import { classById, mediumById, SITE } from "@/constants/catalog";
 import { AddToCartButton, SavingsMeter } from "@/features/catalog/atoms";
+import { CoverImage } from "@/components/ui/cover-image";
 import { Badge, Rating } from "@/components/ui/primitives";
-import { absoluteUrl, formatPrice } from "@/lib/utils";
+import { absoluteUrl, formatPrice, frontCover } from "@/lib/utils";
 import type { ClassId } from "@/types/catalog";
 
 export const revalidate = 43200;
+
+// Combos are few (tens, not hundreds), so all of them prerender. dynamicParams
+// still matters: a combo added in the admin panel must render before the next
+// deploy rather than 404.
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const slugs = await catalog.getAllComboSlugs();
@@ -108,7 +113,7 @@ export default async function ComboDetailPage({
               so every item links to its own product page with its own price. */}
           <section className="mt-12" aria-labelledby="contents">
             <h2 id="contents" className="text-[length:var(--text-2xl)]">
-              What's in this pack
+              What&apos;s in this pack
               <span className="tabular ml-2 text-[length:var(--text-base)] font-normal text-[color:var(--text-3)]">
                 {combo.items.length} books
               </span>
@@ -121,9 +126,15 @@ export default async function ComboDetailPage({
                     href={`/shop/${b.slug}`}
                     className="relative aspect-cover w-14 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--surface-0)]"
                   >
-                    {b.images[0] && (
-                      <Image src={b.images[0].src} alt="" fill sizes="56px" className="object-cover" />
-                    )}
+                    <CoverImage
+                      src={frontCover(b.images)?.src}
+                      alt=""
+                      title={b.title}
+                      titleMr={b.titleMr}
+                      series={b.series}
+                      slug={b.slug}
+                      sizes="56px"
+                    />
                   </Link>
                   <div className="min-w-0 flex-1">
                     <Link href={`/shop/${b.slug}`} className="block">
@@ -151,16 +162,22 @@ export default async function ComboDetailPage({
               {combo.items.slice(0, 5).map((b, i) => (
                 <div
                   key={b.slug}
-                  className="relative aspect-cover w-14 shrink-0 overflow-hidden rounded-[var(--radius-xs)] bg-white shadow-[var(--shadow-md)]"
+                  className="relative aspect-cover w-14 shrink-0 overflow-hidden rounded-[var(--radius-xs)] bg-[color:var(--surface-1)] shadow-[var(--shadow-md)]"
                   style={{
                     marginLeft: i === 0 ? 0 : "-1rem",
                     rotate: `${(i - 2) * 4}deg`,
                     zIndex: i,
                   }}
                 >
-                  {b.images[0] && (
-                    <Image src={b.images[0].src} alt="" fill sizes="56px" className="object-cover" />
-                  )}
+                  <CoverImage
+                    src={frontCover(b.images)?.src}
+                    alt=""
+                    title={b.title}
+                    titleMr={b.titleMr}
+                    series={b.series}
+                    slug={b.slug}
+                    sizes="56px"
+                  />
                 </div>
               ))}
             </div>

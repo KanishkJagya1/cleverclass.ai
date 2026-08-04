@@ -8,9 +8,11 @@ import { z } from "zod";
 import { Check, CreditCard, Lock, PackageCheck } from "lucide-react";
 import { useCart, useCartTotals } from "@/lib/store/cart";
 import { payments, type ShippingDetails } from "@/lib/payments/provider";
+import { SITE } from "@/constants/catalog";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/empty-state";
+import { CheckoutSkeleton } from "@/features/catalog/skeletons";
 import { cn, formatPrice } from "@/lib/utils";
 
 /* Indian pincode + mobile validation — a generic `.min(1)` here produces
@@ -34,13 +36,16 @@ export default function CheckoutPage() {
   const [step, setStep] = React.useState(0);
   const [placing, setPlacing] = React.useState(false);
   const [orderId, setOrderId] = React.useState<string | null>(null);
+  const [failure, setFailure] = React.useState<string | null>(null);
 
   const form = useForm<ShippingDetails>({
     resolver: zodResolver(schema),
     mode: "onBlur",
   });
 
-  if (!ready) return null;
+  // Rendering null while the persisted cart rehydrates is a blank white page on
+  // every checkout load. The cart page next door already used skeletons.
+  if (!ready) return <CheckoutSkeleton />;
 
   if (orderId) {
     return (
@@ -48,11 +53,14 @@ export default function CheckoutPage() {
         <span className="mx-auto grid size-14 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[color:var(--signal-gain)]">
           <PackageCheck className="size-6" aria-hidden />
         </span>
-        <h1 className="mt-6 text-[length:var(--text-3xl)]">Order placed</h1>
+        {/* "Order placed" implies a completed transaction. There is no payment
+            gateway yet and no confirmation email is sent — so this says what
+            actually happened and what happens next. */}
+        <h1 className="mt-6 text-[length:var(--text-3xl)]">Order request received</h1>
         <p className="mt-3 text-[length:var(--text-body)] text-[color:var(--text-2)]">
-          Your order reference is{" "}
-          <span className="tabular font-semibold text-[color:var(--text-1)]">{orderId}</span>. We've
-          sent a confirmation to your email and will call if anything needs checking.
+          Your reference is{" "}
+          <span className="tabular font-semibold text-[color:var(--text-1)]">{orderId}</span>. We
+          will call you to confirm the books, the total and delivery before anything ships.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button asChild>
@@ -87,17 +95,38 @@ export default function CheckoutPage() {
 
   const place = form.handleSubmit(async (shipping) => {
     setPlacing(true);
-    const result = await payments.createOrder({
-      items,
-      shipping,
-      subtotal: totals.subtotal,
-      shippingCost: totals.shipping,
-      total: totals.total,
-    });
-    setPlacing(false);
-    if (result.status === "success") {
-      setOrderId(result.orderId);
-      clear();
+    setFailure(null);
+    try {
+      const result = await payments.createOrder({
+        items,
+        shipping,
+        subtotal: totals.subtotal,
+        shippingCost: totals.shipping,
+        total: totals.total,
+      });
+
+      // `failed` and `pending` are declared on PaymentResult and were both
+      // ignored, so a real gateway failure silently did nothing at all — the
+      // user pressed the button and the page just sat there.
+      if (result.status === "success") {
+        setOrderId(result.orderId);
+        clear();
+      } else if (result.status === "pending") {
+        setFailure(
+          "Your order is still being confirmed. Don't place it again — we'll call you shortly.",
+        );
+      } else {
+        setFailure(
+          result.message ??
+            "We couldn't record that order. Nothing has been charged and your cart is intact.",
+        );
+      }
+    } catch {
+      setFailure(
+        "We couldn't reach our server. Nothing has been charged and your cart is intact.",
+      );
+    } finally {
+      setPlacing(false);
     }
   });
 
@@ -230,21 +259,35 @@ export default function CheckoutPage() {
               <div className="mt-5 rounded-[var(--radius-lg)] border border-dashed border-[var(--border-2)] bg-[var(--surface-0)]/60 p-5">
                 <p className="flex items-center gap-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
                   <CreditCard className="size-4" aria-hidden />
-                  Payment gateway not yet connected
+                  Pay on delivery — we call to confirm first
                 </p>
                 <p className="mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
-                  This build routes through a stubbed payment provider. Wiring
-                  Razorpay, PhonePe or Stripe means implementing one interface —
-                  the checkout flow above stays exactly as it is.
+                  Online payment is not enabled yet. Send this as a request and we
+                  will call you to confirm the books, the total and the delivery
+                  address before anything ships. Nothing is charged now.
                 </p>
               </div>
+
+              {failure && (
+                <p
+                  role="alert"
+                  className="mt-5 rounded-[var(--radius-md)] bg-[var(--signal-danger-soft)] px-4 py-3 text-[length:var(--text-sm)] text-[color:var(--signal-danger)]"
+                >
+                  {failure} Call{" "}
+                  <a href={`tel:${SITE.phones[0]}`} className="font-medium underline">
+                    {SITE.phones[0]}
+                  </a>{" "}
+                  and we&apos;ll take the order directly.
+                </p>
+              )}
+
               <div className="mt-6 flex gap-3">
                 <Button type="button" variant="secondary" onClick={() => setStep(1)}>
                   Back
                 </Button>
                 <Button type="submit" loading={placing}>
                   <Lock className="size-4" aria-hidden />
-                  Place order · {formatPrice(totals.total)}
+                  Send order request · {formatPrice(totals.total)}
                 </Button>
               </div>
             </fieldset>

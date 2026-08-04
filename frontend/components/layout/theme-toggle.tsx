@@ -23,7 +23,9 @@ export function ThemeToggle() {
       variant="ghost"
       // 44px on touch, 36px once a pointer is available (WCAG 2.5.5).
       size="icon"
-      className="lg:size-9"
+      // shrink-0: as a flex child this defaulted to flex-shrink:1 and was
+      // squeezed to 35px inside the navbar's utility cluster on a 320px screen.
+      className="shrink-0 lg:size-9"
       onClick={() => setTheme(dark ? "light" : "dark")}
       aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
     >

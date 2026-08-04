@@ -96,7 +96,7 @@ export default async function ClassHubPage({
         <div role="group" aria-label="Filter by medium" className="flex flex-wrap gap-2">
           <Link
             href={`/class/${cls.id}`}
-            aria-current={!activeMedium ? "true" : undefined}
+            aria-current={!activeMedium ? "page" : undefined}
             className={cn(
               "chip-tap rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
               !activeMedium
@@ -110,7 +110,7 @@ export default async function ClassHubPage({
             <Link
               key={m.id}
               href={`/class/${cls.id}?medium=${m.id}`}
-              aria-current={activeMedium === m.id ? "true" : undefined}
+              aria-current={activeMedium === m.id ? "page" : undefined}
               className={cn(
                 "chip-tap rounded-[var(--radius-md)] border px-3.5 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
                 activeMedium === m.id

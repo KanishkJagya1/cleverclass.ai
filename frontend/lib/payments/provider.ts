@@ -38,20 +38,62 @@ export interface PaymentProvider {
 }
 
 /**
- * Stub. Generates a plausible order id and always succeeds, so the whole
- * checkout flow — including the confirmation screen — is testable today.
+ * Records a real order request against the API.
+ *
+ * NOT a payment. No money moves — this persists the request and returns its
+ * reference, and the shop confirms by phone. It implements `PaymentProvider`
+ * so that when a real gateway is added it slots in beside this one and the
+ * checkout UI does not change.
+ *
+ * It resolves only once the row exists. The previous stub awaited a timer and
+ * returned `success` unconditionally, which meant a customer could complete
+ * checkout, see a reference number, and have nothing recorded anywhere.
  */
-export const stubPaymentProvider: PaymentProvider = {
-  name: "stub",
-  async createOrder(draft) {
-    await new Promise((r) => setTimeout(r, 900));
-    const stamp = Date.now().toString(36).toUpperCase().slice(-6);
-    return {
-      status: "success",
-      orderId: `KT-${stamp}`,
-      message: `Order for ${draft.items.length} item(s) recorded.`,
-    };
+export const requestOrderProvider: PaymentProvider = {
+  name: "order-request",
+  async createOrder(draft): Promise<PaymentResult> {
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: draft.items.map((i) => ({ slug: i.slug, qty: i.qty })),
+          name: draft.shipping.fullName,
+          phone: draft.shipping.phone,
+          email: draft.shipping.email || undefined,
+          address1: draft.shipping.address1,
+          address2: draft.shipping.address2 ?? "",
+          city: draft.shipping.city,
+          state: draft.shipping.state,
+          pincode: draft.shipping.pincode,
+          source: "checkout",
+        }),
+      });
+
+      const body = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        return {
+          status: "failed",
+          orderId: "",
+          message: (body as { error?: string }).error ?? "We couldn't record that order.",
+        };
+      }
+
+      return {
+        status: "success",
+        orderId: (body as { orderNumber: string }).orderNumber,
+        message: (body as { message?: string }).message,
+      };
+    } catch {
+      return {
+        status: "failed",
+        orderId: "",
+        message:
+          "We couldn't reach our server. Nothing has been charged and your cart is intact.",
+      };
+    }
   },
 };
 
-export const payments: PaymentProvider = stubPaymentProvider;
+export const payments: PaymentProvider = requestOrderProvider;

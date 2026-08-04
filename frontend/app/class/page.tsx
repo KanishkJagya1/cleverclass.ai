@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { CLASSES } from "@/constants/catalog";
-import { SEED_BOOKS } from "@/lib/data/seed";
+import { catalog } from "@/lib/data";
 import { RevealItem } from "@/components/motion";
 
 export const metadata: Metadata = {
@@ -12,7 +12,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/class" },
 };
 
-export default function ClassIndexPage() {
+export const revalidate = 3600;
+
+export default async function ClassIndexPage() {
+  // Counts come from the catalogue API, not from the seed module. Importing
+  // SEED_BOOKS here meant this page reported generated numbers no matter which
+  // data source was configured — so every tile advertised a title count the
+  // shop could not deliver.
+  const facets = await catalog.getFacets();
+  const countFor = new Map(facets.classId.map((f) => [f.value, f.count]));
+
   return (
     <div className="container-page py-10 md:py-16">
       <header className="mb-12 max-w-2xl">
@@ -25,11 +34,14 @@ export default function ClassIndexPage() {
 
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {CLASSES.map((c, i) => {
-          const count = SEED_BOOKS.filter((b) => b.classId === c.id).length;
+          const count = countFor.get(c.id) ?? 0;
+          // `as="li"`: this used to render <div><li> inside a <ul>, which is
+          // invalid HTML — a div is not permitted between ul and li, so the
+          // parser relocates it and the grid loses a cell.
           return (
-            <RevealItem key={c.id} index={i} className="h-full">
-              <li className="h-full">
-                <Link href={`/class/${c.id}`} className="surface-card lift group flex h-full flex-col p-6">
+            <RevealItem key={c.id} as="li" index={i} className="h-full">
+              <div className="h-full">
+                <Link href={`/class/${c.id}`} className="surface-card lift-glow group flex h-full flex-col p-6">
                   <div className="flex items-start justify-between">
                     <span className="font-[family-name:var(--font-display)] text-[length:var(--text-3xl)] font-bold text-[color:var(--text-1)] transition-colors group-hover:text-[color:var(--brand-base)]">
                       {c.short}
@@ -54,7 +66,7 @@ export default function ClassIndexPage() {
                     <ArrowRight className="size-3.5" aria-hidden />
                   </p>
                 </Link>
-              </li>
+              </div>
             </RevealItem>
           );
         })}

@@ -13,6 +13,12 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Touch input. Lets a component state its touch target inline —
+   `h-9 coarse:h-11` — instead of every caller remembering a media query.
+   `pointer: coarse` rather than a width breakpoint: a 1280px touchscreen still
+   needs 44px, and a 380px window on a laptop does not. */
+@custom-variant coarse (@media (pointer: coarse));
+
 /* --------------------------------------------------------------------------
    1. PRIMITIVES
    Ramps only. If a component references `--color-indigo-600` directly, that's
@@ -187,6 +193,20 @@
   /* Glass materials */
   --color-glass-chrome: var(--glass-chrome-bg);
   --color-glass-panel:  var(--glass-panel-bg);
+
+  /* AI surfaces — assistant panel, launcher, semantic results, "AI picks".
+     Violet was already in the palette but locked to the ambient mesh. Promoting
+     it to a scoped semantic gives CleverClass.AI a signature without adding a
+     hue, and keeps indigo unambiguously = commerce. Never use it on a price,
+     a stock badge or a buy button. */
+  --color-ai:      var(--ai-base);
+  --color-ai-soft: var(--ai-soft);
+  --color-ai-on:   var(--ai-on);
+
+  /* Paywall / locked pages in the preview reader. Ink-based, NOT rose: a locked
+     page is not an error, and rose is reserved for destructive. */
+  --color-locked:      var(--locked-base);
+  --color-locked-soft: var(--locked-soft);
 }
 
 /* --------------------------------------------------------------------------
@@ -242,10 +262,56 @@
                   0 8px 32px rgb(30 27 75 / 0.10);
   --shadow-brand: 0 4px 14px rgb(49 46 129 / 0.24);
 
-  /* Ambient mesh — the ONLY place violet appears. Kept under 0.10 alpha. */
+  /* Ambient mesh. Violet also appears as --ai-base below, scoped to AI
+     surfaces only; everywhere else it stays under 0.10 alpha. */
   --mesh-1: rgb(93 99 236 / 0.10);
   --mesh-2: rgb(124 58 237 / 0.07);
   --mesh-3: rgb(16 185 129 / 0.05);
+
+  /* AI accent — 7.3:1 on white */
+  --ai-base: #6D28D9;
+  --ai-soft: #F5F3FF;
+  --ai-on:   #FFFFFF;
+
+  /* Locked / paywalled pages */
+  --locked-base:  #64748B;
+  --locked-soft:  color-mix(in srgb, var(--surface-0) 88%, var(--brand-base));
+  --locked-scrim: linear-gradient(
+                    180deg,
+                    color-mix(in srgb, var(--surface-1) 10%, transparent) 0%,
+                    color-mix(in srgb, var(--surface-1) 92%, transparent) 62%,
+                    var(--surface-1) 100%);
+
+  /* Named gradients. There were none, so `text-gradient` inlined its own and
+     every other gradient was written by hand at the call site.
+     RULE: decoration and at most one primary CTA per view. Never on body text,
+     never on a price, never on a form control. */
+  --grad-brand:  linear-gradient(135deg, var(--color-indigo-700) 0%,
+                                         var(--color-indigo-500) 52%,
+                                         var(--color-violet-600) 100%);
+  --grad-ai:     linear-gradient(135deg, var(--color-violet-600), var(--color-indigo-500));
+  --grad-gain:   linear-gradient(135deg, var(--color-emerald-700), var(--color-emerald-500));
+  --grad-sheen:  linear-gradient(105deg, transparent 38%, var(--glass-edge-top) 50%, transparent 62%);
+  --grad-fade-b: linear-gradient(180deg, transparent, var(--surface-canvas));
+
+  /* Elevation by INTENT, not by eye. Shadows existed but were picked ad hoc as
+     shadow-[var(--shadow-lg)], so two sibling cards could disagree. */
+  --elev-flat: none;
+  --elev-1: var(--shadow-sm);   /* resting card */
+  --elev-2: var(--shadow-md);   /* hovered card, dropdown */
+  --elev-3: var(--shadow-lg);   /* sticky panel, drawer */
+  --elev-4: var(--shadow-xl);   /* modal, preview reader */
+  --elev-brand: var(--shadow-brand);
+  /* The one genuinely new visual: what makes a hovered card read as *lit*
+     rather than printed. */
+  --elev-glow: 0 0 0 1px color-mix(in srgb, var(--brand-base) 24%, transparent),
+               0 12px 40px color-mix(in srgb, var(--brand-base) 18%, transparent);
+
+  /* Parallax depth. Named so no component invents its own pixel value. */
+  --px-depth-1:   10px;   /* text blocks — barely perceptible, and that is right */
+  --px-depth-2:   26px;   /* cards, cover art */
+  --px-depth-3:   56px;   /* pure decoration: blobs, rules, oversized numerals */
+  --px-depth-max: 72px;   /* hero backplate only */
 }
 
 .dark {
@@ -302,6 +368,35 @@
   --mesh-1: rgb(93 99 236 / 0.16);
   --mesh-2: rgb(124 58 237 / 0.12);
   --mesh-3: rgb(16 185 129 / 0.07);
+
+  /* Violet at #6D28D9 is only 2.4:1 on the dark canvas — unreadable. Lifted to
+     the 400 ramp (9.1:1), with the "on" colour flipping to ink. */
+  --ai-base: #A78BFA;
+  --ai-soft: rgb(124 58 237 / 0.16);
+  --ai-on:   #0F172A;
+
+  --locked-base:  #94A3B8;
+  --locked-soft:  color-mix(in srgb, var(--surface-0) 88%, var(--brand-base));
+  --locked-scrim: linear-gradient(
+                    180deg,
+                    color-mix(in srgb, var(--surface-1) 10%, transparent) 0%,
+                    color-mix(in srgb, var(--surface-1) 92%, transparent) 62%,
+                    var(--surface-1) 100%);
+
+  /* Gradients re-point to the dark ramps; the names stay identical so no
+     component needs a dark-mode branch. */
+  --grad-brand:  linear-gradient(135deg, var(--color-indigo-400) 0%,
+                                         var(--color-indigo-500) 52%,
+                                         var(--color-violet-400) 100%);
+  --grad-ai:     linear-gradient(135deg, var(--color-violet-400), var(--color-indigo-400));
+  --grad-gain:   linear-gradient(135deg, var(--color-emerald-500), var(--color-emerald-400, #34D399));
+  --grad-sheen:  linear-gradient(105deg, transparent 38%, var(--glass-edge-top) 50%, transparent 62%);
+  --grad-fade-b: linear-gradient(180deg, transparent, var(--surface-canvas));
+
+  /* Elevation intent survives, but on dark the glow does the work a shadow
+     cannot — see the note above about shadows being near-invisible here. */
+  --elev-glow: 0 0 0 1px color-mix(in srgb, var(--brand-base) 40%, transparent),
+               0 12px 40px color-mix(in srgb, var(--brand-base) 26%, transparent);
 }
 
 /* --------------------------------------------------------------------------
@@ -310,7 +405,11 @@
 :root {
   --container-max: 80rem;      /* 1280 */
   --container-prose: 44rem;    /* 704 — optimal 68ch for Inter at 16px */
-  --gutter: 1.25rem;
+  /* 0.75rem below 360px: at 320px a 1.25rem gutter spends 12% of the screen on
+     empty margin, and it pushed the navbar's min-content width (logo 135px +
+     three 44px controls + gaps = 283px) past the viewport, so the whole page
+     scrolled sideways. Widens to 1.25rem the moment there is room. */
+  --gutter: 0.75rem;
   --nav-h: 4.5rem;             /* 72 */
   --nav-h-scrolled: 3.5rem;    /* 56 — the shrink target */
   --bottom-nav-h: 4rem;        /* 64 — mobile only */
@@ -338,5 +437,6 @@
   --z-cursor: 9999;
 }
 
-@media (min-width: 40rem) { :root { --gutter: 2rem; } }
-@media (min-width: 64rem) { :root { --gutter: 2.5rem; } }
+@media (min-width: 22.5rem) { :root { --gutter: 1.25rem; } }  /* 360 */
+@media (min-width: 40rem)   { :root { --gutter: 2rem; } }
+@media (min-width: 64rem)   { :root { --gutter: 2.5rem; } }

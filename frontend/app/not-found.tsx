@@ -10,7 +10,7 @@ export default function NotFound() {
         <p className="font-[family-name:var(--font-display)] text-[length:var(--text-5xl)] font-bold text-[color:var(--text-brand)]">
           404
         </p>
-        <h1 className="mt-4 text-[length:var(--text-2xl)]">We couldn't find that page</h1>
+        <h1 className="mt-4 text-[length:var(--text-2xl)]">We couldn&apos;t find that page</h1>
         <p className="mt-3 text-[length:var(--text-body)] text-[color:var(--text-2)]">
           The link may be out of date. Try searching, or start from your class.
         </p>

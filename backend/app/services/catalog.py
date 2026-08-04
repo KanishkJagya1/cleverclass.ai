@@ -75,6 +75,18 @@ def parse_filters(query: str) -> SearchFilters:
             if re.search(rf"\b{re.escape(word)}\b", q):
                 filters.classId = value
                 break
+        else:
+            # A bare number, as people actually type it: "kohinoor 10 science
+            # marathi". Without this the class was dropped entirely and the
+            # recommender answered a Class 10 question with Class 9, 8 and 5
+            # books — wrong class is the single most expensive mistake here.
+            #
+            # Restricted to 5-12, the classes actually published, and only as a
+            # standalone token. That is what keeps "I want 2 copies" from
+            # becoming a Class 2 search, and the lookarounds keep a price
+            # ("under 200"), a pincode or an order number out of it.
+            if n := re.search(r"(?<![\w₹.])([5-9]|1[0-2])(?![\w.])", q):
+                filters.classId = n.group(1)
 
     # Language names are ambiguous: "marathi" is a medium AND a subject.
     # Whichever reading wins here must not win twice, so the matched medium

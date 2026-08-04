@@ -34,12 +34,16 @@ const button = cva(
         link: "text-[color:var(--brand-base)] underline-offset-4 hover:underline p-0 h-auto",
       },
       size: {
-        // 44px minimum on every tappable size — WCAG 2.5.5 / practical thumbs.
-        sm: "h-9 px-3.5 text-[length:var(--text-sm)]",
+        // 44px (h-11) minimum wherever a thumb is involved — WCAG 2.5.5.
+        // `sm` and `icon-sm` are 36px, which is fine with a mouse and a
+        // miss-tap machine on a phone, so they grow on coarse pointers. The
+        // audit measured 36px targets on "Filters", "View combo", "Load map"
+        // and the search button before this.
+        sm: "h-9 coarse:h-11 px-3.5 text-[length:var(--text-sm)]",
         md: "h-11 px-5 text-[length:var(--text-base)]",
         lg: "h-[3.25rem] px-7 text-[length:var(--text-lg)]",
         icon: "size-11",
-        "icon-sm": "size-9",
+        "icon-sm": "size-9 coarse:size-11",
       },
       full: { true: "w-full" },
     },

@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Minus, Plus, Trash2, Truck } from "lucide-react";
 import { SITE, classById, mediumById } from "@/constants/catalog";
 import { useCart, useCartTotals } from "@/lib/store/cart";
 import { Button } from "@/components/ui/button";
+import { CoverImage } from "@/components/ui/cover-image";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/primitives";
 import { formatPrice } from "@/lib/utils";
@@ -69,9 +69,14 @@ export default function CartPage() {
                     href={href}
                     className="relative aspect-cover w-20 shrink-0 overflow-hidden rounded-[var(--radius-sm)] bg-[var(--surface-0)]"
                   >
-                    {item.image && (
-                      <Image src={item.image} alt="" fill sizes="80px" className="object-cover" />
-                    )}
+                    <CoverImage
+                      src={item.image}
+                      alt=""
+                      title={item.title}
+                      titleMr={item.titleMr}
+                      slug={item.slug}
+                      sizes="80px"
+                    />
                   </Link>
 
                   <div className="flex min-w-0 flex-1 flex-col">

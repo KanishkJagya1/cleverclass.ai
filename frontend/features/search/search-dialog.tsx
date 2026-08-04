@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { CoverImage } from "@/components/ui/cover-image";
 import { Command } from "cmdk";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
@@ -39,6 +39,7 @@ export function SearchDialog() {
   const [hits, setHits] = React.useState<SearchHit[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [semantic, setSemantic] = React.useState(false);
+  const [errored, setErrored] = React.useState(false);
   const [recent, setRecent] = React.useState<string[]>([]);
 
   React.useEffect(() => {
@@ -62,10 +63,12 @@ export function SearchDialog() {
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setLoading(true);
+      setErrored(false);
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`, {
           signal: controller.signal,
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as { hits: SearchHit[] };
 
         if (data.hits.length > 0) {
@@ -81,11 +84,19 @@ export function SearchDialog() {
             setHits(aiData.hits ?? []);
             setSemantic((aiData.hits ?? []).length > 0);
           } else {
+            // The semantic index is a bonus path, not a requirement. No lexical
+            // hits and no semantic hits is a legitimate "no results".
             setHits([]);
           }
         }
-      } catch {
-        /* aborted — a newer keystroke is already in flight */
+      } catch (err) {
+        // An abort is a newer keystroke, not a failure. Anything else IS a
+        // failure and must not be rendered as "no results" — that tells the
+        // user their book doesn't exist when really the network is down.
+        if ((err as Error)?.name !== "AbortError") {
+          setHits([]);
+          setErrored(true);
+        }
       } finally {
         setLoading(false);
       }
@@ -226,16 +237,35 @@ export function SearchDialog() {
                 </Command.Group>
               )}
 
-              {query.length >= 2 && !loading && hits.length === 0 && classMatches.length === 0 && (
-                <Command.Empty className="px-3 py-10 text-center">
+              {/* A failed request and a genuinely empty result set look
+                  identical to a user unless we distinguish them. Telling
+                  someone their book doesn't exist when the network dropped is
+                  the worse of the two mistakes. */}
+              {query.length >= 2 && !loading && errored && (
+                <div role="alert" className="px-3 py-10 text-center">
                   <p className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">
-                    Nothing matched "{query}".
+                    Search is unavailable right now.
                   </p>
                   <p className="mt-1.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
-                    Try a class and subject, like "class 10 science".
+                    This isn&apos;t about your search — please try again in a moment.
                   </p>
-                </Command.Empty>
+                </div>
               )}
+
+              {query.length >= 2 &&
+                !loading &&
+                !errored &&
+                hits.length === 0 &&
+                classMatches.length === 0 && (
+                  <Command.Empty className="px-3 py-10 text-center">
+                    <p className="text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+                      Nothing matched &ldquo;{query}&rdquo;.
+                    </p>
+                    <p className="mt-1.5 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
+                      Try a class and subject, like &ldquo;class 10 science&rdquo;.
+                    </p>
+                  </Command.Empty>
+                )}
             </Command.List>
 
             <div className="hidden items-center gap-4 border-t border-[var(--border-1)] px-4 py-2.5 text-[length:var(--text-2xs)] text-[color:var(--text-3)] sm:flex">
@@ -276,9 +306,16 @@ function Item({
 function ResultItem({ hit, onSelect }: { hit: SearchHit; onSelect: () => void }) {
   return (
     <Command.Item onSelect={onSelect} className={itemCls}>
-      {hit.image ? (
+      {hit.format === "book" ? (
         <span className="relative aspect-cover h-10 shrink-0 overflow-hidden rounded-[var(--radius-xs)] bg-[var(--surface-0)]">
-          <Image src={hit.image} alt="" fill sizes="30px" className="object-cover" />
+          <CoverImage
+            src={hit.image}
+            alt=""
+            title={hit.title}
+            titleMr={hit.titleMr}
+            slug={hit.slug}
+            sizes="30px"
+          />
         </span>
       ) : (
         <Layers className="size-4 shrink-0 text-[color:var(--text-3)]" aria-hidden />

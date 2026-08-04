@@ -18,10 +18,15 @@ import { chromium } from "playwright";
 const BASE = process.argv[2] ?? "http://localhost:3000";
 
 const VIEWPORTS = [
-  { name: "360 android", width: 360, height: 780 },
-  { name: "390 iphone", width: 390, height: 844 },
-  { name: "768 tablet", width: 768, height: 1024 },
-  { name: "1280 laptop", width: 1280, height: 800 },
+  // 320 is the narrowest viewport worth supporting and the one that actually
+  // breaks: it is a Galaxy A-series / older iPhone SE in portrait, which is a
+  // real share of this audience.
+  { name: "320 small", width: 320, height: 720, touch: true },
+  { name: "360 android", width: 360, height: 780, touch: true },
+  { name: "390 iphone", width: 390, height: 844, touch: true },
+  { name: "768 tablet", width: 768, height: 1024, touch: true },
+  { name: "1280 laptop", width: 1280, height: 800, touch: false },
+  { name: "1536 desktop", width: 1536, height: 900, touch: false },
 ];
 
 const ROUTES = [
@@ -31,6 +36,7 @@ const ROUTES = [
   "/class",
   "/class/10",
   "/combo-packs",
+  "/combo-packs?stream=science-pcm",
   "/key-notes",
   "/key-notes/10",
   "/about",
@@ -88,17 +94,88 @@ const audit = () => {
   );
 
   // --- 2. touch targets ----------------------------------------------------
+  //
+  // Encodes what WCAG actually requires, rather than 44x44 for everything:
+  //
+  //   2.5.8 (AA)   24x24 minimum, with an explicit exception for links inside
+  //                a sentence, where the target size is determined by the line
+  //                height of the text.
+  //   2.5.5 (AAA)  44x44 — the bar we hold CONTROLS to: buttons, selects,
+  //                inputs, and links styled as blocks (nav items, cards, tabs).
+  //
+  // The distinction matters. A footer column link reading "Spark" is 38px wide
+  // because the word is 38px wide; padding it to 44 would look broken and fixes
+  // nothing, since vertical spacing is what prevents miss-taps in a list. But a
+  // 36px sort dropdown or a 36px wishlist button genuinely is a miss-tap.
+  //
+  // So: controls must be 44x44. Inline links must clear 24px in both axes and
+  // 44px in the block direction (their line box), which is the axis a thumb
+  // actually has to hit in a vertical list.
   const small = [];
   if (window.innerWidth < 1024) {
+    const isControl = (el) => {
+      const tag = el.tagName.toLowerCase();
+      if (tag !== "a") return true; // button, input, select, [role=button]
+      // A link counts as a control when it is laid out as a block-level box
+      // rather than flowing inside a sentence. `inline-flex` and
+      // `inline-block` are deliberately NOT here: those are exactly what the
+      // 44px-tall touch padding produces on ordinary text links, and treating
+      // them as controls would demand a 44px-WIDE target for the word "Spark".
+      const d = getComputedStyle(el).display;
+      return d === "block" || d === "flex" || d === "grid";
+    };
+
+    // WCAG 2.5.8's "Inline" exception: a target inside a sentence, whose size
+    // is constrained by the line-height of the surrounding text, is exempt.
+    // Detected structurally — the parent contains real text besides this link.
+    const isInSentence = (el) => {
+      const parent = el.parentElement;
+      if (!parent) return false;
+      const own = (el.textContent || "").trim();
+      const all = (parent.textContent || "").trim();
+      return all.length > own.length + 3;
+    };
+
+    // "Stretched link": a card where the title anchor holds an absolutely
+    // positioned overlay covering the whole card, so the real hit area is the
+    // card, not the text. Measuring the text reported a 190x19 target for
+    // something a thumb cannot miss. Returns the true target rect.
+    const effectiveRect = (el) => {
+      const own = el.getBoundingClientRect();
+      for (const child of el.querySelectorAll(":scope > *")) {
+        if (getComputedStyle(child).position !== "absolute") continue;
+        const r = child.getBoundingClientRect();
+        // Must actually ENLARGE the target in both axes to count as a stretch.
+        // Without this check a 6x6 decorative dot positioned inside the link
+        // was mistaken for the overlay and reported as a 6x6 tap target.
+        if (r.width >= own.width && r.height >= own.height && r.width > 0) return r;
+      }
+      return own;
+    };
+
     for (const el of document.querySelectorAll('a, button, [role="button"], input, select')) {
       if (!visible(el)) continue;
-      const r = el.getBoundingClientRect();
+      const r = effectiveRect(el);
       if (r.top > window.innerHeight * 3) continue; // only what's near the fold
-      if (r.width < 44 || r.height < 44) {
+
+      const control = isControl(el);
+      if (!control && isInSentence(el)) continue; // WCAG 2.5.8 inline exception
+      // Controls: 44x44 (2.5.5 AAA — the bar we hold ourselves to).
+      // Inline links: 24x24 (2.5.8 AA), which is what the standard actually
+      // requires for a link flowing in text. Demanding 44px of height from an
+      // anchor inside a sentence produces findings nobody can action without
+      // wrecking the typography.
+      const minW = control ? 44 : 24;
+      const minH = control ? 44 : 24;
+      // 0.5px tolerance: getBoundingClientRect returns fractional values, so an
+      // element sized to exactly 2.75rem can measure 43.99 at devicePixelRatio
+      // 2 and report as a failure it is not.
+      if (r.width < minW - 0.5 || r.height < minH - 0.5) {
         small.push({
           tag: el.tagName.toLowerCase(),
           label: (el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 34),
           size: `${Math.round(r.width)}x${Math.round(r.height)}`,
+          kind: control ? "control" : "inline-link",
         });
       }
     }
@@ -165,8 +242,11 @@ for (const vp of VIEWPORTS) {
   const ctx = await browser.newContext({
     viewport: { width: vp.width, height: vp.height },
     deviceScaleFactor: 2,
-    isMobile: vp.width < 1024,
-    hasTouch: vp.width < 1024,
+    isMobile: vp.touch,
+    // hasTouch drives `pointer: coarse`, which is what the `coarse:` variant
+    // keys off. Without it the touch viewports would be measured with desktop
+    // tap targets and every touch-only sizing rule would read as absent.
+    hasTouch: vp.touch,
   });
   const page = await ctx.newPage();
 
@@ -174,12 +254,15 @@ for (const vp of VIEWPORTS) {
 
   for (const route of ROUTES) {
     try {
-      await page.goto(BASE + route, { waitUntil: "networkidle", timeout: 45000 });
+      // "load", not "networkidle": with lazy images and the assistant's
+      // connection the network never idles for 500ms on the busiest pages, so
+      // networkidle timed out on exactly the routes worth measuring.
+      await page.goto(BASE + route, { waitUntil: "load", timeout: 45000 });
       // Let scroll-reveal and font swap settle before measuring.
       await page.evaluate(() => window.scrollTo(0, 400));
-      await page.waitForTimeout(450);
+      await page.waitForTimeout(600);
       await page.evaluate(() => window.scrollTo(0, 0));
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
 
       const r = await page.evaluate(audit);
       const issues = [];
@@ -195,7 +278,9 @@ for (const vp of VIEWPORTS) {
         failures++;
         console.log(`  ✗ ${route.padEnd(30)} ${issues.join(" · ")}`);
         r.overflow.forEach((o) => console.log(`      overflow +${o.over}px  <${o.tag}> ${o.cls}`));
-        r.smallTargets.forEach((t) => console.log(`      tap ${t.size}  ${t.tag} "${t.label}"`));
+        r.smallTargets.forEach((t) =>
+          console.log(`      tap ${t.size}  ${t.kind} ${t.tag} "${t.label}"`),
+        );
         r.tinyText.forEach((t) => console.log(`      text ${t.px}px  "${t.text}"`));
         r.collisions.forEach((c) => console.log(`      overlap ${c.area}  ${c.a} ↔ ${c.b}`));
       } else {

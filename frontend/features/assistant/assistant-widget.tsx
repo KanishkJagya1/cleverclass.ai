@@ -8,6 +8,7 @@ import { Drawer } from "vaul";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  BookOpen,
   Check,
   Copy,
   Phone,
@@ -22,9 +23,10 @@ import {
 import { SITE } from "@/constants/catalog";
 import { useCart } from "@/lib/store/cart";
 import { Button } from "@/components/ui/button";
+import { CoverImage } from "@/components/ui/cover-image";
 import { cn, formatPrice } from "@/lib/utils";
 import { useAssistant, type AssistantMessage } from "./use-assistant";
-import type { SearchHit } from "@/types/catalog";
+import type { CartItem, SearchHit } from "@/types/catalog";
 
 /* Context-aware prompts. On a product page the useful question is different
    from the one on the home page, and generic suggestions never get tapped. */
@@ -69,7 +71,7 @@ export function AssistantWidget() {
         <Drawer.Root open={open} onOpenChange={setOpen}>
           <Drawer.Portal>
             <Drawer.Overlay className="glass-veil fixed inset-0 z-[var(--z-overlay)]" />
-            <Drawer.Content className="glass-panel fixed inset-x-0 bottom-0 z-[var(--z-chat)] flex h-[88vh] flex-col !rounded-b-none">
+            <Drawer.Content className="glass-panel panel-solid fixed inset-x-0 bottom-0 z-[var(--z-chat)] flex h-[88vh] flex-col !rounded-b-none">
               <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-[var(--border-2)]" aria-hidden />
               <Drawer.Title className="sr-only">AI Learning Assistant</Drawer.Title>
               <Panel onClose={() => setOpen(false)} />
@@ -81,7 +83,7 @@ export function AssistantWidget() {
           <div
             role="dialog"
             aria-label="AI Learning Assistant"
-            className="glass-panel glass-edge fixed bottom-6 right-6 z-[var(--z-chat)] flex h-[min(38rem,80vh)] w-[25rem] flex-col overflow-hidden"
+            className="glass-panel panel-solid glass-edge fixed bottom-6 right-6 z-[var(--z-chat)] flex h-[min(38rem,80vh)] w-[25rem] flex-col overflow-hidden"
           >
             <Panel onClose={() => setOpen(false)} />
           </div>
@@ -173,7 +175,7 @@ function Panel({ onClose }: { onClose: () => void }) {
           <div className="py-6">
             <p className="text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
               Ask about a book, a syllabus, which medium to choose, shipping or
-              returns. I'll answer from our catalogue and suggest the right
+              returns. I&apos;ll answer from our catalogue and suggest the right
               title.
             </p>
             <ul className="mt-5 space-y-2">
@@ -309,6 +311,30 @@ function Message({
           </ul>
         )}
 
+        {/* The pivot. On a teaching question the assistant gives one short line
+            and then offers the sample — a refusal that recommends is a sale,
+            a refusal that stops is a dead end. */}
+        {message.preview && (
+          <Link
+            href={message.preview.previewHref}
+            className="lift-glow mt-3 flex items-center gap-3 rounded-[var(--radius-md)] border border-[var(--brand-base)] bg-[var(--brand-soft)] p-3"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-1)] text-[color:var(--text-brand)]">
+              <BookOpen className="size-4" aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[length:var(--text-xs)] font-semibold text-[color:var(--text-brand)]">
+                {message.preview.freePageCount
+                  ? `Read ${message.preview.freePageCount} pages free`
+                  : "Read the free sample"}
+              </span>
+              <span className="clamp-2 block text-[length:var(--text-2xs)] text-[color:var(--text-2)]">
+                {message.preview.title}
+              </span>
+            </span>
+          </Link>
+        )}
+
         {message.error && (
           <a
             href={`tel:${SITE.phones[0]}`}
@@ -401,13 +427,33 @@ function ProductCardInline({ hit }: { hit: SearchHit }) {
   const add = useCart((s) => s.add);
   const [added, setAdded] = React.useState(false);
 
+  /**
+   * A cart line needs the class and medium of the *actual* book. This used to
+   * hardcode classId "10" / medium "marathi" for every product the assistant
+   * recommended, so a parent asking for a Class 7 English guide got a Class 10
+   * Marathi line in their cart — on a business whose largest support cost is
+   * wrong-medium orders.
+   *
+   * When the backend supplies them we add directly; when it does not we link to
+   * the product page instead. One extra click beats a wrong book.
+   */
+  const canAddDirectly =
+    hit.price !== undefined && Boolean(hit.classId) && Boolean(hit.medium);
+
   return (
     <div className="surface-card flex items-center gap-3 p-2.5">
       <Link
         href={hit.href}
         className="relative aspect-cover w-10 shrink-0 overflow-hidden rounded-[var(--radius-xs)] bg-[var(--surface-0)]"
       >
-        {hit.image && <Image src={hit.image} alt="" fill sizes="40px" className="object-cover" />}
+        <CoverImage
+          src={hit.image}
+          alt=""
+          title={hit.title}
+          titleMr={hit.titleMr}
+          slug={hit.slug}
+          sizes="40px"
+        />
       </Link>
       <div className="min-w-0 flex-1">
         <Link href={hit.href} className="block">
@@ -421,27 +467,32 @@ function ProductCardInline({ hit }: { hit: SearchHit }) {
           </p>
         )}
       </div>
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => {
-          if (hit.price === undefined) return;
-          add({
-            slug: hit.slug,
-            format: hit.format,
-            title: hit.title,
-            titleMr: hit.titleMr,
-            price: hit.price,
-            image: hit.image ?? "",
-            classId: "10",
-            medium: "marathi",
-          });
-          setAdded(true);
-        }}
-        disabled={added}
-      >
-        {added ? <Check className="size-3.5" aria-hidden /> : "Add"}
-      </Button>
+      {canAddDirectly ? (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            add({
+              slug: hit.slug,
+              format: hit.format,
+              title: hit.title,
+              titleMr: hit.titleMr,
+              price: hit.price!,
+              image: hit.image ?? "",
+              classId: hit.classId as CartItem["classId"],
+              medium: hit.medium as CartItem["medium"],
+            });
+            setAdded(true);
+          }}
+          disabled={added}
+        >
+          {added ? <Check className="size-3.5" aria-hidden /> : "Add"}
+        </Button>
+      ) : (
+        <Button size="sm" variant="secondary" asChild>
+          <Link href={hit.href}>View</Link>
+        </Button>
+      )}
     </div>
   );
 }

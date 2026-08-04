@@ -1,6 +1,9 @@
-/* Order matters: tokens define the theme, glass consumes it, base applies it. */
+/* Order matters: tokens define the theme, glass and motion consume it, base
+   applies it. motion.css comes last of the three because its utilities read the
+   elevation and gradient tokens. */
 @import "../styles/tokens.css";
 @import "../styles/glass.css";
+@import "../styles/motion.css";
 
 @layer base {
   * {
@@ -68,7 +71,13 @@
     left: 0.75rem;
     top: -100%;
     z-index: var(--z-toast);
-    padding: 0.625rem 1rem;
+    /* Measured 43px — one pixel under the 44px minimum, which is the most
+       annoying possible way to fail an audit. Sized explicitly instead of
+       relying on padding plus line-height arithmetic. */
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 1rem;
     border-radius: var(--radius-md);
     background-color: var(--brand-base);
     color: var(--brand-on);
@@ -117,6 +126,29 @@
     padding-block: 0.375rem;
   }
 
+  /* …but 0.375rem only reaches ~33px, and the audit measured exactly that on
+     every footer and mega-menu link. On touch, go the rest of the way to 44px.
+     Kept off pointer devices so a footer column does not become a tower. */
+  @media (pointer: coarse) {
+    footer nav a,
+    .link-list a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+      padding-block: 0.25rem;
+    }
+
+    /* Phone and email links are actions, not prose — tapping one starts a call.
+       They measured 21px in the footer contact block and the FAQ copy, which
+       is under even the 24px AA floor. */
+    a[href^="tel:"],
+    a[href^="mailto:"] {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+    }
+  }
+
   /* Pill filters and chips: 44px minimum on touch, natural size once a
      pointer is available. */
   @media (pointer: coarse) {
@@ -125,6 +157,28 @@
       display: inline-flex;
       align-items: center;
     }
+  }
+}
+
+@layer components {
+  /* Native selects in the admin forms. A styled listbox would look tidier and
+     behave worse — the platform control gets keyboard search, mobile pickers
+     and screen-reader support for free. */
+  .admin-select {
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-1);
+    background-color: var(--surface-1);
+    padding-inline: 0.875rem;
+    font-size: var(--text-base);
+    color: var(--text-1);
+  }
+  .admin-select:focus {
+    outline: none;
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus-ring) 25%, transparent);
   }
 }
 

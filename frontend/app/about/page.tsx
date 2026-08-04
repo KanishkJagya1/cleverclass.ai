@@ -50,20 +50,25 @@ export default function AboutPage() {
 
       {/* Statistics band */}
       <Section band="brand-dark" spacing="sm">
-        <ul className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+        {/* gap-6 until sm: at 320px two columns with gap-8 leave 132px each,
+            and "1,75,960+" at text-4xl measures 147px. Grid items default to
+            min-width:auto, so the column grew to fit its content and took the
+            whole page sideways with it. The number also steps down one size on
+            the narrowest screens. */}
+        <ul className="grid grid-cols-2 gap-6 sm:gap-8 lg:grid-cols-4">
           {[
             { to: 27, suffix: "", label: "Years publishing" },
             { to: 325, suffix: "+", label: "Titles in print" },
             { to: 1400, suffix: "+", label: "Schools & retailers" },
             { to: 180000, suffix: "+", label: "Students served" },
           ].map((s, i) => (
-            <RevealItem key={s.label} index={i}>
-              <li>
-                <p className="font-[family-name:var(--font-display)] text-[length:var(--text-4xl)] font-bold text-white">
+            <RevealItem key={s.label} index={i} as="li" className="min-w-0">
+              <div className="min-w-0">
+                <p className="font-[family-name:var(--font-display)] text-[length:var(--text-3xl)] font-bold text-[color:var(--color-ink-50)] sm:text-[length:var(--text-4xl)]">
                   <CountUp to={s.to} suffix={s.suffix} />
                 </p>
                 <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--color-ink-400)]">{s.label}</p>
-              </li>
+              </div>
             </RevealItem>
           ))}
         </ul>
@@ -74,8 +79,8 @@ export default function AboutPage() {
         <SectionHeader eyebrow="Our journey" title="From one guide to a catalogue" />
         <ol className="relative ml-3 border-l border-[var(--border-1)]">
           {TIMELINE.map((t, i) => (
-            <RevealItem key={t.year} index={i}>
-              <li className="relative pb-10 pl-8 last:pb-0">
+            <RevealItem key={t.year} index={i} as="li">
+              <div className="relative pb-10 pl-8 last:pb-0">
                 <span
                   aria-hidden
                   className="absolute -left-[5px] top-1.5 size-2.5 rounded-full bg-[var(--brand-base)] ring-4 ring-[var(--surface-1)]"
@@ -89,7 +94,7 @@ export default function AboutPage() {
                 <p className="mt-2 max-w-xl text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                   {t.body}
                 </p>
-              </li>
+              </div>
             </RevealItem>
           ))}
         </ol>
@@ -124,8 +129,8 @@ export default function AboutPage() {
 
         <ul className="mt-8 grid gap-5 md:grid-cols-3">
           {VALUES.map((v, i) => (
-            <RevealItem key={v.title} index={i} className="h-full">
-              <li className="surface-card h-full p-6">
+            <RevealItem key={v.title} index={i} className="h-full" as="li">
+              <div className="surface-card h-full p-6">
                 <v.icon className="size-5 text-[color:var(--brand-base)]" aria-hidden />
                 <h3 className="mt-4 text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
                   {v.title}
@@ -133,7 +138,7 @@ export default function AboutPage() {
                 <p className="mt-2 text-[length:var(--text-sm)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
                   {v.body}
                 </p>
-              </li>
+              </div>
             </RevealItem>
           ))}
         </ul>

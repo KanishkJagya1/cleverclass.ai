@@ -1,0 +1,215 @@
+/* ==========================================================================
+   Scroll-driven motion.
+   ==========================================================================
+
+   Everything here runs on CSS scroll timelines — no JS, no scroll listener, no
+   IntersectionObserver. Three reasons that matters on this site:
+
+   1. It runs on the compositor. The audience is on ₹12,000 Androids, and a JS
+      scroll handler *plus* backdrop-filter on a sticky nav is exactly the
+      combination that drops frames.
+   2. It costs zero client bundle. Every <Reveal> previously pulled motion/react
+      into whichever section used it; these are server components.
+   3. It composes with lenis, which drives native scroll position rather than
+      transforming a wrapper — so `view()` and `scroll()` track it correctly.
+
+   PROGRESSIVE ENHANCEMENT IS THE CONTRACT.
+   Elements are styled in their FINAL state by default and the animation only
+   plays where `animation-timeline` is supported. This is the opposite of the
+   usual `opacity: 0` + JS pattern: if the animation never runs — old browser,
+   JS disabled, reduced motion, low-end device — the page is fully readable
+   rather than invisible. Never add `opacity: 0` as a base style here.
+
+   Three gates, applied uniformly rather than per component:
+     · prefers-reduced-motion: reduce   -> everything static
+     · :root[data-perf="low"]           -> parallax static (device probe)
+     · pointer: coarse                  -> pointer-driven effects off
+   -------------------------------------------------------------------------- */
+
+@layer utilities {
+  @keyframes cc-reveal-up {
+    from {
+      opacity: 0;
+      translate: 0 var(--reveal-y, 16px);
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes cc-parallax-y {
+    from { translate: 0 var(--px-from); }
+    to   { translate: 0 var(--px-to); }
+  }
+
+  @keyframes cc-stack-in {
+    from { opacity: 0.55; scale: 0.94; }
+    to   { opacity: 1;    scale: 1; }
+  }
+
+  @keyframes cc-progress {
+    from { transform: scaleX(0); }
+    to   { transform: scaleX(1); }
+  }
+
+  @keyframes cc-marquee {
+    from { translate: 0 0; }
+    to   { translate: -50% 0; }
+  }
+}
+
+@supports (animation-timeline: view()) {
+  /* Entrance. `both` so the element holds its start state until it enters and
+     its end state after — without it the element snaps back on scroll-up. */
+  [data-reveal] {
+    animation: cc-reveal-up var(--duration-reveal) var(--ease-out-expo) both;
+    animation-timeline: view();
+    animation-range: entry 8% cover 26%;
+  }
+
+  /* Depth. Only ever `translate` — never top/margin/height, which would
+     invalidate layout on every frame and move the LCP element. */
+  [data-parallax] {
+    animation: cc-parallax-y linear both;
+    animation-timeline: view();
+    animation-range: cover;
+    will-change: translate;
+  }
+  [data-parallax="1"] { --px-from: var(--px-depth-1);   --px-to: calc(-1 * var(--px-depth-1)); }
+  [data-parallax="2"] { --px-from: var(--px-depth-2);   --px-to: calc(-1 * var(--px-depth-2)); }
+  [data-parallax="3"] { --px-from: var(--px-depth-3);   --px-to: calc(-1 * var(--px-depth-3)); }
+  [data-parallax="max"] { --px-from: var(--px-depth-max); --px-to: calc(-1 * var(--px-depth-max)); }
+
+  [data-stack] > * {
+    animation: cc-stack-in var(--duration-slow) var(--ease-standard) both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 34%;
+  }
+
+  [data-scroll-progress] {
+    animation: cc-progress linear both;
+    animation-timeline: scroll(root block);
+    transform-origin: 0 50%;
+  }
+}
+
+/* A parallax scene: contains its layers' paint so a translating child can never
+   trigger layout on the page, and establishes the positioning context. */
+[data-parallax-scene] {
+  position: relative;
+  isolation: isolate;
+  contain: layout paint;
+}
+
+/* Marquee needs no scroll timeline — it is time-based, and deliberately the
+   only animation on the site that is. */
+[data-marquee] {
+  display: flex;
+  width: max-content;
+  animation: cc-marquee var(--marquee-duration, 40s) linear infinite;
+}
+[data-marquee]:hover,
+[data-marquee]:focus-within {
+  animation-play-state: paused;
+}
+
+/* --------------------------------------------------------------------------
+   Gate 1 — reduced motion. Static, and crucially still VISIBLE: `opacity: 1`
+   is what stops a reduced-motion user from getting a blank page.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-parallax],
+  [data-stack] > *,
+  [data-marquee],
+  [data-scroll-progress] {
+    animation: none !important;
+    translate: none !important;
+    scale: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Gate 2 — low-capability devices, flagged by the probe in providers/index.tsx
+   (deviceMemory / hardwareConcurrency / saveData). Reveals are cheap enough to
+   keep; continuous parallax is what costs frames.
+   -------------------------------------------------------------------------- */
+:root[data-perf="low"] [data-parallax],
+:root[data-perf="low"] [data-stack] > * {
+  animation: none !important;
+  translate: none !important;
+  scale: none !important;
+  opacity: 1 !important;
+}
+:root[data-perf="low"] [data-marquee] {
+  animation-play-state: paused;
+}
+
+/* --------------------------------------------------------------------------
+   Gate 3 — touch. Pointer-driven effects have no meaning without a pointer,
+   and a hover glow that latches on tap looks broken. Scroll parallax SURVIVES
+   here: it is the one motion that is genuinely touch-native.
+   -------------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .lift-glow:hover,
+  .lift-glow:focus-within {
+    box-shadow: var(--elev-1);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Shared utilities that consume the new tokens
+   -------------------------------------------------------------------------- */
+@layer utilities {
+  /* The hovered-card treatment. Transitions only shadow and translate, both
+     compositor-friendly. */
+  .lift-glow {
+    transition:
+      box-shadow var(--duration-base) var(--ease-standard),
+      translate var(--duration-base) var(--ease-standard);
+  }
+  @media (hover: hover) {
+    .lift-glow:hover,
+    .lift-glow:focus-within {
+      box-shadow: var(--elev-glow);
+      translate: 0 -2px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .lift-glow:hover,
+    .lift-glow:focus-within {
+      translate: none;
+    }
+  }
+
+  .text-grad-brand {
+    background-image: var(--grad-brand);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* A sweep of light across a surface on hover. Decorative only. */
+  .sheen {
+    position: relative;
+    overflow: hidden;
+  }
+  .sheen::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--grad-sheen);
+    translate: -100% 0;
+    transition: translate var(--duration-slow) var(--ease-standard);
+    pointer-events: none;
+  }
+  @media (hover: hover) {
+    .sheen:hover::after { translate: 100% 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheen::after { display: none; }
+  }
+}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { catalog } from "@/lib/data";
-import { SEED_BOOKS } from "@/lib/data/seed";
 import { SUBJECTS } from "@/constants/catalog";
 import { Hero } from "@/components/home/hero";
 import {
@@ -35,18 +34,23 @@ export const metadata: Metadata = {
 export const revalidate = 43200;
 
 export default async function HomePage() {
-  const [featured, bestSellers, newArrivals, combos] = await Promise.all([
+  const [featured, bestSellers, newArrivals, combos, facets] = await Promise.all([
     catalog.getFeatured(5),
     catalog.getBestSellers(8),
     catalog.getNewArrivals(10),
     catalog.getCombos({ classId: "10", medium: "marathi", perPage: 1 }),
+    catalog.getFacets(),
   ]);
 
   const heroCombo = combos.items[0] ? await catalog.getCombo(combos.items[0].slug) : null;
 
-  // Subject counts are computed once at build, not per request.
+  // Subject counts come from the catalogue facets, which are computed against
+  // the same filters the shop page uses. This previously counted SEED_BOOKS
+  // directly, so the home page advertised generated numbers that no longer
+  // matched anything the shop would return.
+  const bySubject = new Map(facets.subject.map((f) => [f.value, f.count]));
   const subjectCounts = Object.fromEntries(
-    SUBJECTS.map((s) => [s, SEED_BOOKS.filter((b) => b.subject === s).length]),
+    SUBJECTS.map((s) => [s, bySubject.get(s) ?? 0]),
   );
 
   const faqSchema = {

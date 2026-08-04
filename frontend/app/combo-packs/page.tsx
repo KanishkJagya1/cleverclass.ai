@@ -36,9 +36,13 @@ export default async function ComboPacksPage({
     await Promise.all(page.items.map((c) => catalog.getCombo(c.slug)))
   ).filter((c): c is ComboResolved => Boolean(c));
 
-  const filtered = sp.class
-    ? resolved.filter((c) => c.classId === sp.class)
-    : resolved;
+  // `stream` was declared in the params type and then never read, so the five
+  // "choose your stream" cards and four mega-menu entries linking to
+  // ?stream=science-pcm all returned the unfiltered list. Combos now carry a
+  // stream (inferred from their member books at import), so this filters.
+  const filtered = resolved.filter(
+    (c) => (!sp.class || c.classId === sp.class) && (!sp.stream || c.stream === sp.stream),
+  );
 
   const byBand = BANDS.map((band) => ({
     ...band,
@@ -55,14 +59,14 @@ export default async function ComboPacksPage({
           <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[var(--tracking-wide)] text-[color:var(--color-indigo-300)]">
             Save 15–30%
           </p>
-          <h1 className="mt-4 text-[length:var(--text-4xl)] text-white">
+          <h1 className="mt-4 text-[length:var(--text-4xl)] text-[color:var(--color-ink-50)]">
             One pack. Every subject. One delivery.
           </h1>
           <p className="mt-4 text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--color-ink-300)]">
             Combo packs bundle every core subject for a class into a single
             order — matched editions, one shipment, and free shipping included.
             Across the catalogue they save families{" "}
-            <span className="tabular font-semibold text-white">
+            <span className="tabular font-semibold text-[color:var(--color-ink-50)]">
               ₹{totalSaving.toLocaleString("en-IN")}
             </span>{" "}
             against buying title by title.
@@ -75,7 +79,7 @@ export default async function ComboPacksPage({
         <div className="mb-8 flex flex-wrap gap-2">
           <Link
             href="/combo-packs"
-            aria-current={!sp.class ? "true" : undefined}
+            aria-current={!sp.class ? "page" : undefined}
             className={cn(
               "chip-tap rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
               !sp.class
@@ -89,7 +93,7 @@ export default async function ComboPacksPage({
             <Link
               key={c.id}
               href={`/combo-packs?class=${c.id}`}
-              aria-current={sp.class === c.id ? "true" : undefined}
+              aria-current={sp.class === c.id ? "page" : undefined}
               className={cn(
                 "chip-tap rounded-full border px-4 py-2 text-[length:var(--text-sm)] font-medium transition-colors",
                 sp.class === c.id

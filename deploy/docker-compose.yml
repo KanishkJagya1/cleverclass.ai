@@ -1,0 +1,119 @@
+# CleverClass.AI — its OWN compose project.
+#
+# `name:` is what keeps this stack and the LMS stack apart. Compose scopes every
+# operation to its project, so `docker compose down` here physically cannot
+# touch lms-deploy-*. The LMS files are never edited by this deployment.
+#
+# Ports: 8050 public, 8051 admin. The LMS keeps 80 and 8080.
+name: cleverclass
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  api:
+    build:
+      context: ../cleverclass.ai/backend
+    # Explicit name so it reads as "cc-api" next to lms-engine in the existing
+    # Dozzle at :8080/logs — which picks up every container on the host, so
+    # these appear there with no change to the LMS stack.
+    container_name: cc-api
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - DB_PATH=/db/cleverclass.db
+      - MEDIA_ROOT=/media
+      - CHROMA_PATH=/chroma
+      - KNOWLEDGE_DIR=/app/knowledge
+      - LLM_PROVIDER=gemini
+      - GEMINI_API_KEY=${GEMINI_API_KEY:?set GEMINI_API_KEY in .env}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-flash-latest}
+      - EMBEDDING_PROVIDER=sentence-transformers
+      - VECTOR_STORE=chroma
+      - API_KEY=${BACKEND_API_KEY:-}
+      - ADMIN_SESSION_SECRET=${ADMIN_SESSION_SECRET:?set ADMIN_SESSION_SECRET in .env}
+      # Plain HTTP by an explicit decision. Flip to true the moment TLS is in
+      # front, or the browser will refuse to send the session cookie at all.
+      - COOKIE_SECURE=${COOKIE_SECURE:-false}
+      - FRONTEND_REVALIDATE_URL=http://cc-web:3000/api/revalidate
+      - FRONTEND_REVALIDATE_SECRET=${REVALIDATE_SECRET:?set REVALIDATE_SECRET in .env}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://34.131.254.234:8050}
+      - MAX_PDF_MB=200
+    volumes:
+      - /opt/cleverclass/db:/db
+      - /opt/cleverclass/media:/media
+      - /opt/cleverclass/chroma:/chroma
+      # The embedding model lives here, NOT in the image — so a dependency
+      # change does not re-download 90 MB.
+      - /opt/cleverclass/cache:/cache
+    expose: ["8000"]
+    ports:
+      # Bound to LOOPBACK ONLY — not reachable from outside the host.
+      #
+      # It exists so the `web` image can be built against a running API: the
+      # Next build prerenders pages and calls generateStaticParams, and a build
+      # container is not on the compose network, so it cannot resolve
+      # "cc-api". It reaches this through the docker0 gateway instead.
+      - "127.0.0.1:18000:8000"
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          # Hard cap. This box also runs the LMS stack and a paper-checker;
+          # torch resident plus Chroma sits around 900 MB, and the limit is what
+          # stops a bad day here becoming a bad day for everything else.
+          memory: 1600M
+
+  web:
+    build:
+      context: ../cleverclass.ai/frontend
+      # HOST NETWORKING, for the build only.
+      #
+      # The Next build prerenders pages, so it needs a live API. A normal build
+      # container is on neither the compose network (cannot resolve "cc-api")
+      # nor the host loopback (cannot reach the 127.0.0.1:18000 publish, which
+      # is bound to loopback deliberately so nothing outside this host can see
+      # it). Host networking during the build resolves both at once, and costs
+      # nothing at runtime — the running container still uses the compose
+      # network and talks to cc-api by name.
+      network: host
+      args:
+        - CATALOG_API_URL=http://127.0.0.1:18000
+    container_name: cc-web
+    environment:
+      - NODE_ENV=production
+      - CATALOG_SOURCE=api
+      - CATALOG_API_URL=http://cc-api:8000
+      - BACKEND_URL=http://cc-api:8000
+      - BACKEND_API_KEY=${BACKEND_API_KEY:-}
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET:?}
+      - NEXT_PUBLIC_SITE_URL=${SITE_URL:-http://34.131.254.234:8050}
+    depends_on:
+      api:
+        condition: service_healthy
+    expose: ["3000"]
+    restart: unless-stopped
+    logging: *default-logging
+    deploy:
+      resources:
+        limits:
+          memory: 700M
+
+  proxy:
+    image: nginx:alpine
+    container_name: cc-proxy
+    ports:
+      - "8050:8050"   # public storefront
+      - "8051:8051"   # admin, behind HTTP Basic auth
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+    depends_on:
+      - api
+      - web
+    restart: unless-stopped
+    logging: *default-logging

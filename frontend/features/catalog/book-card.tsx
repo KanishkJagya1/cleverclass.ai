@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { classById, mediumById } from "@/constants/catalog";
 import { TiltCard } from "@/components/motion";
+import { CoverImage } from "@/components/ui/cover-image";
 import { Badge, Rating, Skeleton } from "@/components/ui/primitives";
 import { AddToCartButton, PriceBlock, WishlistButton } from "./atoms";
-import { cn, discountPct } from "@/lib/utils";
+import { cn, discountPct, frontCover } from "@/lib/utils";
 import type { Book } from "@/types/catalog";
 
 export type BookCardVariant = "grid" | "list" | "compact" | "rank";
@@ -38,27 +38,42 @@ export function BookCard({
   const medium = mediumById(book.medium);
   const off = discountPct(book.price, book.mrp);
   const href = `/shop/${book.slug}`;
-  const cover = book.images[0];
+  // Most of the catalogue has no cover file yet, so every variant goes through
+  // CoverImage, which draws a designed placeholder instead of a broken box.
+  const cover = frontCover(book.images);
+  const coverProps = {
+    src: cover?.src,
+    alt: cover?.alt ?? book.title,
+    title: book.title,
+    titleMr: book.titleMr,
+    series: book.series,
+    slug: book.slug,
+  };
 
   /* ---------------------------------------------------------------- rank -- */
   if (variant === "rank") {
     return (
       <li
         className={cn(
-          "group flex items-center gap-4 border-b border-[var(--border-1)] py-3.5 last:border-0",
+          // gap-3 until sm: at 320px this row has to fit a rank number, a
+          // cover, a title, a price and a 44px add button inside a card with
+          // 20px padding. With gap-4 the button was crushed to 12px and the
+          // whole document scrolled sideways.
+          "group flex items-center gap-3 border-b border-[var(--border-1)] py-3.5 last:border-0 sm:gap-4",
           className,
         )}
       >
         <span
-          className="tabular w-8 shrink-0 text-right font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[color:var(--text-3)] transition-colors group-hover:text-[color:var(--brand-base)]"
+          // The rank number is decorative (aria-hidden) and the first thing to
+          // go when width is scarce — the ordering is still conveyed by the
+          // surrounding <ol>.
+          className="tabular hidden w-8 shrink-0 text-right font-[family-name:var(--font-display)] text-[length:var(--text-xl)] font-bold text-[color:var(--text-3)] transition-colors group-hover:text-[color:var(--brand-base)] xs:block"
           aria-hidden
         >
           {String((index ?? 0) + 1).padStart(2, "0")}
         </span>
         <Link href={href} className="relative aspect-cover w-11 shrink-0 overflow-hidden rounded-[var(--radius-xs)] bg-[var(--surface-0)]">
-          {cover && (
-            <Image src={cover.src} alt="" fill sizes="44px" className="object-cover" />
-          )}
+          <CoverImage {...coverProps} alt="" sizes="44px" />
         </Link>
         <div className="min-w-0 flex-1">
           <Link href={href} className="block">
@@ -72,9 +87,13 @@ export function BookCard({
         </div>
         <Rating value={book.rating} size={12} className="hidden sm:flex" />
         <PriceBlock price={book.price} mrp={book.mrp} size="sm" className="shrink-0" />
-        <AddToCartButton item={book} size="icon-sm" variant="secondary" aria-label={`Add ${book.title} to cart`}>
-          <span aria-hidden>+</span>
-        </AddToCartButton>
+        <AddToCartButton
+          item={book}
+          size="icon-sm"
+          variant="secondary"
+          className="shrink-0"
+          aria-label={`Add ${book.title} to cart`}
+        />
       </li>
     );
   }
@@ -84,9 +103,7 @@ export function BookCard({
     return (
       <article className={cn("surface-card flex gap-5 p-4 sm:p-5", className)}>
         <Link href={href} className="relative aspect-cover w-24 shrink-0 overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-0)] sm:w-32">
-          {cover && (
-            <Image src={cover.src} alt={cover.alt} fill sizes="(max-width: 640px) 96px, 128px" className="object-cover" />
-          )}
+          <CoverImage {...coverProps} sizes="(max-width: 640px) 96px, 128px" />
         </Link>
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex flex-wrap items-center gap-2">
@@ -127,9 +144,7 @@ export function BookCard({
     return (
       <Link href={href} className={cn("group flex w-36 shrink-0 flex-col gap-2.5", className)}>
         <div className="relative aspect-cover overflow-hidden rounded-[var(--radius-md)] bg-[var(--surface-0)] shadow-[var(--shadow-sm)] transition-shadow group-hover:shadow-[var(--shadow-lg)]">
-          {cover && (
-            <Image src={cover.src} alt={cover.alt} fill sizes="144px" className="object-cover" />
-          )}
+          <CoverImage {...coverProps} sizes="144px" />
         </div>
         <p className="clamp-2 text-[length:var(--text-sm)] font-medium leading-snug text-[color:var(--text-1)]">
           {book.title}
@@ -144,16 +159,12 @@ export function BookCard({
     <TiltCard max={6} className={cn("h-full", className)}>
       <article className="surface-card group flex h-full flex-col overflow-hidden">
         <div className="relative aspect-cover overflow-hidden bg-[var(--surface-0)]">
-          {cover && (
-            <Image
-              src={cover.src}
-              alt={cover.alt}
-              fill
-              priority={priority}
-              sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
-              className="object-cover transition-transform duration-[var(--duration-slow)] ease-[var(--ease-standard)] group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
-            />
-          )}
+          <CoverImage
+            {...coverProps}
+            priority={priority}
+            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 22vw"
+            className="transition-transform duration-[var(--duration-slow)] ease-[var(--ease-standard)] group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
+          />
 
           {/* Spine shadow. A flat cover JPEG on a white card reads as a
               database record; a 2px gradient at the binding edge reads as a
@@ -203,9 +214,7 @@ export function BookCard({
                 size="icon-sm"
                 variant="secondary"
                 aria-label={`Add ${book.title} to cart`}
-              >
-                <span className="sr-only">Add to cart</span>
-              </AddToCartButton>
+              />
             </div>
           </div>
         </div>

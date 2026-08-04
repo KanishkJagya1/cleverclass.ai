@@ -83,7 +83,7 @@ export function WishlistButton({
         "grid place-items-center rounded-full transition-all duration-[var(--duration-fast)]",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]",
         floating
-          ? "glass-panel !rounded-full size-9 !border-[var(--border-glass)] hover:scale-105 motion-reduce:hover:scale-100"
+          ? "glass-panel !rounded-full size-9 coarse:size-11 !border-[var(--border-glass)] hover:scale-105 motion-reduce:hover:scale-100"
           : "size-11 hover:bg-[var(--surface-0)]",
         className,
       )}
@@ -132,6 +132,11 @@ export function AddToCartButton({
   const add = useCart((s) => s.add);
   const [added, setAdded] = React.useState(false);
 
+  // On an icon-sized button there is no room for a word next to the glyph, so
+  // the confirmation is the tick alone and the label goes to screen readers.
+  // Rendering "Added" here spilled the text outside a 36px box.
+  const iconOnly = typeof props.size === "string" && props.size.startsWith("icon");
+
   // The confirmation reverts after 1.6s. A button that stays "Added" forever
   // can't be used to add a second copy, which people genuinely try to do.
   React.useEffect(() => {
@@ -162,15 +167,23 @@ export function AddToCartButton({
       {added ? (
         <>
           <Check className="size-4" aria-hidden />
-          Added
+          {iconOnly ? <span className="sr-only">Added</span> : "Added"}
         </>
       ) : (
-        children ?? (
-          <>
-            <ShoppingBag className="size-4" aria-hidden />
-            Add to cart
-          </>
-        )
+        // The icon is rendered here rather than left to each caller. Callers
+        // that passed children for the LABEL only — an `sr-only` span on the
+        // card grid — knocked out this whole fallback and shipped a button that
+        // was visually empty: a white square containing nothing but
+        // screen-reader text. Now the glyph is unconditional and only the label
+        // is the caller's business.
+        <>
+          <ShoppingBag className="size-4" aria-hidden />
+          {iconOnly ? (
+            <span className="sr-only">Add to cart</span>
+          ) : (
+            children ?? "Add to cart"
+          )}
+        </>
       )}
       {/* Announced to screen readers without changing the visible label twice. */}
       <span aria-live="polite" className="sr-only">

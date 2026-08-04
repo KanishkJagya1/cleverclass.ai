@@ -1,13 +1,18 @@
 import type { MetadataRoute } from "next";
 import { catalog } from "@/lib/data";
 import { CLASSES, SERIES } from "@/constants/catalog";
-import { SEED_KEY_NOTES } from "@/lib/data/seed";
 import { absoluteUrl, slugify } from "@/lib/utils";
 
 /**
  * ~380 URLs. Priorities are deliberate rather than uniform: class hubs are the
  * primary organic landing pages, so they outrank individual product pages.
+ *
+ * Cached for a day. Without this the route re-reads the entire catalogue on
+ * every crawler hit, and Googlebot fetches a sitemap far more often than the
+ * catalogue actually changes.
  */
+export const revalidate = 86400;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
@@ -26,15 +31,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/terms", priority: 0.2, freq: "yearly" as const },
   ];
 
-  const [bookSlugs, comboSlugs] = await Promise.all([
+  const [bookSlugs, comboSlugs, keyNotes] = await Promise.all([
     catalog.getAllBookSlugs(),
     catalog.getAllComboSlugs(),
+    // Read through the adapter rather than importing the seed module, so the
+    // sitemap describes the live catalogue instead of the generated one.
+    catalog.getKeyNotes(),
   ]);
 
   // Key-note detail routes are class+subject, deduped across mediums.
   const noteRoutes = [
-    ...new Set(SEED_KEY_NOTES.map((n) => `/key-notes/${n.classId}/${slugify(n.subject)}`)),
+    ...new Set(keyNotes.map((n) => `/key-notes/${n.classId}/${slugify(n.subject)}`)),
   ];
+  const noteClassRoutes = [...new Set(keyNotes.map((n) => `/key-notes/${n.classId}`))];
 
   return [
     ...staticRoutes.map((r) => ({
@@ -67,7 +76,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     })),
-    ...[...new Set(SEED_KEY_NOTES.map((n) => `/key-notes/${n.classId}`))].map((path) => ({
+    ...noteClassRoutes.map((path) => ({
       url: absoluteUrl(path),
       lastModified: now,
       changeFrequency: "monthly" as const,

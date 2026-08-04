@@ -61,6 +61,17 @@ export interface Book extends Money {
   /** Slugs of the same title in other mediums — powers the medium switch. */
   variants?: string[];
   related?: string[];
+
+  /**
+   * How many pages of this book are readable for free, and how many it has in
+   * total. Present ONLY when a PDF has been uploaded and free ranges set.
+   *
+   * Absent means there is no sample, and the preview CTA must not render — the
+   * old `previewPages` array pointed at image files that never existed, so
+   * every book advertised a sample that opened a modal of broken images.
+   */
+  freePageCount?: number;
+  totalPages?: number;
 }
 
 export interface Combo extends Money {
@@ -208,4 +219,19 @@ export interface SearchHit {
   price?: number;
   /** Present only on semantic results from the AI backend (D8). */
   score?: number;
+
+  /**
+   * The real class and medium of this product.
+   *
+   * Required for a correct cart line. The assistant used to invent them, which
+   * put the wrong medium in the cart — the single most expensive support issue
+   * this business has. Consumers MUST link to the product page rather than add
+   * to cart when these are absent; never substitute a default.
+   */
+  classId?: ClassId;
+  medium?: Medium;
+  mrp?: number;
+  /** Deep link into the free-sample reader, when the book has free pages. */
+  previewHref?: string;
+  freePageCount?: number;
 }

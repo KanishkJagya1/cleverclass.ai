@@ -40,7 +40,7 @@ export function MobileBottomNav() {
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="flex h-[var(--bottom-nav-h)] items-stretch">
+      <ul className="flex h-[var(--bottom-nav-h)] items-stretch overflow-hidden">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = href !== "__search" && (href === "/" ? pathname === "/" : pathname.startsWith(href));
           const inner = (
@@ -53,17 +53,26 @@ export function MobileBottomNav() {
                   </span>
                 )}
               </span>
-              <span className="text-[length:var(--text-2xs)] font-medium">{label}</span>
+              {/* max-w-full + truncate: the label is what sets each tab's
+                  min-content width, so on a 320px screen five tabs demanded
+                  more than the viewport and the whole page scrolled sideways.
+                  The icon still identifies the tab if a label ever clips. */}
+              <span className="max-w-full truncate px-0.5 text-[length:var(--text-2xs)] font-medium">
+                {label}
+              </span>
             </>
           );
           const cls = cn(
-            "flex h-full w-full flex-col items-center justify-center gap-1",
+            "flex h-full w-full min-w-11 flex-col items-center justify-center gap-1",
             "transition-colors duration-[var(--duration-fast)]",
             active ? "text-[color:var(--brand-base)]" : "text-[color:var(--text-3)]",
           );
 
+          // min-w-0 so flex-1 can actually shrink these below their label
+          // width — without it a flex item refuses to go under min-content and
+          // the row overflows instead of dividing the space.
           return (
-            <li key={href} className="flex-1">
+            <li key={href} className="min-w-0 flex-1">
               {href === "__search" ? (
                 <button className={cls} onClick={() => setOpen(true)} aria-label="Search">
                   {inner}

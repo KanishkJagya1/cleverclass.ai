@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { POLICIES } from "../policy-content";
+import { notFound } from "next/navigation";
 
 export function generateStaticParams() {
   return Object.keys(POLICIES).map((policy) => ({ policy }));

@@ -2,6 +2,28 @@
 
 Swapping to FAISS, pgvector or Pinecone means writing one class that satisfies
 `VectorStore`. Nothing in the RAG pipeline knows which one it is talking to.
+
+COLLECTIONS
+-----------
+Everything is addressed by collection name, and the sales bot depends on that
+separation being physical rather than a metadata filter:
+
+    cc_policy      company, shipping and returns copy
+    cc_marketing   admin-authored sales copy and chapter lists
+    cc_samples     text from FREE book pages only
+
+A metadata filter is a decision made at query time, and a query-time decision
+is one a future bug can forget. A separate collection is a different object that
+the wrong code path cannot reach even by accident.
+
+DELETE IS LOAD-BEARING
+----------------------
+`delete()` is not a convenience. When an admin narrows a book's free range from
+1-20 to 1-5, pages 6-20 must leave the index. Without it that text stays
+queryable forever and the "the bot can only see free pages" guarantee is false
+the first time anyone edits a range. This is the single highest-risk correctness
+requirement in the feature, and `tests/test_corpus_isolation.py` exists to prove
+it holds.
 """
 
 from __future__ import annotations
@@ -14,6 +36,12 @@ from app.config import settings
 from app.embeddings.provider import EmbeddingProvider
 
 log = logging.getLogger(__name__)
+
+# The only collection names in use. Anything else is a typo.
+POLICY = "cc_policy"
+MARKETING = "cc_marketing"
+SAMPLES = "cc_samples"
+ALL_COLLECTIONS = (POLICY, MARKETING, SAMPLES)
 
 
 @dataclass
@@ -29,54 +57,81 @@ class Match:
     text: str
     metadata: dict
     score: float  # cosine similarity, 1.0 = identical
+    collection: str = ""
 
 
 class VectorStore(Protocol):
-    def add(self, docs: list[Document]) -> None: ...
-    def query(self, text: str, top_k: int) -> list[Match]: ...
-    def count(self) -> int: ...
-    def reset(self) -> None: ...
+    def add(self, collection: str, docs: list[Document]) -> None: ...
+    def delete(self, collection: str, ids: list[str]) -> None: ...
+    def query(self, collection: str, text: str, top_k: int) -> list[Match]: ...
+    def ids(self, collection: str) -> set[str]: ...
+    def count(self, collection: str | None = None) -> int: ...
+    def reset(self, collection: str | None = None) -> None: ...
 
 
 class InMemoryStore:
-    """Brute-force cosine search.
+    """Brute-force cosine search, one bucket per collection.
 
-    ponytail: O(n) per query. At a few thousand chunks that is well under a
-    millisecond; move to Chroma/FAISS if the corpus grows past ~50k chunks.
+    O(n) per query. At a few thousand chunks that is well under a millisecond;
+    move to Chroma/FAISS if the corpus grows past ~50k chunks.
     """
 
     def __init__(self, embeddings: EmbeddingProvider) -> None:
         self._embeddings = embeddings
-        self._docs: list[Document] = []
-        self._vectors: list[list[float]] = []
+        self._docs: dict[str, dict[str, Document]] = {c: {} for c in ALL_COLLECTIONS}
+        self._vectors: dict[str, dict[str, list[float]]] = {c: {} for c in ALL_COLLECTIONS}
 
-    def add(self, docs: list[Document]) -> None:
+    def _bucket(self, collection: str) -> str:
+        if collection not in self._docs:
+            self._docs[collection] = {}
+            self._vectors[collection] = {}
+        return collection
+
+    def add(self, collection: str, docs: list[Document]) -> None:
         if not docs:
             return
+        c = self._bucket(collection)
         vectors = self._embeddings.embed([d.text for d in docs])
-        self._docs.extend(docs)
-        self._vectors.extend(vectors)
+        for doc, vector in zip(docs, vectors):
+            self._docs[c][doc.id] = doc
+            self._vectors[c][doc.id] = vector
 
-    def query(self, text: str, top_k: int) -> list[Match]:
-        if not self._docs:
+    def delete(self, collection: str, ids: list[str]) -> None:
+        if not ids:
+            return
+        c = self._bucket(collection)
+        for doc_id in ids:
+            self._docs[c].pop(doc_id, None)
+            self._vectors[c].pop(doc_id, None)
+
+    def query(self, collection: str, text: str, top_k: int) -> list[Match]:
+        c = self._bucket(collection)
+        if not self._docs[c]:
             return []
         q = self._embeddings.embed_one(text)
         scored = [
-            (sum(a * b for a, b in zip(q, v)), doc)
-            for v, doc in zip(self._vectors, self._docs)
+            (sum(a * b for a, b in zip(q, self._vectors[c][doc_id])), doc)
+            for doc_id, doc in self._docs[c].items()
         ]
         scored.sort(key=lambda x: x[0], reverse=True)
         return [
-            Match(id=d.id, text=d.text, metadata=d.metadata, score=float(s))
+            Match(id=d.id, text=d.text, metadata=d.metadata, score=float(s), collection=c)
             for s, d in scored[:top_k]
         ]
 
-    def count(self) -> int:
-        return len(self._docs)
+    def ids(self, collection: str) -> set[str]:
+        return set(self._docs.get(collection, {}))
 
-    def reset(self) -> None:
-        self._docs.clear()
-        self._vectors.clear()
+    def count(self, collection: str | None = None) -> int:
+        if collection is None:
+            return sum(len(b) for b in self._docs.values())
+        return len(self._docs.get(collection, {}))
+
+    def reset(self, collection: str | None = None) -> None:
+        targets = [collection] if collection else list(self._docs)
+        for c in targets:
+            self._docs[c] = {}
+            self._vectors[c] = {}
 
 
 class ChromaStore:
@@ -87,30 +142,41 @@ class ChromaStore:
 
         self._embeddings = embeddings
         self._client = chromadb.PersistentClient(path=settings.chroma_path)
-        self._collection = self._client.get_or_create_collection(
-            name=settings.collection_name,
-            # Cosine, not the L2 default — our embeddings are normalised, and
-            # L2 on normalised vectors produces a distance that is monotonic
-            # with cosine but not directly comparable to min_relevance.
-            metadata={"hnsw:space": "cosine"},
-        )
+        self._collections: dict[str, object] = {}
 
-    def add(self, docs: list[Document]) -> None:
+    def _get(self, collection: str):
+        if collection not in self._collections:
+            self._collections[collection] = self._client.get_or_create_collection(
+                name=collection,
+                # Cosine, not the L2 default — our embeddings are normalised, and
+                # L2 on normalised vectors is monotonic with cosine but not
+                # directly comparable to min_relevance.
+                metadata={"hnsw:space": "cosine"},
+            )
+        return self._collections[collection]
+
+    def add(self, collection: str, docs: list[Document]) -> None:
         if not docs:
             return
-        self._collection.upsert(
+        self._get(collection).upsert(
             ids=[d.id for d in docs],
             documents=[d.text for d in docs],
             embeddings=self._embeddings.embed([d.text for d in docs]),
             metadatas=[d.metadata or {"source": "unknown"} for d in docs],
         )
 
-    def query(self, text: str, top_k: int) -> list[Match]:
-        if self.count() == 0:
+    def delete(self, collection: str, ids: list[str]) -> None:
+        if not ids:
+            return
+        self._get(collection).delete(ids=ids)
+
+    def query(self, collection: str, text: str, top_k: int) -> list[Match]:
+        available = self.count(collection)
+        if available == 0:
             return []
-        res = self._collection.query(
+        res = self._get(collection).query(
             query_embeddings=[self._embeddings.embed_one(text)],
-            n_results=min(top_k, self.count()),
+            n_results=min(top_k, available),
             include=["documents", "metadatas", "distances"],
         )
         ids = res.get("ids", [[]])[0]
@@ -125,18 +191,28 @@ class ChromaStore:
                 metadata=meta or {},
                 # Chroma returns cosine *distance*; similarity is 1 - distance.
                 score=float(1.0 - dist),
+                collection=collection,
             )
             for i, doc, meta, dist in zip(ids, documents, metadatas, distances)
         ]
 
-    def count(self) -> int:
-        return int(self._collection.count())
+    def ids(self, collection: str) -> set[str]:
+        got = self._get(collection).get(include=[])
+        return set(got.get("ids", []))
 
-    def reset(self) -> None:
-        self._client.delete_collection(settings.collection_name)
-        self._collection = self._client.get_or_create_collection(
-            name=settings.collection_name, metadata={"hnsw:space": "cosine"}
-        )
+    def count(self, collection: str | None = None) -> int:
+        if collection is None:
+            return sum(int(self._get(c).count()) for c in ALL_COLLECTIONS)
+        return int(self._get(collection).count())
+
+    def reset(self, collection: str | None = None) -> None:
+        targets = [collection] if collection else list(ALL_COLLECTIONS)
+        for c in targets:
+            try:
+                self._client.delete_collection(c)
+            except Exception:  # noqa: BLE001 — deleting a missing collection is fine
+                pass
+            self._collections.pop(c, None)
 
 
 def build_vector_store(embeddings: EmbeddingProvider) -> VectorStore:

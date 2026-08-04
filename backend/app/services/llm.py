@@ -101,32 +101,115 @@ class OpenAILLM:
 
 
 class GeminiLLM:
+    """Gemini over plain HTTPS.
+
+    Deliberately not the `google-generativeai` SDK: it is deprecated, it pulls
+    grpc, and it adds ~40 MB to an image sharing a disk with another stack — to
+    make one HTTP POST. The LMS service on this same box has called Gemini this
+    way for months, against this same key.
+
+    TWO GOTCHAS carried over from that project, both of which cost real time:
+
+    1. `thinkingBudget: 0` is REJECTED with HTTP 400 by current flash models.
+       `thinkingConfig` is therefore absent. Do not "optimise latency" by
+       setting it to zero — that is how every call starts 400-ing.
+
+    2. In the LMS, `TUTOR_GEMINI_MODEL` was declared in config, set in compose,
+       and never passed to a call site, so the hardcoded default silently won
+       for weeks. Here the model is passed explicitly at construction, logged
+       at boot, and reported by /health.
+    """
+
+    ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+
     def __init__(self, api_key: str, model: str) -> None:
-        import google.generativeai as genai
-
-        genai.configure(api_key=api_key)
+        self._key = api_key
         self._model_name = model
-        self._genai = genai
+        log.info("Gemini provider ready (model=%s)", model)
 
-    def _model(self, system: str):
-        return self._genai.GenerativeModel(
-            self._model_name,
-            system_instruction=system,
-            generation_config={
-                "temperature": settings.temperature,
-                "max_output_tokens": settings.max_tokens,
-            },
+    @property
+    def model(self) -> str:
+        return self._model_name
+
+    def _call(self, system: str, prompt: str) -> str:
+        import json
+        import urllib.error
+        import urllib.request
+
+        generation_config: dict = {
+            "temperature": settings.temperature,
+            "maxOutputTokens": settings.max_tokens,
+        }
+        # Only ever sent when > 0. `thinkingBudget: 0` is rejected outright by
+        # current flash models with HTTP 400 — verified against the live key, so
+        # do not "optimise latency" by zeroing it. A positive value is a hint
+        # that reduces thinking without disabling it.
+        if settings.thinking_budget > 0:
+            generation_config["thinkingConfig"] = {
+                "thinkingBudget": settings.thinking_budget
+            }
+
+        body = json.dumps(
+            {
+                "systemInstruction": {"parts": [{"text": system}]},
+                "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                "generationConfig": generation_config,
+            }
+        ).encode("utf-8")
+
+        request = urllib.request.Request(
+            self.ENDPOINT.format(model=self._model_name),
+            data=body,
+            headers={"Content-Type": "application/json", "X-goog-api-key": self._key},
+            method="POST",
         )
 
+        try:
+            with urllib.request.urlopen(request, timeout=45) as response:
+                payload = json.loads(response.read())
+        except urllib.error.HTTPError as exc:
+            detail = exc.read().decode("utf-8", "replace")[:400]
+            log.error("Gemini HTTP %s: %s", exc.code, detail)
+            raise RuntimeError(f"Gemini returned {exc.code}") from exc
+
+        candidates = payload.get("candidates") or []
+        if not candidates:
+            # A safety block returns no candidate at all. Reading `.text`
+            # unguarded here is what turns that into a 500 rather than a
+            # graceful fallback.
+            reason = (payload.get("promptFeedback") or {}).get("blockReason", "no candidates")
+            log.warning("Gemini returned nothing (%s)", reason)
+            return ""
+
+        # Truncation must never be silent again. Hitting the ceiling returns a
+        # perfectly well-formed 200 with an answer that simply stops mid-word,
+        # and without this line the only way to notice is to read the replies.
+        if candidates[0].get("finishReason") == "MAX_TOKENS":
+            usage = payload.get("usageMetadata") or {}
+            log.error(
+                "Gemini hit maxOutputTokens (%s): %s thinking + %s answer tokens. "
+                "The reply is cut mid-sentence — raise max_tokens.",
+                settings.max_tokens,
+                usage.get("thoughtsTokenCount"),
+                usage.get("candidatesTokenCount"),
+            )
+
+        parts = (candidates[0].get("content") or {}).get("parts") or []
+        return "".join(p.get("text", "") for p in parts).strip()
+
     async def complete(self, system: str, prompt: str) -> str:
-        resp = await self._model(system).generate_content_async(prompt)
-        return (resp.text or "").strip()
+        # urllib blocks; keep it off the event loop or one slow generation
+        # stalls every other request on this single worker.
+        return await asyncio.to_thread(self._call, system, prompt)
 
     async def stream(self, system: str, prompt: str) -> AsyncIterator[str]:
-        resp = await self._model(system).generate_content_async(prompt, stream=True)
-        async for chunk in resp:
-            if chunk.text:
-                yield chunk.text
+        """Yields the complete answer as one chunk.
+
+        A choice, not a limitation. The sales pipeline runs its price guard on
+        the FULL answer before any of it is shown — streaming a wrong price and
+        correcting it two seconds later is worse than waiting two seconds.
+        """
+        yield await self.complete(system, prompt)
 
 
 def build_llm() -> LLM:

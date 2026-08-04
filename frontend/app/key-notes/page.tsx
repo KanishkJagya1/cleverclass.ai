@@ -17,13 +17,31 @@ export const metadata: Metadata = {
 
 const NOTE_CLASSES = ["5", "6", "7", "8", "9", "10"];
 
-export default async function KeyNotesPage() {
+/**
+ * `?subject=` is honoured here. The mega menu has always linked to
+ * `/key-notes?subject=Science`, but this page accepted no search params at all,
+ * so four navigation entries landed silently on the unfiltered index.
+ */
+export default async function KeyNotesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ subject?: string }>;
+}) {
+  const { subject } = await searchParams;
   const notes = await catalog.getKeyNotes();
+
+  const scoped = subject
+    ? notes.filter((n) => n.subject.toLowerCase() === subject.toLowerCase())
+    : notes;
+  // Fall back to everything rather than rendering a blank page for a subject
+  // that has no notes yet; the banner below explains what happened.
+  const source = scoped.length > 0 ? scoped : notes;
+  const noMatches = Boolean(subject) && scoped.length === 0;
 
   // class → distinct subjects
   const matrix = NOTE_CLASSES.map((id) => {
     const cls = CLASSES.find((c) => c.id === id)!;
-    const subjects = [...new Set(notes.filter((n) => n.classId === id).map((n) => n.subject))];
+    const subjects = [...new Set(source.filter((n) => n.classId === id).map((n) => n.subject))];
     return { cls, subjects };
   }).filter((r) => r.subjects.length > 0);
 
@@ -46,6 +64,19 @@ export default async function KeyNotesPage() {
       </Section>
 
       <div className="container-page py-10 md:py-14">
+        {noMatches && (
+          <p
+            role="status"
+            className="mb-8 rounded-[var(--radius-md)] bg-[var(--surface-0)] px-4 py-3 text-[length:var(--text-sm)] text-[color:var(--text-2)]"
+          >
+            No key notes for <strong>{subject}</strong> yet — showing every subject
+            instead.{" "}
+            <Link href="/key-notes" className="text-[color:var(--text-brand)] underline underline-offset-4">
+              Clear filter
+            </Link>
+          </p>
+        )}
+
         <div className="space-y-10">
           {matrix.map(({ cls, subjects }) => (
             <section key={cls.id} aria-labelledby={`kn-${cls.id}`}>
@@ -58,7 +89,10 @@ export default async function KeyNotesPage() {
                 </h2>
                 <Link
                   href={`/key-notes/${cls.id}`}
-                  className="inline-flex items-center gap-1 text-[length:var(--text-sm)] font-medium text-[color:var(--text-brand)]"
+                  // min-h-11 on touch: this is a standalone navigation link in
+                  // a section header, not a link inside a sentence, so the
+                  // WCAG inline exception does not apply. It measured 21px.
+                  className="inline-flex min-h-0 items-center gap-1 text-[length:var(--text-sm)] font-medium text-[color:var(--text-brand)] coarse:min-h-11"
                 >
                   All {cls.label} notes
                   <ArrowRight className="size-3.5" aria-hidden />

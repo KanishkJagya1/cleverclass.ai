@@ -1,11 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
 import { Inter, Mukta, Noto_Sans_Devanagari, Space_Grotesk } from "next/font/google";
 import { SITE } from "@/constants/catalog";
 import { Providers } from "@/providers";
-import { Navbar } from "@/components/layout/navbar";
-import { MobileBottomNav } from "@/components/layout/mobile-nav";
-import { Footer } from "@/components/layout/footer";
+import { SiteChrome } from "@/components/layout/site-chrome";
 import { absoluteUrl } from "@/lib/utils";
 import "./globals.css";
 
@@ -44,15 +41,6 @@ const mukta = Mukta({
   variable: "--font-mukta",
   display: "swap",
 });
-
-/* Below-the-fold chrome. Neither is needed for first paint, and the palette
-   pulls in cmdk while the assistant pulls in the markdown renderer. */
-const SearchDialog = dynamic(() =>
-  import("@/features/search/search-dialog").then((m) => m.SearchDialog),
-);
-const AssistantWidget = dynamic(() =>
-  import("@/features/assistant/assistant-widget").then((m) => m.AssistantWidget),
-);
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
@@ -136,7 +124,9 @@ const orgSchema = {
       publisher: { "@id": absoluteUrl("/#organization") },
       potentialAction: {
         "@type": "SearchAction",
-        target: { "@type": "EntryPoint", urlTemplate: absoluteUrl("/search?q={search_term_string}") },
+        // /shop, not /search — there is no /search route, so this advertised a
+        // sitelinks searchbox to Google that pointed straight at a 404.
+        target: { "@type": "EntryPoint", urlTemplate: absoluteUrl("/shop?q={search_term_string}") },
         "query-input": "required name=search_term_string",
       },
     },
@@ -159,20 +149,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
 
         <Providers>
-          <Navbar />
-
-          {/* Offsets: fixed navbar above, fixed bottom nav below on mobile. */}
-          <main
-            id="main"
-            className="min-h-screen pt-[var(--nav-h)] pb-[var(--bottom-nav-h)] lg:pb-0"
-          >
-            {children}
-          </main>
-
-          <Footer />
-          <MobileBottomNav />
-          <SearchDialog />
-          <AssistantWidget />
+          {/* SiteChrome renders the storefront shell, and renders nothing at
+              all under /admin — see the note in that file. */}
+          <SiteChrome>{children}</SiteChrome>
         </Providers>
 
         <script

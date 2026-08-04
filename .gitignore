@@ -95,3 +95,14 @@ pnpm-debug.log*
 
 # Ad-hoc verification screenshots
 frontend/shot-*.png
+
+# ---------------------------------------------------------------------------
+# Runtime data — NEVER committed.
+# backend/data/ holds the live SQLite database (customer emails, addresses,
+# orders) and the media root (uploaded book PDFs). Both are generated at
+# runtime and neither belongs in a public repository.
+# ---------------------------------------------------------------------------
+backend/data/
+*.db
+*.db-wal
+*.db-shm

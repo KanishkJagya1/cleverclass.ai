@@ -1,12 +1,19 @@
 "use client";
 
-import Image from "next/image";
+
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { AnimatedHeading, Magnetic, MeshBackground, TiltCard } from "@/components/motion";
+import {
+  AnimatedHeading,
+  Magnetic,
+  MeshBackground,
+  ParallaxLayer,
+  TiltCard,
+} from "@/components/motion";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { CoverImage } from "@/components/ui/cover-image";
+import { cn, frontCover } from "@/lib/utils";
 import type { Book } from "@/types/catalog";
 
 const TRUST = [
@@ -28,10 +35,34 @@ export function Hero({ books }: { books: Book[] }) {
   const stack = books.slice(0, 3);
 
   return (
-    <section className="relative isolate overflow-hidden bg-[var(--surface-canvas)] pb-16 pt-14 md:pb-24 md:pt-20">
-      <MeshBackground />
+    <section
+      data-parallax-scene=""
+      className="relative isolate overflow-hidden bg-[var(--surface-canvas)] pb-16 pt-14 md:pb-24 md:pt-20"
+    >
+      {/* Decorative backplate only. The parallax layers here are absolutely
+          positioned and carry no content, so they can never move the LCP
+          element or change the height of the document.
 
-      <div className="container-page">
+          The headline, the trust strip and the centre cover deliberately sit
+          OUTSIDE any parallax layer — the centre cover is the LCP, and an LCP
+          element that translates on scroll is how you lose the metric you were
+          trying to decorate. */}
+      <ParallaxLayer depth="max" className="absolute inset-0">
+        <MeshBackground className="size-full" />
+      </ParallaxLayer>
+
+      <ParallaxLayer depth={3} className="absolute inset-0">
+        <div
+          className="absolute -right-24 top-[-6rem] size-[26rem] rounded-full opacity-[0.07] blur-3xl"
+          style={{ backgroundImage: "var(--grad-brand)" }}
+        />
+        <div
+          className="absolute -left-32 bottom-[-8rem] size-[22rem] rounded-full opacity-[0.06] blur-3xl"
+          style={{ backgroundImage: "var(--grad-ai)" }}
+        />
+      </ParallaxLayer>
+
+      <div className="container-page relative">
         <div className="grid min-w-0 items-center gap-14 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
           {/* ------------------------------------------------------ copy -- */}
           <div className="min-w-0">
@@ -131,17 +162,17 @@ export function Hero({ books }: { books: Book[] }) {
                         i > 0 && "-ml-8 xs:-ml-10 sm:-ml-12",
                       )}
                     >
-                      {book.images[0] && (
-                        <Image
-                          src={book.images[0].src}
-                          alt={book.title}
-                          fill
-                          // Only the centre cover is LCP-critical.
-                          priority={i === 1}
-                          sizes="(max-width: 640px) 40vw, 12rem"
-                          className="object-cover"
-                        />
-                      )}
+                      <CoverImage
+                        src={frontCover(book.images)?.src}
+                        alt={book.title}
+                        title={book.title}
+                        titleMr={book.titleMr}
+                        series={book.series}
+                        slug={book.slug}
+                        // Only the centre cover is LCP-critical.
+                        priority={i === 1}
+                        sizes="(max-width: 640px) 40vw, 12rem"
+                      />
                       <div
                         aria-hidden
                         className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/25 to-transparent"

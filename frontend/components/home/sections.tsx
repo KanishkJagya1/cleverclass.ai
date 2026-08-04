@@ -48,7 +48,10 @@ export function ClassRail() {
           <li key={c.id} className="shrink-0">
             <Link
               href={`/class/${c.id}`}
-              className="surface-card lift group flex h-24 w-20 flex-col items-center justify-center gap-1 lg:w-full"
+              // `relative` is what the highlight dot below positions against.
+              // Without it the dot escaped to the nearest positioned ancestor
+              // and landed in the corner of the whole rail, not the tile.
+              className="surface-card lift group relative flex h-24 w-20 flex-col items-center justify-center gap-1 lg:w-full"
             >
               <span className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-bold text-[color:var(--text-1)] transition-colors group-hover:text-[color:var(--brand-base)]">
                 {c.short}
@@ -150,7 +153,7 @@ export function FeaturedBooks({ books }: { books: Book[] }) {
               )}
             </div>
             <div className="flex flex-1 flex-col p-6 lg:p-8">
-              <Badge variant="brand">Editor's pick</Badge>
+              <Badge variant="brand">Editor&apos;s pick</Badge>
               <h3 className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-semibold text-[color:var(--text-1)]">
                 {lead.title}
               </h3>
@@ -221,8 +224,8 @@ export function SubjectGrid({ counts }: { counts: Record<string, number> }) {
         {SUBJECTS.map((s, i) => {
           const Icon = SUBJECT_ICONS[s] ?? BookOpen;
           return (
-            <RevealItem key={s} index={i} className="h-full">
-              <li className="h-full">
+            <RevealItem key={s} index={i} className="h-full" as="li">
+              <div className="h-full">
                 <Link
                   href={`/shop?subject=${encodeURIComponent(s)}`}
                   className="surface-card lift flex h-full items-center gap-3 p-4"
@@ -239,7 +242,7 @@ export function SubjectGrid({ counts }: { counts: Record<string, number> }) {
                     </span>
                   </span>
                 </Link>
-              </li>
+              </div>
             </RevealItem>
           );
         })}
@@ -406,8 +409,8 @@ export function SeriesStrip() {
       />
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {SERIES.map((s, i) => (
-          <RevealItem key={s.id} index={i} className="h-full">
-            <li className="h-full">
+          <RevealItem key={s.id} index={i} className="h-full" as="li">
+            <div className="h-full">
               <Link href={`/series/${s.id}`} className="surface-card lift flex h-full flex-col p-5">
                 <span
                   aria-hidden
@@ -425,7 +428,7 @@ export function SeriesStrip() {
                   <ArrowRight className="size-3.5" aria-hidden />
                 </span>
               </Link>
-            </li>
+            </div>
           </RevealItem>
         ))}
       </ul>
@@ -449,15 +452,15 @@ export function Statistics() {
     <Section band="brand-dark" spacing="sm">
       <ul className="grid grid-cols-2 gap-8 lg:grid-cols-4">
         {stats.map((s, i) => (
-          <RevealItem key={s.label} index={i}>
-            <li className="text-center lg:text-left">
+          <RevealItem key={s.label} index={i} as="li">
+            <div className="text-center lg:text-left">
               <p className="font-[family-name:var(--font-display)] text-[length:var(--text-4xl)] font-bold text-white">
                 <CountUp to={s.to} suffix={s.suffix} />
               </p>
               <p className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--color-ink-400)]">
                 {s.label}
               </p>
-            </li>
+            </div>
           </RevealItem>
         ))}
       </ul>
@@ -469,11 +472,15 @@ export function Statistics() {
    §11 Educational resources — utility content that earns links and returns.
    ========================================================================== */
 export function Resources() {
+  // Every destination here must exist. Three of these previously pointed at
+  // /resources/syllabus, /resources/calendar and /resources/planners — there is
+  // no app/resources directory, so three of the four cards in this section were
+  // hard 404s. Restore them once those pages are built.
   const items = [
-    { title: "Syllabus PDFs", desc: "Current State Board syllabus for every class.", href: "/resources/syllabus", icon: FileText },
-    { title: "Exam calendar", desc: "SSC and HSC timetables as they are announced.", href: "/resources/calendar", icon: Calculator },
-    { title: "Guessing papers", desc: "Board-pattern practice sets for Class 10 and 12.", href: "/class/board-exam", icon: Sparkles },
-    { title: "Study planners", desc: "Printable revision schedules for the final term.", href: "/resources/planners", icon: Download },
+    { title: "Free Key Notes", desc: "Chapter-wise summaries for Classes 5 to 10 — read before you buy.", href: "/key-notes", icon: FileText },
+    { title: "Board exam guides", desc: "Board-pattern practice sets for Class 10 and 12.", href: "/class/board-exam", icon: Sparkles },
+    { title: "Complete class sets", desc: "Every core subject in one pack, with free delivery.", href: "/combo-packs", icon: Download },
+    { title: "Not sure what to buy?", desc: "Tell us the class and medium — we'll point you to the right guide.", href: "/contact", icon: Calculator },
   ];
 
   return (
@@ -485,8 +492,8 @@ export function Resources() {
       />
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {items.map((r, i) => (
-          <RevealItem key={r.title} index={i} className="h-full">
-            <li className="h-full">
+          <RevealItem key={r.title} index={i} className="h-full" as="li">
+            <div className="h-full">
               <Link href={r.href} className="surface-card lift flex h-full flex-col p-5">
                 <r.icon className="size-5 text-[color:var(--brand-base)]" aria-hidden />
                 <span className="mt-4 font-[family-name:var(--font-display)] text-[length:var(--text-base)] font-semibold text-[color:var(--text-1)]">
@@ -494,7 +501,7 @@ export function Resources() {
                 </span>
                 <span className="mt-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)]">{r.desc}</span>
               </Link>
-            </li>
+            </div>
           </RevealItem>
         ))}
       </ul>

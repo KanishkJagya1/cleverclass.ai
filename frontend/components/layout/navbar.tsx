@@ -114,7 +114,7 @@ export function Navbar() {
             <button
               onClick={() => setSearchOpen(true)}
               className={cn(
-                "hidden md:flex h-9 shrink-0 items-center gap-2 rounded-[var(--radius-md)] pl-3 pr-2",
+                "hidden md:flex h-9 coarse:h-11 shrink-0 items-center gap-2 rounded-[var(--radius-md)] pl-3 pr-2",
                 "border border-[var(--border-1)] bg-[var(--surface-1)]/60 text-[color:var(--text-3)]",
                 "transition-colors hover:border-[var(--border-2)] hover:text-[color:var(--text-2)]",
               )}
@@ -127,18 +127,14 @@ export function Navbar() {
               </kbd>
             </button>
 
-            {/* Every icon control is 44px on touch and shrinks to 36px only
-                from lg up, where a mouse makes the smaller target fine. The
-                audit caught all of these sitting at 36px on a 360px phone. */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Search"
-            >
-              <Search className="size-5" aria-hidden />
-            </Button>
+            {/* There is deliberately NO mobile search button here.
+                One used to render below md — but MobileBottomNav is lg:hidden
+                and already carries a Search tab, so every screen that showed
+                this button showed that tab too. Two entry points for one
+                action, and the cost was real: at 320px the four icon controls
+                plus the 135px logo needed 323px of the 288px available, so the
+                buttons squeezed to 35px (under the 44px minimum) AND the header
+                still overflowed by 15px. Removing the duplicate fixes both. */}
 
             <ThemeToggle />
 
@@ -146,7 +142,7 @@ export function Navbar() {
               asChild
               variant="ghost"
               size="icon"
-              className="relative hidden sm:inline-flex lg:size-9"
+              className="relative hidden shrink-0 sm:inline-flex lg:size-9"
             >
               <Link href="/account/wishlist" aria-label={`Wishlist, ${wishCount} items`}>
                 <Heart className="size-5" aria-hidden />
@@ -154,7 +150,7 @@ export function Navbar() {
               </Link>
             </Button>
 
-            <Button asChild variant="ghost" size="icon" className="relative lg:size-9">
+            <Button asChild variant="ghost" size="icon" className="relative shrink-0 lg:size-9">
               <Link href="/cart" aria-label={`Cart, ${cartCount} items`}>
                 <ShoppingCart className="size-5" aria-hidden />
                 {cartCount > 0 && <CountDot n={cartCount} />}
@@ -165,7 +161,7 @@ export function Navbar() {
               asChild
               variant="ghost"
               size="icon"
-              className="hidden sm:inline-flex lg:size-9"
+              className="hidden shrink-0 sm:inline-flex lg:size-9"
             >
               <Link href="/account" aria-label="Account">
                 <User className="size-5" aria-hidden />
@@ -175,7 +171,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="shrink-0 lg:hidden"
               onClick={() => setMobileOpen(true)}
               aria-label="Open menu"
             >
@@ -253,7 +249,7 @@ function MegaMenu({ menu, onClose }: { menu: string; onClose: () => void }) {
 
   return (
     <div
-      className="glass-panel glass-edge absolute inset-x-0 top-full mx-auto hidden max-w-6xl origin-top animate-[fadeDown_var(--duration-base)_var(--ease-out-expo)] p-8 lg:block"
+      className="glass-panel panel-solid glass-edge absolute inset-x-0 top-full mx-auto hidden max-w-6xl origin-top animate-[fadeDown_var(--duration-base)_var(--ease-out-expo)] p-8 lg:block"
       style={{ marginTop: "0.5rem" }}
       role="region"
       aria-label={`${menu} menu`}
@@ -270,7 +266,7 @@ function MegaMenu({ menu, onClose }: { menu: string; onClose: () => void }) {
                   <Link
                     href={l.href}
                     onClick={onClose}
-                    className="block rounded-[var(--radius-sm)] px-2 py-1.5 text-[length:var(--text-sm)] text-[color:var(--text-2)] transition-colors hover:bg-[var(--surface-0)] hover:text-[color:var(--text-1)]"
+                    className="block rounded-[var(--radius-sm)] px-2 py-1.5 coarse:py-3 text-[length:var(--text-sm)] text-[color:var(--text-2)] transition-colors hover:bg-[var(--surface-0)] hover:text-[color:var(--text-1)]"
                   >
                     {l.label}
                   </Link>

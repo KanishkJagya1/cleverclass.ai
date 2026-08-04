@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { catalog } from "@/lib/data";
-import { BookCard, BookCardSkeleton } from "@/features/catalog/book-card";
+import { BookCard } from "@/features/catalog/book-card";
 import {
   ActiveFilters,
   FilterRail,
   Pagination,
   ResultsToolbar,
 } from "@/features/catalog/filters";
+import {
+  BookGridSkeleton,
+  FilterRailSkeleton,
+  ResultsToolbarSkeleton,
+} from "@/features/catalog/skeletons";
 import { EmptyState } from "@/components/ui/empty-state";
 import { paramList } from "@/lib/utils";
 import type { Board, CatalogQuery, ClassId, Medium, Series, SortKey } from "@/types/catalog";
@@ -38,8 +43,20 @@ function toQuery(sp: Record<string, string | string[] | undefined>): CatalogQuer
   };
 }
 
-export default async function ShopPage({ searchParams }: { searchParams: SearchParams }) {
-  const sp = await searchParams;
+/**
+ * The catalogue half of the page, split out so it can suspend.
+ *
+ * This used to be inline, with `app/shop/loading.tsx` covering the wait. That
+ * file had to go: `loading.tsx` creates a Suspense boundary for its segment AND
+ * every child, so it made `/shop/[slug]` start streaming before the route knew
+ * whether the book existed. Once the first byte is flushed the status line is
+ * already committed to 200, and `notFound()` can only swap the UI — a soft 404
+ * that gets bogus URLs indexed and writes an ISR entry per bad request.
+ *
+ * A `<Suspense>` *inside* this page does not extend to child routes, so the
+ * skeleton is preserved here and `/shop/[slug]` still returns a real 404.
+ */
+async function ShopResults({ sp }: { sp: Awaited<SearchParams> }) {
   const query = toQuery(sp);
   const view = sp.view === "list" ? "list" : "grid";
 
@@ -49,6 +66,44 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
     // whole result set, not the current page.
     catalog.getFacets({ ...query, page: undefined, perPage: undefined }),
   ]);
+
+  return (
+    <>
+      <FilterRail facets={facets} />
+
+      <div className="min-w-0">
+        <ResultsToolbar total={results.total} shown={results.items.length} facets={facets} />
+        <ActiveFilters facets={facets} />
+        {results.items.length === 0 ? (
+          <EmptyState
+            title="No books match these filters"
+            description="Try removing the medium or subject filter — the same title is often published in another medium."
+            action={{ label: "Clear all filters", href: "/shop" }}
+          />
+        ) : view === "list" ? (
+          <div className="space-y-4">
+            {results.items.map((b) => (
+              <BookCard key={b.slug} book={b} variant="list" />
+            ))}
+          </div>
+        ) : (
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+            {results.items.map((b, i) => (
+              <li key={b.slug}>
+                {/* Only the first row is above the fold on any viewport. */}
+                <BookCard book={b} priority={i < 4} />
+              </li>
+            ))}
+          </ul>
+        )}
+        <Pagination page={results.page} totalPages={results.totalPages} />
+      </div>
+    </>
+  );
+}
+
+export default async function ShopPage({ searchParams }: { searchParams: SearchParams }) {
+  const sp = await searchParams;
 
   return (
     <div className="container-page py-8 md:py-12">
@@ -69,57 +124,28 @@ export default async function ShopPage({ searchParams }: { searchParams: SearchP
       </header>
 
       <div className="grid gap-10 lg:grid-cols-[16rem_1fr]">
-        <Suspense>
-          <FilterRail facets={facets} />
+        {/* Keyed on the query so changing a filter re-suspends and shows the
+            skeleton again, rather than leaving the previous results on screen
+            with no indication that anything is loading. */}
+        <Suspense
+          key={JSON.stringify(sp)}
+          fallback={
+            <>
+              <FilterRailSkeleton />
+              <div className="min-w-0">
+                <ResultsToolbarSkeleton />
+                <BookGridSkeleton />
+              </div>
+            </>
+          }
+        >
+          <ShopResults sp={sp} />
         </Suspense>
-
-        <div className="min-w-0">
-          <Suspense>
-            <ResultsToolbar total={results.total} shown={results.items.length} facets={facets} />
-            <ActiveFilters facets={facets} />
-          </Suspense>
-
-          {results.items.length === 0 ? (
-            <EmptyState
-              title="No books match these filters"
-              description="Try removing the medium or subject filter — the same title is often published in another medium."
-              action={{ label: "Clear all filters", href: "/shop" }}
-            />
-          ) : view === "list" ? (
-            <div className="space-y-4">
-              {results.items.map((b) => (
-                <BookCard key={b.slug} book={b} variant="list" />
-              ))}
-            </div>
-          ) : (
-            <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-              {results.items.map((b, i) => (
-                <li key={b.slug}>
-                  {/* Only the first row is above the fold on any viewport. */}
-                  <BookCard book={b} priority={i < 4} />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <Suspense>
-            <Pagination page={results.page} totalPages={results.totalPages} />
-          </Suspense>
-        </div>
       </div>
     </div>
   );
 }
 
-/** Exported for reuse by class/series pages that render the same grid. */
-export function BookGridSkeleton({ count = 12 }: { count?: number }) {
-  return (
-    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-      {Array.from({ length: count }, (_, i) => (
-        <li key={i}>
-          <BookCardSkeleton />
-        </li>
-      ))}
-    </ul>
-  );
-}
+// BookGridSkeleton moved to features/catalog/skeletons.tsx — exporting a
+// component from a route module means importing it drags this file's metadata,
+// data fetches and generateStaticParams along, which is why nothing ever did.

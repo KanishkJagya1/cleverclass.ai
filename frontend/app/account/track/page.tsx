@@ -53,7 +53,7 @@ export default function TrackOrderPage() {
             <a href={`tel:${SITE.phones[0]}`} className="font-medium text-[color:var(--text-brand)]">
               {SITE.phones[0]}
             </a>{" "}
-            with your reference and we'll check it for you.
+            with your reference and we&apos;ll check it for you.
           </p>
         </div>
       )}

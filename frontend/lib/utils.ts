@@ -64,3 +64,18 @@ export function buildQuery(
 export function absoluteUrl(path = ""): string {
   return `${SITE.url}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/**
+ * Pick the front cover from a `Book.images` array.
+ *
+ * Lives here rather than beside `<CoverImage>` because that component is
+ * `"use client"`, and a server component calling into a client module is a
+ * build error — server pages need this helper too.
+ *
+ * Returns undefined when the book has no cover on file, which is the common
+ * case: most of the catalogue has no artwork yet and renders a generated one.
+ */
+export function frontCover<T extends { kind: string }>(images: T[] | undefined): T | undefined {
+  if (!images?.length) return undefined;
+  return images.find((i) => i.kind === "front") ?? images[0];
+}

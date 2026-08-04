@@ -1,18 +1,20 @@
 {
-  "name": "kohinoor-tez-frontend",
+  "name": "cleverclass-frontend",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "analyze": "ANALYZE=true next build",
+    "export:seed": "tsx scripts/export-seed.ts",
     "download:covers": "tsx scripts/download-covers.ts",
     "download:covers:refresh": "tsx scripts/download-covers.ts --refresh --force",
     "brand:logo": "node scripts/prepare-logo.mjs",
-    "audit:responsive": "node scripts/audit-responsive.mjs"
+    "audit:responsive": "node scripts/audit-responsive.mjs",
+    "audit:links": "node scripts/audit-links.mjs",
+    "audit:motion": "node scripts/audit-motion.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.0",
@@ -35,8 +37,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.4",
-    "embla-carousel-react": "^8.5.2",
-    "gsap": "^3.12.7",
     "lenis": "^1.1.20",
     "lucide-react": "^0.475.0",
     "motion": "^12.4.7",
@@ -45,7 +45,6 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.54.2",
-    "react-intersection-observer": "^9.15.1",
     "react-markdown": "^9.0.3",
     "remark-gfm": "^4.0.1",
     "sonner": "^2.0.1",
@@ -55,6 +54,7 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.6",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^22.13.5",
     "@types/react": "^19.0.10",

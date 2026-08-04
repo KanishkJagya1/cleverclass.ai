@@ -238,7 +238,7 @@ export function ActiveFilters({ facets }: { facets: Facets }) {
         <button
           key={`${c.key}-${c.value}`}
           onClick={() => toggle(c.key, c.value)}
-          className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-1)] bg-[var(--surface-1)] py-1.5 pl-3 pr-2 text-[length:var(--text-xs)] font-medium text-[color:var(--text-2)] transition-colors hover:border-[var(--border-2)]"
+          className="chip-tap inline-flex items-center gap-1.5 rounded-full border border-[var(--border-1)] bg-[var(--surface-1)] py-1.5 pl-3 pr-2 text-[length:var(--text-xs)] font-medium text-[color:var(--text-2)] transition-colors hover:border-[var(--border-2)]"
         >
           {c.label}
           <X className="size-3.5" aria-hidden />
@@ -247,7 +247,7 @@ export function ActiveFilters({ facets }: { facets: Facets }) {
       ))}
       <Link
         href={pathname}
-        className="text-[length:var(--text-xs)] font-medium text-[color:var(--text-brand)] underline underline-offset-4"
+        className="chip-tap text-[length:var(--text-xs)] font-medium text-[color:var(--text-brand)] underline underline-offset-4"
       >
         Clear all
       </Link>
@@ -276,7 +276,11 @@ export function ResultsToolbar({
         Showing <span className="font-medium text-[color:var(--text-1)]">{shown}</span> of {total} books
       </p>
 
-      <div className="flex items-center gap-2">
+      {/* Below xs the controls take their own full-width row rather than
+          competing with the result count on one line — at 320px the Filters
+          button, the view toggles and the sort select together needed more
+          than the viewport, and the select was squeezed to 26px. */}
+      <div className="flex w-full min-w-0 items-center justify-between gap-2 xs:w-auto xs:justify-start">
         <FilterSheet facets={facets} total={total} />
 
         <div className="hidden items-center rounded-[var(--radius-md)] border border-[var(--border-1)] p-0.5 sm:flex">
@@ -289,7 +293,7 @@ export function ResultsToolbar({
                 aria-pressed={view === v}
                 aria-label={`${v} view`}
                 className={cn(
-                  "grid size-8 place-items-center rounded-[var(--radius-sm)] transition-colors",
+                  "grid size-8 place-items-center rounded-[var(--radius-sm)] transition-colors coarse:size-11",
                   view === v
                     ? "bg-[var(--surface-0)] text-[color:var(--text-1)]"
                     : "text-[color:var(--text-3)] hover:text-[color:var(--text-2)]",
@@ -308,7 +312,11 @@ export function ResultsToolbar({
           id="sort"
           value={params.get("sort") ?? "relevance"}
           onChange={(e) => set({ sort: e.target.value === "relevance" ? undefined : e.target.value })}
-          className="h-9 rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3 text-[length:var(--text-sm)] text-[color:var(--text-2)]"
+          // A native select sizes to its LONGEST option ("Price: high to low"),
+          // which made this 178px wide and pushed the toolbar past a 320px
+          // viewport. min-w-0 lets it shrink to the space available; it returns
+          // to its intrinsic width from sm up.
+          className="h-9 min-w-0 flex-1 rounded-[var(--radius-md)] border border-[var(--border-1)] bg-[var(--surface-1)] px-3 text-[length:var(--text-sm)] text-[color:var(--text-2)] coarse:h-11 sm:flex-none"
         >
           {SORT_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>

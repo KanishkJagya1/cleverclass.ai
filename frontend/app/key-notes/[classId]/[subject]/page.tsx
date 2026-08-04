@@ -4,8 +4,6 @@ import { notFound } from "next/navigation";
 import { ArrowRight, BookOpen, Check } from "lucide-react";
 import { catalog } from "@/lib/data";
 import { classById, mediumById } from "@/constants/catalog";
-import { SEED_KEY_NOTES } from "@/lib/data/seed";
-import { PreviewReader } from "@/features/catalog/product-gallery";
 import { BookCard } from "@/features/catalog/book-card";
 import { Badge } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -14,10 +12,25 @@ import type { ClassId, KeyNote } from "@/types/catalog";
 
 export const revalidate = 43200;
 
-export function generateStaticParams() {
+export const dynamicParams = true;
+
+/**
+ * Read through the adapter, not from the seed module.
+ *
+ * This previously imported SEED_KEY_NOTES directly, which meant the route
+ * prerendered the seed's class/subject pairs no matter which data source was
+ * configured — so a key note added in the admin panel would never get a static
+ * page, and one removed from the catalogue would still be built.
+ */
+export async function generateStaticParams() {
+  // Never throw here. This runs during `next build`, and an unreachable API at
+  // build time must degrade to "prerender nothing, render on demand" rather
+  // than failing the whole deploy. `dynamicParams` above is what makes that
+  // safe — every route still works, it is just built on first request.
+  const notes = await catalog.getKeyNotes().catch(() => []);
   const seen = new Set<string>();
   const out: { classId: string; subject: string }[] = [];
-  for (const n of SEED_KEY_NOTES) {
+  for (const n of notes) {
     const key = `${n.classId}/${slugify(n.subject)}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -96,8 +109,8 @@ export default async function KeyNoteDetailPage({
 
           <p className="mt-5 max-w-xl text-[length:var(--text-body)] leading-[var(--leading-relaxed)] text-[color:var(--text-2)]">
             Concise, chapter-wise notes covering the complete {cls.label}{" "}
-            {primary.subject} syllabus. Read the first{" "}
-            {primary.previewPages.length} pages free — no account, no email.
+            {primary.subject} syllabus — {primary.chapters.length} chapters, free
+            to read, no account and no email.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-2">
@@ -109,17 +122,23 @@ export default async function KeyNoteDetailPage({
           </div>
 
           <div className="mt-8 max-w-sm">
-            <PreviewReader
-              pages={primary.previewPages}
-              totalPages={primary.totalPages}
-              title={`${cls.label} ${primary.subject} Key Notes`}
-              trigger={
-                <Button size="lg">
+            {/* Key notes have no PDF pipeline of their own, so there is no
+                sample to open. Point at the paid guide, which does have one. */}
+            {primary.relatedBookSlug ? (
+              <Button asChild size="lg">
+                <Link href={`/shop/${primary.relatedBookSlug}/preview`}>
                   <BookOpen className="size-4" aria-hidden />
-                  Read {primary.previewPages.length} pages free
-                </Button>
-              }
-            />
+                  Read a free sample of the full guide
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild size="lg">
+                <Link href={`/shop?class=${primary.classId}&subject=${encodeURIComponent(primary.subject)}`}>
+                  <BookOpen className="size-4" aria-hidden />
+                  See the guides for this subject
+                </Link>
+              </Button>
+            )}
           </div>
 
           <section className="mt-12" aria-labelledby="chapters">

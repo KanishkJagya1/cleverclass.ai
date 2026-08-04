@@ -44,7 +44,7 @@ export default function FaqsPage() {
     <div className="container-prose py-12 md:py-16">
       <h1 className="text-[length:var(--text-4xl)]">Frequently asked questions</h1>
       <p className="mt-3 text-[length:var(--text-body)] text-[color:var(--text-2)]">
-        If your question isn't here, the assistant can answer it — or call us.
+        If your question isn&apos;t here, the assistant can answer it — or call us.
       </p>
 
       <div className="mt-10 divide-y divide-[var(--border-1)]">

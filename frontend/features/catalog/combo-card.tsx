@@ -1,13 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Layers } from "lucide-react";
 import { classById, mediumById } from "@/constants/catalog";
+import { CoverImage } from "@/components/ui/cover-image";
 import { Badge } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
 import { SavingsMeter } from "./atoms";
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice, frontCover } from "@/lib/utils";
 import type { ComboResolved } from "@/types/catalog";
 
 /**
@@ -55,9 +55,15 @@ export function ComboCard({
                 transitionDelay: `${i * 40}ms`,
               }}
             >
-              {b.images[0] && (
-                <Image src={b.images[0].src} alt="" fill sizes="64px" className="object-cover" />
-              )}
+              <CoverImage
+                src={frontCover(b.images)?.src}
+                alt=""
+                title={b.title}
+                titleMr={b.titleMr}
+                series={b.series}
+                slug={b.slug}
+                sizes="64px"
+              />
             </div>
           ))}
         </div>
@@ -134,7 +140,15 @@ export function ComboBanner({ combo }: { combo: ComboResolved }) {
             className="relative aspect-cover w-12 overflow-hidden rounded-[var(--radius-xs)] bg-white shadow-[var(--shadow-sm)]"
             style={{ rotate: `${(i - 1) * 5}deg`, zIndex: i }}
           >
-            {b.images[0] && <Image src={b.images[0].src} alt="" fill sizes="48px" className="object-cover" />}
+            <CoverImage
+              src={frontCover(b.images)?.src}
+              alt=""
+              title={b.title}
+              titleMr={b.titleMr}
+              series={b.series}
+              slug={b.slug}
+              sizes="48px"
+            />
           </div>
         ))}
       </div>

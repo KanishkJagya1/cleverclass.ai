@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { catalog } from "@/lib/data";
 import { classById, mediumById, seriesById, SITE } from "@/constants/catalog";
 import { ProductGallery } from "@/features/catalog/product-gallery";
@@ -13,12 +12,23 @@ import { BookCard } from "@/features/catalog/book-card";
 import { Badge, Rating } from "@/components/ui/primitives";
 import { absoluteUrl } from "@/lib/utils";
 import type { Book } from "@/types/catalog";
+import { notFound } from "next/navigation";
 
 export const revalidate = 43200;
 
+/**
+ * Prerender the head of the catalogue only; the rest is ISR on first request.
+ * Building all ~324 product pages against a live API turns a backend blip into
+ * a failed deploy, and most of those pages see no traffic between deploys.
+ * `getAllBookSlugs` is ordered best-seller-first, so this prerenders the pages
+ * that actually get hit.
+ */
+export const dynamicParams = true;
+const PRERENDER_COUNT = 40;
+
 export async function generateStaticParams() {
   const slugs = await catalog.getAllBookSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return slugs.slice(0, PRERENDER_COUNT).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -133,7 +143,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </nav>
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,0.8fr)] lg:gap-8">
-        <ProductGallery images={book.images} title={book.title} />
+        <ProductGallery
+          images={book.images}
+          title={book.title}
+          titleMr={book.titleMr}
+          series={book.series}
+          slug={book.slug}
+        />
 
         {/* ------------------------------------------------------- details -- */}
         <div className="min-w-0">

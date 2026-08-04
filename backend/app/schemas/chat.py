@@ -75,10 +75,28 @@ class IngestResponse(BaseModel):
     collection: str
 
 
+class ComponentHealth(BaseModel):
+    """What was configured vs what is actually running.
+
+    These drift silently: if sentence-transformers fails to import, the provider
+    factory falls back to md5 hash vectors; if Chroma fails, the store falls back
+    to an in-memory dict. Both degrade retrieval to noise, and the old health
+    check echoed the *configured* names — so quality collapsed while every
+    dashboard stayed green. `actual` is read off the live object.
+    """
+
+    configured: str
+    actual: str
+    detail: str | None = None
+
+
 class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"]
     version: str
-    llm_provider: str
-    embedding_provider: str
-    vector_store: str
+    llm: ComponentHealth
+    embeddings: ComponentHealth
+    store: ComponentHealth
     documents: int
+    database: dict = Field(default_factory=dict)
+    # Non-empty whenever anything fell back. The single field worth alerting on.
+    degraded: list[str] = Field(default_factory=list)

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { FileText } from "lucide-react";
 import { catalog } from "@/lib/data";
 import { classById, mediumById } from "@/constants/catalog";
@@ -8,6 +7,7 @@ import { Badge } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/empty-state";
 import { slugify } from "@/lib/utils";
 import type { ClassId } from "@/types/catalog";
+import { notFound } from "next/navigation";
 
 export const revalidate = 43200;
 

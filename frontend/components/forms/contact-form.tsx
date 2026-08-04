@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Check, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Textarea } from "@/components/ui/primitives";
+import { SITE } from "@/constants/catalog";
 
 const schema = z.object({
   name: z.string().min(2, "Enter your name"),
@@ -35,11 +36,32 @@ const TOPICS = [
  */
 export function ContactForm() {
   const [sent, setSent] = React.useState(false);
+  const [failed, setFailed] = React.useState(false);
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Values>({ resolver: zodResolver(schema), mode: "onBlur", defaultValues: { topic: "product" } });
+
+  /**
+   * Only claim success if the enquiry was actually stored. This used to await a
+   * `setTimeout` and then say "Message sent" unconditionally — so every enquiry
+   * was discarded while the sender believed we had it.
+   */
+  const submit = async (values: Values) => {
+    setFailed(false);
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "contact", ...values }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setSent(true);
+    } catch {
+      setFailed(true);
+    }
+  };
 
   if (sent) {
     return (
@@ -60,12 +82,7 @@ export function ContactForm() {
 
   return (
     <form
-      onSubmit={handleSubmit(async () => {
-        // ponytail: no transport wired. Point at a route handler or a form
-        // service; the schema is the contract either way.
-        await new Promise((r) => setTimeout(r, 600));
-        setSent(true);
-      })}
+      onSubmit={handleSubmit(submit)}
       className="glass-panel glass-edge p-6 md:p-8"
       noValidate
     >
@@ -105,6 +122,20 @@ export function ContactForm() {
           <FieldError>{errors.message?.message}</FieldError>
         </div>
       </div>
+
+      {failed && (
+        <p
+          role="alert"
+          className="mt-5 rounded-[var(--radius-md)] bg-[var(--signal-danger-soft)] px-4 py-3 text-[length:var(--text-sm)] text-[color:var(--signal-danger)]"
+        >
+          We couldn&apos;t send that just now — nothing was saved. Please try again, or
+          call us on{" "}
+          <a href={`tel:${SITE.phones[0]}`} className="font-medium underline">
+            {SITE.phones[0]}
+          </a>
+          .
+        </p>
+      )}
 
       <Button type="submit" size="lg" className="mt-6" loading={isSubmitting}>
         <Send className="size-4" aria-hidden />

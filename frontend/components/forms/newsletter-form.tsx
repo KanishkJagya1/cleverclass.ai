@@ -31,11 +31,24 @@ export function NewsletterForm({
     formState: { errors, isSubmitting },
   } = useForm<Values>({ resolver: zodResolver(schema), mode: "onBlur" });
 
-  const onSubmit = async (_values: Values) => {
-    // ponytail: no list provider wired yet. Swap for the ESP call when one is
-    // chosen — the form contract does not change.
-    await new Promise((r) => setTimeout(r, 400));
-    setDone(true);
+  const [failed, setFailed] = React.useState(false);
+
+  // Only confirm once the address is actually stored. Telling someone
+  // "check your inbox to confirm" when nothing was recorded is worse than
+  // telling them it failed.
+  const onSubmit = async (values: Values) => {
+    setFailed(false);
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "newsletter", email: values.email }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setDone(true);
+    } catch {
+      setFailed(true);
+    }
   };
 
   const dark = variant === "dark";
@@ -51,7 +64,7 @@ export function NewsletterForm({
         role="status"
       >
         <Check className="size-4" aria-hidden />
-        You're on the list. Check your inbox to confirm.
+        You&apos;re on the list.
       </p>
     );
   }
@@ -107,6 +120,17 @@ export function NewsletterForm({
           )}
         >
           {errors.email.message}
+        </p>
+      )}
+      {failed && !errors.email && (
+        <p
+          role="alert"
+          className={cn(
+            "mt-2 text-[length:var(--text-xs)]",
+            dark ? "text-rose-300" : "text-[color:var(--signal-danger)]",
+          )}
+        >
+          Couldn&apos;t subscribe just now. Please try again in a moment.
         </p>
       )}
     </form>

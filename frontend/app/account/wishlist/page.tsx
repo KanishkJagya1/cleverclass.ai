@@ -2,31 +2,72 @@
 
 import * as React from "react";
 import { useWishlist } from "@/lib/store/wishlist";
-import { SEED_BOOKS } from "@/lib/data/seed";
 import { BookCard } from "@/features/catalog/book-card";
 import { BookCardSkeleton } from "@/features/catalog/book-card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { Heart } from "lucide-react";
+import type { Book } from "@/types/catalog";
 
 export default function WishlistPage() {
   const { slugs, ready } = useWishlist();
+  const [books, setBooks] = React.useState<Book[]>([]);
+  const [status, setStatus] = React.useState<"idle" | "loading" | "ok" | "error">("idle");
 
-  // Client-side resolution against the seed module. A remote adapter would
-  // fetch by slug here — the component contract is identical either way.
-  const books = React.useMemo(
-    () => slugs.map((s) => SEED_BOOKS.find((b) => b.slug === s)).filter(Boolean),
-    [slugs],
-  );
+  /**
+   * Resolve the saved slugs against the real catalogue.
+   *
+   * This used to filter the bundled SEED_BOOKS module, which meant the wishlist
+   * showed generated books with generated prices no matter what the catalogue
+   * actually contained — and silently dropped anything the seed didn't happen
+   * to include. `/api/ai/*` is the rewrite to the backend (next.config.ts).
+   */
+  React.useEffect(() => {
+    if (!ready) return;
+    if (slugs.length === 0) {
+      setBooks([]);
+      setStatus("ok");
+      return;
+    }
+
+    const controller = new AbortController();
+    setStatus("loading");
+    fetch(`/api/ai/catalog/books/by-slugs?slugs=${encodeURIComponent(slugs.join(","))}`, {
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: Book[]) => {
+        setBooks(data);
+        setStatus("ok");
+      })
+      .catch((err) => {
+        if ((err as Error)?.name === "AbortError") return;
+        setStatus("error");
+      });
+
+    return () => controller.abort();
+  }, [ready, slugs]);
+
+  const loading = !ready || status === "loading" || status === "idle";
 
   return (
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Wishlist</h1>
       <p className="tabular mt-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
-        {ready ? `${books.length} saved` : "Loading…"}
+        {status === "ok" ? `${books.length} saved` : "Loading…"}
       </p>
 
       <div className="mt-8">
-        {!ready ? (
+        {status === "error" ? (
+          <ErrorState
+            title="Couldn't load your wishlist"
+            description="Your saved books are safe — we just couldn't reach the catalogue."
+            onRetry={() => setStatus("idle")}
+          />
+        ) : loading ? (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             {[0, 1, 2].map((i) => (
               <li key={i}>
@@ -43,7 +84,7 @@ export default function WishlistPage() {
           />
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {books.map((b) => b && (
+            {books.map((b) => (
               <li key={b.slug}>
                 <BookCard book={b} />
               </li>

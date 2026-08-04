@@ -3,12 +3,26 @@
 import * as React from "react";
 import type { SearchHit } from "@/types/catalog";
 
+/** A deep link into a book's free sample, sent as its own SSE frame. */
+export interface PreviewCard {
+  slug: string;
+  title: string;
+  href: string;
+  previewHref: string;
+  freePageCount?: number;
+  cover?: string | null;
+}
+
 export interface AssistantMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   /** Product recommendations returned alongside the prose (D9). */
   products?: SearchHit[];
+  /** Free-sample deep link, when the recommended book has one. */
+  preview?: PreviewCard;
+  /** What the backend decided this turn was — "recommend", "teaching", … */
+  intent?: string;
   /** True while tokens are still arriving. */
   streaming?: boolean;
   error?: boolean;
@@ -118,7 +132,13 @@ export function useAssistant() {
                 patch((m) => ({ ...m, content: m.content + evt.value }));
               } else if (evt.type === "products" && Array.isArray(evt.value)) {
                 patch((m) => ({ ...m, products: evt.value as SearchHit[] }));
+              } else if (evt.type === "meta" && evt.value) {
+                patch((m) => ({ ...m, intent: (evt.value as { intent?: string }).intent }));
+              } else if (evt.type === "preview" && evt.value) {
+                patch((m) => ({ ...m, preview: evt.value as PreviewCard }));
               }
+              // Unknown frame types are ignored on purpose, so the backend can
+              // add new ones without waiting for the client to ship.
             } catch {
               /* skip malformed frame */
             }

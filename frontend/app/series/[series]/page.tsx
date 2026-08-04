@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { SERIES, seriesById } from "@/constants/catalog";
 import { catalog } from "@/lib/data";
 import { BookCard } from "@/features/catalog/book-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { Series } from "@/types/catalog";
+import { notFound } from "next/navigation";
 
 export const revalidate = 43200;
 

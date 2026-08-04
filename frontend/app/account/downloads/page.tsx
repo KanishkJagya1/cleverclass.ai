@@ -8,7 +8,7 @@ export default function DownloadsPage() {
     <div>
       <h1 className="text-[length:var(--text-3xl)]">Downloads</h1>
       <p className="mt-2 max-w-lg text-[length:var(--text-body)] text-[color:var(--text-2)]">
-        Digital notes you've purchased. Key Notes previews are free and need no
+        Digital notes you&apos;ve purchased. Key Notes previews are free and need no
         account — they open directly on the notes page.
       </p>
       <div className="mt-8">
