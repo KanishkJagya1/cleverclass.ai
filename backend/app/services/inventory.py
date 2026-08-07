@@ -158,7 +158,7 @@ def low_stock(limit: int = 50) -> list[dict]:
             "  FROM books"
             " WHERE stock_qty IS NOT NULL"
             "   AND stock_qty <= low_stock_threshold"
-            "   AND status = 'published'"
+            "   AND status = 'published' AND deleted_at IS NULL"
             " ORDER BY stock_qty ASC, title LIMIT ?",
             (int(limit),),
         )

@@ -3,13 +3,14 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FileText, Search } from "lucide-react";
+import { FileText, Pencil, Search, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Skeleton } from "@/components/ui/primitives";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { AdminPageHeader } from "@/features/admin/shell";
-import { useAdminData } from "@/features/admin/auth-context";
+import { useAdminAuth, useAdminData } from "@/features/admin/auth-context";
+import { adminFetch, AdminApiError } from "@/features/admin/api";
 import type { AdminBookRow } from "@/features/admin/api";
 import { CoverImage } from "@/components/ui/cover-image";
 import { formatPrice } from "@/lib/utils";
@@ -102,10 +103,13 @@ export default function AdminBooksPage() {
     return () => clearTimeout(t);
   }, [term, q, setParam]);
 
+  const [message, setMessage] = React.useState<string | null>(null);
+
   const query = new URLSearchParams();
   if (status) query.set("status", status);
   if (q) query.set("q", q);
   query.set("page", String(page));
+  query.set("perPage", "10");
   const { data, error, loading, reload } = useAdminData<Paged>(`/books?${query}`, [
     status,
     q,
@@ -118,11 +122,28 @@ export default function AdminBooksPage() {
         title="Books"
         description={data ? `${data.total} in the catalogue` : undefined}
         action={
-          <Button asChild>
-            <Link href="/admin/books/new">Add a book</Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline">
+              <Link href="/admin/books/bulk">Bulk import</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/books/deleted">Deleted</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/books/new">Add a book</Link>
+            </Button>
+          </div>
         }
       />
+
+      {message ? (
+        <p
+          className="mb-4 rounded-[var(--radius-md)] border border-[var(--border-1)] p-3 text-[length:var(--text-sm)] text-[color:var(--text-2)]"
+          role="status"
+        >
+          {message}
+        </p>
+      ) : null}
 
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <div className="relative min-w-0 flex-1 sm:max-w-xs">
@@ -190,6 +211,7 @@ export default function AdminBooksPage() {
                   <th scope="col" className="px-3 py-2 font-medium">Stock</th>
                   <th scope="col" className="px-3 py-2 font-medium">Free sample</th>
                   <th scope="col" className="px-3 py-2 font-medium">Status</th>
+                  <th scope="col" className="px-3 py-2 text-right font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -227,6 +249,16 @@ export default function AdminBooksPage() {
                     </td>
                     <td className="px-3 py-2.5"><SampleCell row={b} /></td>
                     <td className="px-3 py-2.5"><StatusPill status={b.status} /></td>
+                    <td className="px-3 py-2.5 text-right">
+                      <RowActions
+                        slug={b.slug}
+                        title={b.title}
+                        onDeleted={(msg) => {
+                          setMessage(msg);
+                          reload();
+                        }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -282,5 +314,71 @@ export default function AdminBooksPage() {
         </>
       )}
     </>
+  );
+}
+
+/**
+ * Per-row edit and delete.
+ *
+ * Delete is a SOFT delete — the book leaves the shop but its row stays, so
+ * existing orders and invoices can still name what was sold. The confirmation
+ * says exactly that rather than the usual "cannot be undone", which would be
+ * false here and teaches people to distrust the warnings that are true.
+ */
+function RowActions({
+  slug,
+  title,
+  onDeleted,
+}: {
+  slug: string;
+  title: string;
+  onDeleted: (message: string) => void;
+}) {
+  const { csrf } = useAdminAuth();
+  const [busy, setBusy] = React.useState(false);
+
+  async function remove() {
+    const ok = window.confirm(
+      `Delete "${title}"?\n\nIt disappears from the shop and search. Existing orders keep working, and you can restore it from Deleted books.`,
+    );
+    if (!ok) return;
+
+    setBusy(true);
+    try {
+      await adminFetch(`/books/${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+        csrf,
+      });
+      onDeleted(`Deleted "${title}". You can restore it from Deleted books.`);
+    } catch (err) {
+      onDeleted(
+        err instanceof AdminApiError || err instanceof Error
+          ? err.message
+          : "Couldn't delete that book",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex justify-end gap-1">
+      <Link
+        href={`/admin/books/${slug}`}
+        aria-label={`Edit ${title}`}
+        className="inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-2)] hover:bg-[var(--surface-0)]"
+      >
+        <Pencil className="size-4" />
+      </Link>
+      <button
+        type="button"
+        aria-label={`Delete ${title}`}
+        disabled={busy}
+        onClick={() => void remove()}
+        className="inline-flex size-9 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--text-2)] hover:bg-[var(--signal-danger-soft)] hover:text-[color:var(--signal-danger)] disabled:opacity-40"
+      >
+        <Trash2 className="size-4" />
+      </button>
+    </div>
   );
 }

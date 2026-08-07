@@ -19,13 +19,22 @@ import logging
 import re
 from urllib.parse import quote
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi import (
+    APIRouter,
+    Cookie,
+    Depends,
+    HTTPException,
+    Path,
+    Query,
+    Request,
+    Response,
+)
+from fastapi.responses import FileResponse, RedirectResponse
 from pydantic import BaseModel, EmailStr, Field
 
 from app.config import settings
 from app.db.repo import customers as repo
-from app.services import mailer, oauth
+from app.services import mailer, oauth, order_flow
 from app.services import security
 from app.services.ratelimit import SlidingWindowLimiter, client_ip
 
@@ -423,16 +432,17 @@ def my_orders(customer: dict = Depends(current_customer)) -> dict:
             {
                 "orderNumber": o["order_number"],
                 "status": o["status"],
+                "statusLabel": order_flow.LABELS.get(o["status"], o["status"]),
+                # Surfaced because "has my payment gone through" is the
+                # question this screen exists to answer, and it is not the
+                # same question as where the parcel is.
+                "paymentStatus": o["payment_status"],
                 "total": o["total"],
                 "subtotal": o["subtotal"],
                 "shipping": o["shipping"],
                 "createdAt": o["created_at"],
                 "itemCount": sum(i["qty"] for i in o["items"]),
-                "items": [
-                    {"title": i["title"], "qty": i["qty"], "price": i["price"],
-                     "slug": i["slug"]}
-                    for i in o["items"]
-                ],
+                "items": o["items"],
             }
             for o in orders
         ]
@@ -571,6 +581,10 @@ class AddressIn(BaseModel):
     city: str = Field(min_length=2, max_length=100)
     state: str = Field(default="", max_length=100)
     pincode: str = Field(pattern=r"^\d{6}$")
+    # Often the field that actually gets the parcel to the door here —
+    # "opposite Ganesh temple" resolves a street a courier cannot otherwise
+    # find. Optional, because plenty of addresses do not need one.
+    landmark: str = Field(default="", max_length=200)
     isDefault: bool = False
 
 
@@ -583,6 +597,7 @@ class AddressPatch(BaseModel):
     city: str | None = Field(default=None, max_length=100)
     state: str | None = Field(default=None, max_length=100)
     pincode: str | None = Field(default=None, pattern=r"^\d{6}$")
+    landmark: str | None = Field(default=None, max_length=200)
 
 
 @router.get("/addresses")
@@ -759,3 +774,147 @@ def read_all_notifications(customer: dict = Depends(current_customer)) -> dict:
             audience="customer", customer_id=customer["id"]
         ),
     }
+
+
+# ------------------------------------------------------------- downloads --
+@router.get("/downloads")
+def my_downloads(customer: dict = Depends(current_customer)) -> dict:
+    """E-books this account has bought and may download."""
+    from app.services import ebook
+
+    return {"downloads": ebook.entitlements(customer["id"])}
+
+
+@router.get("/downloads/{order_number}/{slug}")
+def download_ebook(
+    request: Request,
+    order_number: str = Path(min_length=4, max_length=20),
+    slug: str = Path(min_length=1, max_length=200),
+    customer: dict = Depends(current_customer),
+) -> FileResponse:
+    """Stream this buyer's watermarked copy.
+
+    No cache headers and no shared path: the file is built per order and names
+    the buyer on every page, so it must never be served from a CDN or reused
+    for a second account.
+    """
+    from app.services import ebook
+
+    try:
+        path, filename = ebook.prepare_download(
+            order_number, slug,
+            customer_id=customer["id"],
+            ip=client_ip(request),
+            user_agent=request.headers.get("user-agent"),
+        )
+    except ebook.EbookError as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+    return FileResponse(
+        path,
+        media_type="application/pdf",
+        filename=filename,
+        headers={
+            "Cache-Control": "private, no-store",
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
+
+
+# ---------------------------------------------------------------- reader --
+_reader_limiter = SlidingWindowLimiter([(40, 60), (600, 3600)])
+
+
+@router.get("/reader/{order_number}/{slug}/manifest")
+def reader_manifest(
+    order_number: str = Path(min_length=4, max_length=20),
+    slug: str = Path(min_length=1, max_length=200),
+    customer: dict = Depends(current_customer),
+) -> dict:
+    from app.services import reader
+
+    try:
+        return reader.issue_manifest(
+            order_number, slug, customer_id=customer["id"]
+        )
+    except reader.ReaderError as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+
+@router.get("/reader/{order_number}/{slug}/page/{page_no}.webp")
+def reader_page(
+    request: Request,
+    order_number: str = Path(min_length=4, max_length=20),
+    slug: str = Path(min_length=1, max_length=200),
+    page_no: int = Path(ge=1, le=5000),
+    t: str = Query(min_length=8, max_length=80),
+    customer: dict = Depends(current_customer),
+) -> Response:
+    """One page, as an image. There is no route that returns the whole file.
+
+    Three checks, in this order, because each is cheaper than the next:
+    rate limit, signature, then the live entitlement read.
+    """
+    from app.services import pdf, reader, storage
+
+    allowed, retry = _reader_limiter.check(f"{customer['id']}:{order_number}")
+    if not allowed:
+        # A human reads a page every few seconds. This rate is a scraper.
+        log.warning(
+            "Reader rate limit hit: customer=%s order=%s", customer["id"], order_number
+        )
+        raise HTTPException(
+            429, "Slow down a moment.", headers={"Retry-After": str(retry)}
+        )
+
+    try:
+        reader.verify_page(order_number, slug, page_no, t)
+        # Re-read on EVERY page: a refund must stop the book mid-chapter, not
+        # at the next login.
+        row = reader.check_entitled(
+            order_number, slug, customer_id=customer["id"]
+        )
+    except reader.ReaderError as exc:
+        raise HTTPException(403, str(exc)) from exc
+
+    asset = query_one_asset(row["book_id"])
+    if asset is None:
+        raise HTTPException(404, "This book is not ready to read yet.")
+
+    source = storage.absolute(asset["storage_path"])
+    if not source.exists():
+        raise HTTPException(404, "That page is unavailable.")
+
+    # Rendered per request with the buyer's stamp — NOT cached to disk. A
+    # cached page image is a file on disk carrying one buyer's identity that a
+    # second buyer could be served; the CPU cost is the price of that not
+    # happening.
+    try:
+        image = pdf.render_page(
+            source, page_no, dpi=144,
+            watermark=reader.watermark_for(order_number, slug),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Reader render failed for %s p%s", slug, page_no)
+        raise HTTPException(500, "Could not render that page.") from exc
+
+    return Response(
+        image,
+        media_type="image/webp",
+        headers={
+            # Never cached anywhere but this browser, and not even there for
+            # long: the image carries a name and an order number.
+            "Cache-Control": "private, no-store, max-age=0",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+def query_one_asset(book_id: str):
+    from app.db.conn import query_one as _q
+
+    return _q(
+        "SELECT id, storage_path, page_count FROM book_assets"
+        " WHERE book_id = ? AND is_current = 1",
+        (book_id,),
+    )

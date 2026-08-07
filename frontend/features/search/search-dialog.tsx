@@ -149,7 +149,7 @@ export function SearchDialog() {
 
           <Command
             shouldFilter={false}
-            className="glass-panel glass-edge flex h-full flex-col overflow-hidden !rounded-none sm:!rounded-[var(--radius-2xl)]"
+            className="glass-panel panel-solid glass-edge flex h-full flex-col overflow-hidden !rounded-none sm:!rounded-[var(--radius-2xl)]"
           >
             <div className="flex items-center gap-3 border-b border-[var(--border-1)] px-4">
               {loading ? (

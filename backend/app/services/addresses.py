@@ -49,6 +49,7 @@ def _public(row: dict) -> dict:
         "city": row["city"],
         "state": row["state"],
         "pincode": row["pincode"],
+        "landmark": row["landmark"],
         "isDefault": bool(row["is_default"]),
     }
 
@@ -140,14 +141,15 @@ def create(customer_id: str, **fields) -> dict:
             )
         conn.execute(
             "INSERT INTO addresses (id, customer_id, label, name, phone, line1,"
-            " line2, city, state, pincode, is_default, created_at, updated_at)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " line2, city, state, pincode, landmark, is_default, created_at,"
+            " updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (address_id, customer_id,
              str(fields.get("label") or "Home")[:40],
              str(fields.get("name") or "")[:120],
              str(fields.get("phone") or "")[:20],
              line1[:300], str(fields.get("line2") or "")[:300],
              city[:100], str(fields.get("state") or "")[:100], pincode,
+             str(fields.get("landmark") or "")[:200],
              1 if make_default else 0, _now(), _now()),
         )
         if make_default:
@@ -166,12 +168,13 @@ def update(customer_id: str, address_id: str, **fields) -> dict:
     with transaction() as conn:
         conn.execute(
             "UPDATE addresses SET label = ?, name = ?, phone = ?, line1 = ?,"
-            " line2 = ?, city = ?, state = ?, pincode = ?, updated_at = ?"
-            " WHERE id = ? AND customer_id = ?",
+            " line2 = ?, city = ?, state = ?, pincode = ?, landmark = ?,"
+            " updated_at = ? WHERE id = ? AND customer_id = ?",
             (str(merged["label"])[:40], str(merged["name"])[:120],
              str(merged["phone"])[:20], str(merged["line1"])[:300],
              str(merged["line2"])[:300], str(merged["city"])[:100],
-             str(merged["state"])[:100], str(merged["pincode"]), _now(),
+             str(merged["state"])[:100], str(merged["pincode"]),
+             str(merged.get("landmark") or "")[:200], _now(),
              address_id, customer_id),
         )
         if current["isDefault"]:

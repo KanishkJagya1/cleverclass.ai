@@ -65,8 +65,13 @@ export async function adminFetch<T>(
 ): Promise<T> {
   const { method = "GET", body, csrf, signal } = options;
 
+  // FormData goes through untouched: the browser has to set Content-Type
+  // itself so it can append the multipart boundary, and JSON.stringify on a
+  // File yields "{}" — an upload that silently sends nothing.
+  const isUpload = typeof FormData !== "undefined" && body instanceof FormData;
+
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (body !== undefined && !isUpload) headers["Content-Type"] = "application/json";
   if (method !== "GET" && csrf !== null) {
     if (!csrf) {
       throw new AdminApiError(
@@ -83,7 +88,12 @@ export async function adminFetch<T>(
     // Same-origin, but explicit: without this the cookie is omitted on
     // cross-origin builds and every request 401s for no visible reason.
     credentials: "same-origin",
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body:
+      body === undefined
+        ? undefined
+        : isUpload
+          ? (body as FormData)
+          : JSON.stringify(body),
     signal,
   });
 
@@ -130,6 +140,8 @@ export interface AdminBook {
   slug: string;
   title: string;
   titleMr: string | null;
+  /** Current front cover, or null when none has been uploaded. */
+  cover: string | null;
   series: string;
   board: string;
   classId: string;
@@ -138,6 +150,10 @@ export interface AdminBook {
   stream: string | null;
   price: number;
   mrp: number | null;
+  /** Sold in print, as a download, or both — each priced separately. */
+  physicalAvailable: boolean;
+  ebookAvailable: boolean;
+  ebookPrice: number | null;
   pages: number;
   isbn: string | null;
   edition: string;

@@ -65,30 +65,53 @@ def price_lines(items: list[dict]) -> tuple[list[dict], int]:
     Unsellable slugs are dropped rather than raising — the caller decides
     whether an empty result is an error.
     """
-    wanted: dict[str, int] = {}
+    # Keyed by (slug, delivery): the same title in print and as a download are
+    # two different products at two different prices, and merging them on slug
+    # alone would silently bill one of them twice.
+    wanted: dict[tuple[str, str], int] = {}
     for item in items:
         slug = str(item.get("slug", "")).strip()
+        delivery = str(item.get("delivery") or "physical").strip().lower()
+        if delivery not in ("physical", "digital"):
+            delivery = "physical"
         qty = max(1, min(20, int(item.get("qty", 1))))
         if slug:
-            wanted[slug] = wanted.get(slug, 0) + qty
+            key = (slug, delivery)
+            wanted[key] = wanted.get(key, 0) + qty
     if not wanted:
         return [], 0
 
-    marks = ",".join("?" * len(wanted))
+    slugs = sorted({slug for slug, _ in wanted})
+    marks = ",".join("?" * len(slugs))
     rows = query(
-        f"SELECT slug, title, price, class_id, medium, series, in_stock FROM books"
-        f" WHERE slug IN ({marks}) AND status = 'published'",
-        list(wanted),
+        f"SELECT slug, title, price, ebook_price, ebook_available,"
+        f"       physical_available, class_id, medium, series, in_stock"
+        f"  FROM books"
+        f" WHERE slug IN ({marks}) AND status = 'published' AND deleted_at IS NULL",
+        slugs,
     )
     found = {r["slug"]: r for r in rows}
 
     lines: list[dict] = []
     subtotal = 0
-    for slug, qty in wanted.items():
+    for (slug, delivery), qty in wanted.items():
         row = found.get(slug)
         if row is None:
             continue  # not sellable, so not billed
-        line_total = int(row["price"]) * qty
+
+        if delivery == "digital":
+            # An e-book with no price set is not for sale, whatever the flag
+            # says. Falling back to the print price here would quietly charge
+            # for a download that was never meant to be sold.
+            if not row["ebook_available"] or row["ebook_price"] is None:
+                continue
+            unit_price = int(row["ebook_price"])
+        else:
+            if not row["physical_available"]:
+                continue
+            unit_price = int(row["price"])
+
+        line_total = unit_price * qty
         subtotal += line_total
         lines.append(
             {
@@ -99,8 +122,9 @@ def price_lines(items: list[dict]) -> tuple[list[dict], int]:
                 # Carried for coupon scoping ("20% off Kohinoor").
                 "series": row["series"],
                 # Snapshot: a later price change must not rewrite history.
-                "unitPrice": int(row["price"]),
+                "unitPrice": unit_price,
                 "qty": qty,
+                "delivery": delivery,
                 "lineTotal": line_total,
             }
         )
@@ -125,7 +149,21 @@ def create_order(
     if not lines:
         raise ValueError("None of those books are available.")
 
-    shipping = 0 if subtotal >= settings.free_shipping_threshold else settings.shipping_flat_rate
+    # Shipping is charged on PRINTED lines only. A customer buying nothing but
+    # downloads and being charged delivery is a support ticket every time, and
+    # the free-shipping threshold has to be judged on the printed subtotal for
+    # the same reason.
+    physical_subtotal = sum(
+        line["lineTotal"] for line in lines if line.get("delivery") != "digital"
+    )
+    if physical_subtotal == 0:
+        shipping = 0
+    else:
+        shipping = (
+            0
+            if physical_subtotal >= settings.free_shipping_threshold
+            else settings.shipping_flat_rate
+        )
 
     # Coupon, applied HERE and nowhere else.
     #
@@ -185,11 +223,13 @@ def create_order(
         )
         for line in lines:
             conn.execute(
-                "INSERT INTO order_items (order_id, slug, format, title, class_id, medium,"
-                " unit_price, qty, line_total) VALUES (?,?,'book',?,?,?,?,?,?)",
+                "INSERT INTO order_items (order_id, slug, format, title, class_id,"
+                " medium, unit_price, qty, line_total, delivery)"
+                " VALUES (?,?,'book',?,?,?,?,?,?,?)",
                 (
                     order_id, line["slug"], line["title"], line["classId"],
-                    line["medium"], line["unitPrice"], line["qty"], line["lineTotal"],
+                    line["medium"], line["unitPrice"], line["qty"],
+                    line["lineTotal"], line.get("delivery", "physical"),
                 ),
             )
         conn.execute(

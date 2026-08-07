@@ -65,7 +65,7 @@ export function ContactForm() {
 
   if (sent) {
     return (
-      <div className="glass-panel glass-edge p-8 text-center" role="status">
+      <div className="glass-panel panel-solid glass-edge p-8 text-center" role="status">
         <span className="mx-auto grid size-12 place-items-center rounded-full bg-[var(--signal-gain-soft)] text-[color:var(--signal-gain)]">
           <Check className="size-5" aria-hidden />
         </span>
@@ -83,7 +83,7 @@ export function ContactForm() {
   return (
     <form
       onSubmit={handleSubmit(submit)}
-      className="glass-panel glass-edge p-6 md:p-8"
+      className="glass-panel panel-solid glass-edge p-6 md:p-8"
       noValidate
     >
       <div className="grid gap-4 sm:grid-cols-2">

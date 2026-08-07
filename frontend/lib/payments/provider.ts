@@ -57,7 +57,15 @@ export const requestOrderProvider: PaymentProvider = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: draft.items.map((i) => ({ slug: i.slug, qty: i.qty })),
+          // `delivery` must survive this hop. Dropping it here would send
+          // every line as a printed copy, so an e-book would be billed at the
+          // print price and would deduct stock — the selector would look like
+          // it worked and quietly do nothing.
+          items: draft.items.map((i) => ({
+            slug: i.slug,
+            qty: i.qty,
+            delivery: i.delivery ?? "physical",
+          })),
           name: draft.shipping.fullName,
           phone: draft.shipping.phone,
           email: draft.shipping.email || undefined,

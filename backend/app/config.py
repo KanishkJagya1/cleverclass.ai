@@ -94,6 +94,10 @@ class Settings(BaseSettings):
     company_name: str = "CleverClass.AI"
     company_phone: str = "+91 71042 99010"
     company_email: str = "kohinoortezz@gmail.com"
+    # Where support tickets are emailed. Separate from `company_email` so the
+    # inbox a customer writes to and the one staff watch can diverge later
+    # without touching every template; defaults to the same address.
+    support_email: str | None = None
     company_whatsapp: str = "917104299010"  # digits only, for wa.me links
     free_shipping_threshold: int = 200
     shipping_flat_rate: int = 40

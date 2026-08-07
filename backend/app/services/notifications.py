@@ -71,7 +71,7 @@ def notify(
 
 
 def for_admin(admin_id: str | None = None, *, unread_only: bool = False,
-              limit: int = 50) -> dict:
+              limit: int = 50, page: int = 1) -> dict:
     """Staff notifications: those addressed to everyone, plus this admin's own."""
     clauses = ["audience = 'admin'"]
     params: list = []
@@ -83,16 +83,31 @@ def for_admin(admin_id: str | None = None, *, unread_only: bool = False,
     if unread_only:
         clauses.append("read_at IS NULL")
 
+    where = " AND ".join(clauses)
+    total = query_one(
+        f"SELECT COUNT(*) n FROM notifications WHERE {where}", params
+    )["n"]
     rows = query(
-        f"SELECT * FROM notifications WHERE {' AND '.join(clauses)}"
-        " ORDER BY created_at DESC LIMIT ?",
-        [*params, int(limit)],
+        f"SELECT * FROM notifications WHERE {where}"
+        " ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        [*params, int(limit), (int(page) - 1) * int(limit)],
     )
+    # Counted across ALL unread, not just this page — it drives the bell badge,
+    # which must not shrink because the operator turned to page two.
     unread = query_one(
         "SELECT COUNT(*) n FROM notifications WHERE audience = 'admin'"
         " AND read_at IS NULL"
     )["n"]
-    return {"notifications": [_public(dict(r)) for r in rows], "unread": unread}
+    items = [_public(dict(r)) for r in rows]
+    return {
+        "items": items,
+        "notifications": items,  # legacy key, kept while the UI migrates
+        "unread": unread,
+        "total": total,
+        "page": page,
+        "perPage": limit,
+        "totalPages": (total + limit - 1) // limit if total else 0,
+    }
 
 
 def for_customer(customer_id: str, *, unread_only: bool = False,

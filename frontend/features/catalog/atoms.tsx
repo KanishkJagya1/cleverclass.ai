@@ -102,16 +102,38 @@ export function WishlistButton({
 /* -------------------------------------------------------------------------- */
 /* AddToCartButton                                                            */
 /* -------------------------------------------------------------------------- */
-type Addable = Pick<Book, "slug" | "title" | "titleMr" | "price" | "mrp" | "classId" | "medium" | "images" | "inStock">;
+type Addable = Pick<
+  Book,
+  | "slug"
+  | "title"
+  | "titleMr"
+  | "price"
+  | "mrp"
+  | "classId"
+  | "medium"
+  | "images"
+  | "inStock"
+> &
+  Partial<Pick<Book, "ebookPrice" | "ebookAvailable" | "physicalAvailable">>;
 
-export function toCartItem(item: Addable, format: CartItem["format"] = "book"): Omit<CartItem, "qty"> {
+export function toCartItem(
+  item: Addable,
+  format: CartItem["format"] = "book",
+  delivery: CartItem["delivery"] = "physical",
+): Omit<CartItem, "qty"> {
+  // A download is billed at its own price. Taking `item.price` for both would
+  // show the printed cost in the basket and the real one at checkout.
+  const digital = delivery === "digital";
+  const price = digital ? (item.ebookPrice ?? item.price) : item.price;
   return {
     slug: item.slug,
     format,
+    delivery,
     title: item.title,
     titleMr: item.titleMr,
-    price: item.price,
-    mrp: item.mrp,
+    price,
+    // A download has no printed MRP to strike through.
+    mrp: digital ? undefined : item.mrp,
     image: item.images[0]?.src ?? "",
     classId: item.classId,
     medium: item.medium,
@@ -121,12 +143,14 @@ export function toCartItem(item: Addable, format: CartItem["format"] = "book"): 
 export function AddToCartButton({
   item,
   format = "book",
+  delivery = "physical",
   qty = 1,
   children,
   ...props
 }: {
   item: Addable;
   format?: CartItem["format"];
+  delivery?: CartItem["delivery"];
   qty?: number;
 } & Omit<ButtonProps, "children"> & { children?: React.ReactNode }) {
   const add = useCart((s) => s.add);
@@ -145,7 +169,10 @@ export function AddToCartButton({
     return () => clearTimeout(t);
   }, [added]);
 
-  if (!item.inStock) {
+  // Stock gates the PRINTED copy only. A download cannot sell out, and
+  // greying out its button because the warehouse is empty would refuse a sale
+  // that costs nothing to fulfil.
+  if (delivery !== "digital" && !item.inStock) {
     return (
       <Button disabled variant="secondary" {...props}>
         Out of stock
@@ -158,7 +185,7 @@ export function AddToCartButton({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        add(toCartItem(item, format), qty);
+        add(toCartItem(item, format, delivery), qty);
         setAdded(true);
         toast.success("Added to cart", { description: item.title });
       }}

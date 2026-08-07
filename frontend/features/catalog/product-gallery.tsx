@@ -222,7 +222,7 @@ export function PreviewReader({
         <Dialog.Overlay className="glass-veil fixed inset-0 z-[var(--z-overlay)]" />
         <Dialog.Content
           className={cn(
-            "glass-panel glass-edge fixed left-1/2 top-1/2 z-[var(--z-modal)] flex max-h-[92vh] w-[min(56rem,94vw)]",
+            "glass-panel panel-solid glass-edge fixed left-1/2 top-1/2 z-[var(--z-modal)] flex max-h-[92vh] w-[min(56rem,94vw)]",
             "-translate-x-1/2 -translate-y-1/2 flex-col p-5 focus:outline-none md:p-6",
           )}
         >

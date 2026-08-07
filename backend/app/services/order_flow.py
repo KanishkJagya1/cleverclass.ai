@@ -135,8 +135,13 @@ def transition(
             )
         )
 
+    # PHYSICAL lines only. A download cannot sell out, and deducting stock for
+    # one would walk a printed title's count down every time somebody bought
+    # the e-book — eventually marking a book that never shipped out of stock.
     items = query(
-        "SELECT slug, qty FROM order_items WHERE order_id = ?", (order["id"],)
+        "SELECT slug, qty FROM order_items"
+        " WHERE order_id = ? AND delivery != 'digital'",
+        (order["id"],),
     )
     already_applied = order["stock_applied_at"] is not None
 

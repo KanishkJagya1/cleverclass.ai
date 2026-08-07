@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Download, Heart, LayoutDashboard, MapPin, Settings, ShoppingBag, User } from "lucide-react";
+import { LogoutButton } from "@/features/account/logout-button";
 
 export const metadata: Metadata = {
   title: "Your account",
@@ -43,6 +44,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                 </Link>
               </li>
             ))}
+            {/* In the rail on mobile, below the divider on desktop — either
+                way it is where someone looks for it. */}
+            <li className="shrink-0 lg:mt-2 lg:border-t lg:border-[var(--border-1)] lg:pt-2">
+              <LogoutButton />
+            </li>
           </ul>
         </nav>
 

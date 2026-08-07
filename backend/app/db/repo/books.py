@@ -55,6 +55,9 @@ def book_from_row(row: Any, images: list[dict] | None = None) -> dict:
         "medium": row["medium"],
         "subject": row["subject"],
         "price": row["price"],
+        "ebookPrice": row["ebook_price"],
+        "ebookAvailable": bool(row["ebook_available"]),
+        "physicalAvailable": bool(row["physical_available"]),
         "images": images or [],
         # Populated by the preview layer, not stored here — a book has free
         # pages only once a PDF is uploaded and ranges are set.
@@ -172,7 +175,10 @@ def _where(q: dict, alias: str = "b") -> tuple[str, list]:
     count computed against different filters than the result list is the classic
     faceted-search bug.
     """
-    clauses = [f"{alias}.status = 'published'"]
+    # A deleted book is gone from every browse, facet and count in one place.
+    # Filtering here rather than at 58 call sites means a new query cannot
+    # forget it — and the three callers of this clause stay in step.
+    clauses = [f"{alias}.status = 'published'", f"{alias}.deleted_at IS NULL"]
     params: list[Any] = []
 
     if q.get("board"):
@@ -251,7 +257,7 @@ def get_book(slug: str) -> dict | None:
     API and rendered on the storefront. Unpublishing has to actually unpublish.
     Admin reads go through admin_routes, which sees every status.
     """
-    row = query_one("SELECT * FROM books WHERE slug = ? AND status = 'published'", (slug,))
+    row = query_one("SELECT * FROM books WHERE slug = ? AND status = 'published' AND deleted_at IS NULL", (slug,))
     if row is None:
         return None
     return hydrate([row])[0]
@@ -262,7 +268,7 @@ def get_books_by_slugs(slugs: list[str]) -> list[dict]:
         return []
     marks = ",".join("?" * len(slugs))
     rows = query(
-        f"SELECT * FROM books WHERE slug IN ({marks}) AND status = 'published'", slugs
+        f"SELECT * FROM books WHERE slug IN ({marks}) AND status = 'published' AND deleted_at IS NULL", slugs
     )
     hydrated = hydrate(rows)
     # Preserve the caller's order — combo contents and "related" lists are
@@ -273,7 +279,7 @@ def get_books_by_slugs(slugs: list[str]) -> list[dict]:
 
 def all_slugs(limit: int | None = None) -> list[str]:
     sql = (
-        "SELECT slug FROM books WHERE status = 'published'"
+        "SELECT slug FROM books WHERE status = 'published' AND deleted_at IS NULL"
         " ORDER BY best_seller_rank IS NULL, best_seller_rank ASC, slug ASC"
     )
     params: list[Any] = []
@@ -338,14 +344,14 @@ def search_books(term: str, limit: int = 8) -> list[dict]:
         rows = query(
             "SELECT b.*, bm25(books_fts) AS rank FROM books_fts"
             " JOIN books b ON b.rowid = books_fts.rowid"
-            " WHERE books_fts MATCH ? AND b.status = 'published'"
+            " WHERE books_fts MATCH ? AND b.status = 'published' AND deleted_at IS NULL"
             " ORDER BY rank LIMIT ?",
             (fts_query, limit),
         )
     except Exception:  # noqa: BLE001 — malformed FTS expression
         like = f"%{term.lower()}%"
         rows = query(
-            "SELECT b.* FROM books b WHERE b.status = 'published'"
+            "SELECT b.* FROM books b WHERE b.status = 'published' AND deleted_at IS NULL"
             " AND (LOWER(b.title) LIKE ? OR LOWER(b.subject) LIKE ?)"
             " ORDER BY b.best_seller_rank IS NULL, b.best_seller_rank LIMIT ?",
             (like, like, limit),
@@ -359,7 +365,7 @@ def search_books(term: str, limit: int = 8) -> list[dict]:
 
 def best_sellers(limit: int = 8, class_id: str | None = None) -> list[dict]:
     sql = (
-        "SELECT * FROM books WHERE status = 'published' AND best_seller_rank IS NOT NULL"
+        "SELECT * FROM books WHERE status = 'published' AND deleted_at IS NULL AND best_seller_rank IS NOT NULL"
     )
     params: list[Any] = []
     if class_id:
@@ -373,7 +379,7 @@ def best_sellers(limit: int = 8, class_id: str | None = None) -> list[dict]:
 def new_arrivals(limit: int = 8) -> list[dict]:
     return hydrate(
         query(
-            "SELECT * FROM books WHERE status = 'published'"
+            "SELECT * FROM books WHERE status = 'published' AND deleted_at IS NULL"
             " ORDER BY published_at DESC, slug ASC LIMIT ?",
             (int(limit),),
         )
@@ -383,7 +389,7 @@ def new_arrivals(limit: int = 8) -> list[dict]:
 def featured(limit: int = 8) -> list[dict]:
     return hydrate(
         query(
-            "SELECT * FROM books WHERE status = 'published' AND in_stock = 1"
+            "SELECT * FROM books WHERE status = 'published' AND deleted_at IS NULL AND in_stock = 1"
             " ORDER BY rating DESC, review_count DESC LIMIT ?",
             (int(limit),),
         )
@@ -391,7 +397,9 @@ def featured(limit: int = 8) -> list[dict]:
 
 
 def related(slug: str, limit: int = 4) -> list[dict]:
-    book = query_one("SELECT * FROM books WHERE slug = ?", (slug,))
+    book = query_one(
+        "SELECT * FROM books WHERE slug = ? AND deleted_at IS NULL", (slug,)
+    )
     if book is None:
         return []
 
@@ -403,7 +411,7 @@ def related(slug: str, limit: int = 4) -> list[dict]:
     seen = {slug, *(b["slug"] for b in out)}
     marks = ",".join("?" * len(seen))
     rows = query(
-        f"SELECT * FROM books WHERE status = 'published' AND class_id = ? AND medium = ?"
+        f"SELECT * FROM books WHERE status = 'published' AND deleted_at IS NULL AND class_id = ? AND medium = ?"
         f" AND slug NOT IN ({marks}) ORDER BY rating DESC LIMIT ?",
         [book["class_id"], book["medium"], *seen, limit - len(out)],
     )
@@ -413,11 +421,13 @@ def related(slug: str, limit: int = 4) -> list[dict]:
 def frequently_bought_together(slug: str, limit: int = 3) -> list[dict]:
     """Same class and medium, different subject — the combination that actually
     gets bought together, and the one that clears the free-shipping threshold."""
-    book = query_one("SELECT * FROM books WHERE slug = ?", (slug,))
+    book = query_one(
+        "SELECT * FROM books WHERE slug = ? AND deleted_at IS NULL", (slug,)
+    )
     if book is None:
         return []
     rows = query(
-        "SELECT * FROM books WHERE status = 'published' AND in_stock = 1"
+        "SELECT * FROM books WHERE status = 'published' AND deleted_at IS NULL AND in_stock = 1"
         " AND class_id = ? AND medium = ? AND subject != ? AND slug != ?"
         " ORDER BY best_seller_rank IS NULL, best_seller_rank ASC, rating DESC LIMIT ?",
         (book["class_id"], book["medium"], book["subject"], slug, int(limit)),
@@ -454,6 +464,14 @@ def upsert_book(conn, book: dict) -> str:
         "stream": book.get("stream"),
         "price": int(book["price"]),
         "mrp": int(book["mrp"]) if book.get("mrp") is not None else None,
+        "ebook_price": (
+            int(book["ebookPrice"]) if book.get("ebookPrice") is not None else None
+        ),
+        "ebook_available": 1 if book.get("ebookAvailable") else 0,
+        # Defaults to available so a payload from an older client — or any
+        # caller that has not learned about these fields — keeps the book on
+        # sale in print rather than silently delisting it.
+        "physical_available": 0 if book.get("physicalAvailable") is False else 1,
         "pages": int(book.get("pages") or 0),
         "isbn": book.get("isbn"),
         "edition": book.get("edition", ""),
@@ -517,3 +535,100 @@ def set_status(slug: str, status: str) -> bool:
             (status, _now(), slug),
         )
         return cur.rowcount > 0
+
+
+# --------------------------------------------------------------------------
+# Soft delete
+# --------------------------------------------------------------------------
+
+def soft_delete(slug: str, *, actor_id: str | None) -> dict:
+    """Mark a book deleted. Never removes the row.
+
+    Orders, invoices and the stock ledger all reference `books.id`. An invoice
+    that cannot name what was sold is a problem for an auditor, not just a
+    broken page — so the row stays and the catalogue stops showing it.
+
+    Status is moved to 'archived' alongside the flag. Belt and braces: any
+    query that gates on `status = 'published'` and has not yet learned about
+    `deleted_at` still does the right thing.
+    """
+    now = _now()
+    book = query_one(
+        "SELECT id, slug, title, status, deleted_at FROM books WHERE slug = ?",
+        (slug,),
+    )
+    if book is None:
+        raise LookupError("No such book")
+    if book["deleted_at"] is not None:
+        # Idempotent rather than an error: a double-click must not 500.
+        return {"slug": slug, "alreadyDeleted": True}
+
+    with transaction() as conn:
+        conn.execute(
+            "UPDATE books SET deleted_at = ?, deleted_by = ?, status = 'archived',"
+            " updated_at = ? WHERE slug = ?",
+            (now, actor_id, now, slug),
+        )
+    return {
+        "slug": slug,
+        "title": book["title"],
+        # Returned so the UI can say what it will restore TO, rather than
+        # silently republishing a book on restore.
+        "previousStatus": book["status"],
+        "deletedAt": now,
+        "alreadyDeleted": False,
+    }
+
+
+def restore(slug: str, *, status: str = "draft") -> dict:
+    """Bring a deleted book back, as a draft by default.
+
+    Deliberately NOT restored to 'published'. A book was deleted for a reason;
+    putting it straight back in the shop without anyone looking at it is how a
+    wrong price goes live twice.
+    """
+    if status not in ("draft", "archived"):
+        raise ValueError("A restored book may only come back as draft or archived")
+
+    book = query_one("SELECT id, deleted_at FROM books WHERE slug = ?", (slug,))
+    if book is None:
+        raise LookupError("No such book")
+    if book["deleted_at"] is None:
+        return {"slug": slug, "alreadyLive": True}
+
+    now = _now()
+    with transaction() as conn:
+        conn.execute(
+            "UPDATE books SET deleted_at = NULL, deleted_by = NULL, status = ?,"
+            " updated_at = ? WHERE slug = ?",
+            (status, now, slug),
+        )
+    return {"slug": slug, "status": status, "alreadyLive": False}
+
+
+def deleted(limit: int = 50, offset: int = 0) -> dict:
+    """The bin, newest first, with a total so the UI can paginate it."""
+    total = query_one(
+        "SELECT COUNT(*) AS n FROM books WHERE deleted_at IS NOT NULL"
+    )["n"]
+    rows = query(
+        "SELECT b.slug, b.title, b.class_id, b.medium, b.subject, b.price,"
+        " b.deleted_at, b.deleted_by, u.email AS deleted_by_email"
+        " FROM books b LEFT JOIN admin_users u ON u.id = b.deleted_by"
+        " WHERE b.deleted_at IS NOT NULL"
+        " ORDER BY b.deleted_at DESC LIMIT ? OFFSET ?",
+        (int(limit), int(offset)),
+    )
+    return {
+        "items": [
+            {
+                "slug": r["slug"], "title": r["title"], "classId": r["class_id"],
+                "medium": r["medium"], "subject": r["subject"], "price": r["price"],
+                "deletedAt": r["deleted_at"],
+                # Who did it, by email — "deleted_by: 7f3a-..." answers nothing.
+                "deletedBy": r["deleted_by_email"] or r["deleted_by"],
+            }
+            for r in rows
+        ],
+        "total": total,
+    }

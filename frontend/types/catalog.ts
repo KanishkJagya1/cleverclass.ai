@@ -36,6 +36,14 @@ export interface CoverImage {
 export interface Book extends Money {
   id: string;
   slug: string;
+  /**
+   * Sold in print, as a download, or both. Optional so older cached payloads
+   * still parse — absent means "printed only", which is what every book was
+   * before e-books existed.
+   */
+  physicalAvailable?: boolean;
+  ebookAvailable?: boolean;
+  ebookPrice?: number | null;
   title: string;
   /** Devanagari title. Rendered with lang="mr" so it picks up --leading-deva. */
   titleMr?: string;
@@ -198,6 +206,12 @@ export interface Facets {
 export interface CartItem {
   slug: string;
   format: ProductFormat;
+  /**
+   * How it arrives. Separate from `format` (what it IS) because the same
+   * title can be bought in print and as a download at different prices, and
+   * both can sit in one basket.
+   */
+  delivery: "physical" | "digital";
   title: string;
   titleMr?: string;
   price: number;

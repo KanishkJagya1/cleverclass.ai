@@ -159,7 +159,12 @@ def main_() -> int:
     print("\n=== the dashboard holds together ===")
     board = analytics.dashboard(30)
     check("summary present", "revenue" in board["summary"])
-    check("series is zero-filled, not sparse", len(board["series"]) == 31,
+    # 30, not 31. This asserted 31 while the window ran from `now - 30 days`,
+    # which spans 31 calendar dates AND made the oldest bucket a partial day —
+    # it held only orders placed after the current hour, so it rendered as a
+    # quiet day. The window is date-aligned now: exactly `days` buckets, only
+    # today partial. See `analytics._range`.
+    check("series has one point per day, zero-filled", len(board["series"]) == 30,
           f"{len(board['series'])} days — a chart that skips empty days compresses time")
     check("every day has a value", all("revenue" in d for d in board["series"]))
     check("top products computed", isinstance(board["topProducts"], list))

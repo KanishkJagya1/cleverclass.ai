@@ -7,7 +7,8 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
-import { CLASSES, MEDIUMS, SERIES, SUBJECTS } from "@/constants/catalog";
+import { MEDIUMS } from "@/constants/catalog";
+import { useMasters } from "@/features/admin/use-masters";
 import { Button } from "@/components/ui/button";
 import { FieldError, Input, Label, Textarea } from "@/components/ui/primitives";
 import { adminFetch, AdminApiError, type AdminBook } from "./api";
@@ -34,6 +35,11 @@ const schema = z.object({
   stream: z.string().optional(),
   price: z.coerce.number().int().min(0, "Price cannot be negative").max(100000),
   mrp: z.coerce.number().int().min(0).max(100000).optional(),
+  physicalAvailable: z.boolean().default(true),
+  ebookAvailable: z.boolean().default(false),
+  // Optional, and validated against the availability flag below rather than
+  // here: an e-book with no price is a mistake, but only once it is offered.
+  ebookPrice: z.coerce.number().int().min(0).max(100000).optional(),
   pages: z.coerce.number().int().min(0).max(5000),
   isbn: z.string().max(40).optional(),
   edition: z.string().max(100),
@@ -61,6 +67,9 @@ const EMPTY: Values = {
   stream: "",
   price: 0,
   mrp: undefined,
+  physicalAvailable: true,
+  ebookAvailable: false,
+  ebookPrice: undefined,
   pages: 0,
   isbn: "",
   edition: "",
@@ -87,6 +96,9 @@ function toValues(book: AdminBook): Values {
     stream: book.stream ?? "",
     price: book.price,
     mrp: book.mrp ?? undefined,
+    physicalAvailable: book.physicalAvailable ?? true,
+    ebookAvailable: book.ebookAvailable ?? false,
+    ebookPrice: book.ebookPrice ?? undefined,
     pages: book.pages,
     isbn: book.isbn ?? "",
     edition: book.edition,
@@ -179,6 +191,21 @@ export function BookForm({ book }: { book?: AdminBook }) {
 
   const title = watch("title");
   const slug = watch("slug");
+  const classId = watch("classId");
+  const ebookOn = watch("ebookAvailable");
+
+  const { masters } = useMasters();
+
+  // Streams declare which classes they belong to, so the picker narrows to the
+  // class on the form. A stream with no declared classes is shown everywhere
+  // rather than nowhere — an unconfigured master should not silently vanish.
+  const streamOptions = React.useMemo(
+    () =>
+      masters.stream.filter(
+        (s) => s.appliesTo.length === 0 || s.appliesTo.includes(classId),
+      ),
+    [masters.stream, classId],
+  );
 
   // Suggest a slug from the title, but only while creating and only until the
   // user edits it themselves — silently rewriting the slug of a live book
@@ -279,8 +306,8 @@ export function BookForm({ book }: { book?: AdminBook }) {
             <div>
               <Label htmlFor="classId">Class</Label>
               <select id="classId" {...register("classId")} className="admin-select">
-                {CLASSES.map((c) => (
-                  <option key={c.id} value={c.id}>{c.label}</option>
+                {masters.class.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label}</option>
                 ))}
               </select>
             </div>
@@ -295,16 +322,17 @@ export function BookForm({ book }: { book?: AdminBook }) {
             <div>
               <Label htmlFor="series">Series</Label>
               <select id="series" {...register("series")} className="admin-select">
-                {SERIES.map((s) => (
-                  <option key={s.id} value={s.id}>{s.label}</option>
+                {masters.series.map((s) => (
+                  <option key={s.code} value={s.code}>{s.label}</option>
                 ))}
               </select>
             </div>
             <div>
               <Label htmlFor="board">Board</Label>
               <select id="board" {...register("board")} className="admin-select">
-                <option value="state">Maharashtra State Board</option>
-                <option value="cbse">CBSE</option>
+                {masters.board.map((b) => (
+                  <option key={b.code} value={b.code}>{b.label}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -312,8 +340,8 @@ export function BookForm({ book }: { book?: AdminBook }) {
             <Label htmlFor="subject">Subject</Label>
             <Input id="subject" list="subject-options" {...register("subject")} />
             <datalist id="subject-options">
-              {SUBJECTS.map((s) => (
-                <option key={s} value={s} />
+              {masters.subject.map((s) => (
+                <option key={s.code} value={s.code} />
               ))}
             </datalist>
             <FieldError>{errors.subject?.message}</FieldError>
@@ -322,11 +350,12 @@ export function BookForm({ book }: { book?: AdminBook }) {
             <Label htmlFor="stream">Stream (Classes 11–12 only)</Label>
             <select id="stream" {...register("stream")} className="admin-select">
               <option value="">None</option>
-              <option value="science-pcm">Science PCM</option>
-              <option value="science-pcb">Science PCB</option>
-              <option value="science-pcbm">Science PCBM</option>
-              <option value="commerce">Commerce</option>
-              <option value="arts">Arts</option>
+              {/* Only the streams declared for the class currently selected —
+                  offering a Class 11 stream on a Class 6 book is how bad data
+                  gets entered by an honest mistake. */}
+              {streamOptions.map((s) => (
+                <option key={s.code} value={s.code}>{s.label}</option>
+              ))}
             </select>
           </div>
         </section>
@@ -349,6 +378,47 @@ export function BookForm({ book }: { book?: AdminBook }) {
                 Leave blank if there is no discount.
               </p>
             </div>
+          </div>
+
+          <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--border-1)] p-3">
+            <p className="text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
+              How is this sold?
+            </p>
+            <p className="mb-3 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
+              A title can be sold in print, as a download, or both — each with
+              its own price. E-books are never charged delivery and never use
+              stock.
+            </p>
+            <div className="space-y-2">
+              <label className="flex min-h-11 items-center gap-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+                <input type="checkbox" {...register("physicalAvailable")} />
+                Printed copy
+              </label>
+              <label className="flex min-h-11 items-center gap-2 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+                <input type="checkbox" {...register("ebookAvailable")} />
+                E-book (download)
+              </label>
+            </div>
+            {ebookOn ? (
+              <div className="mt-3">
+                <Label htmlFor="ebookPrice">E-book price (₹)</Label>
+                <Input
+                  id="ebookPrice"
+                  type="number"
+                  inputMode="numeric"
+                  {...register("ebookPrice")}
+                />
+                <p className="mt-1 text-[length:var(--text-xs)] text-[color:var(--text-3)]">
+                  {/* Said here because the backend refuses the sale rather
+                      than falling back to the print price. */}
+                  Required — without it the e-book cannot be bought, whatever
+                  this checkbox says.
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="pages">Total pages</Label>
               <Input id="pages" type="number" inputMode="numeric" {...register("pages")} />

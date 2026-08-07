@@ -108,7 +108,7 @@ def facts_block(slugs: list[str]) -> str:
                      WHERE a.book_id = b.id AND a.is_current = 1 AND p.is_free = 1
                    ) AS free_pages
               FROM books b
-             WHERE b.slug IN ({marks}) AND b.status = 'published'
+             WHERE b.slug IN ({marks}) AND b.status = 'published' AND deleted_at IS NULL
             """,
             unique,
         )
@@ -190,7 +190,7 @@ def recommend(
     book is a refund, a bad review, and exactly the support cost this business
     already has too much of.
     """
-    clauses = ["b.status = 'published'"]
+    clauses = ["b.status = 'published' AND deleted_at IS NULL"]
     params: list = []
 
     if class_id:
@@ -292,7 +292,7 @@ def book_for_topic(topic: str, class_id: str | None = None) -> dict | None:
     if len(like) <= 4:  # "%%" plus a stray character matches everything
         return None
 
-    clauses = ["b.status = 'published'", "b.in_stock = 1"]
+    clauses = ["b.status = 'published' AND deleted_at IS NULL", "b.in_stock = 1"]
     params: list = []
     if class_id:
         clauses.append("b.class_id = ?")

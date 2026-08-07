@@ -38,8 +38,16 @@ from fastapi import (
     UploadFile,
 )
 from fastapi.responses import StreamingResponse
+
 from pydantic import BaseModel, EmailStr, Field
 
+from app.api.pagination import (
+    attach_children,
+    in_clause,
+    page_params,
+    paginate,
+    paginated_query,
+)
 from app.config import settings
 from app.db.conn import query, query_one, transaction
 from app.db.repo import admin as admin_repo
@@ -54,6 +62,8 @@ from app.services import ranges as ranges_service
 from app.services.ratelimit import SlidingWindowLimiter, client_ip
 from app.services import permissions
 from app.services import inventory
+from app.services import masters
+from app.services import order_admin
 from app.services import order_flow
 from app.services import payments
 from app.services import reviews as reviews_service
@@ -175,6 +185,14 @@ class BookIn(BaseModel):
     price: int = Field(ge=0, le=100000)
     mrp: int | None = Field(default=None, ge=0, le=100000)
 
+    # A title may be sold in print, as a download, or both — priced separately.
+    # `ebookPrice` stays None when there is no e-book; pricing refuses to sell a
+    # download with no price of its own rather than falling back to the print
+    # price, which would charge for something nobody meant to list.
+    ebookPrice: int | None = Field(default=None, ge=0, le=100000)
+    ebookAvailable: bool = False
+    physicalAvailable: bool = True
+
     pages: int = Field(default=0, ge=0, le=5000)
     isbn: str | None = Field(default=None, max_length=40)
     edition: str = Field(default="", max_length=100)
@@ -280,12 +298,22 @@ def admin_list_books(
     q: str | None = Query(default=None, max_length=200),
     status: str | None = Query(default=None, pattern="^(draft|published|archived)$"),
     classId: str | None = None,
+    deleted: bool = Query(
+        default=False, description="Show ONLY deleted books (the bin)"
+    ),
     page: int = Query(default=1, ge=1),
     perPage: int = Query(default=50, ge=1, le=200),
 ) -> dict:
     """Unlike the public list, this one shows drafts and archived books, and
-    reports PDF/free-page state so the table can say what still needs doing."""
-    clauses: list[str] = ["1=1"]
+    reports PDF/free-page state so the table can say what still needs doing.
+
+    Deleted books are excluded unless `deleted=true`, which shows only them —
+    a single flag rather than a tri-state, because "all books including the
+    deleted ones" is not a view anybody wants.
+    """
+    clauses: list[str] = [
+        "b.deleted_at IS NOT NULL" if deleted else "b.deleted_at IS NULL"
+    ]
     params: list[Any] = []
     if status:
         clauses.append("b.status = ?")
@@ -315,7 +343,10 @@ def admin_list_books(
                  JOIN book_assets a2 ON a2.id = p.asset_id
                 WHERE a2.book_id = b.id AND a2.is_current = 1 AND p.is_free = 1) AS free_pages
         FROM books b WHERE {where}
-        ORDER BY b.updated_at DESC LIMIT ? OFFSET ?
+        -- Newest ADDED first. `updated_at` would jump a five-year-old
+        -- book to the top the moment someone fixed its typo, which is
+        -- not what "latest" means to whoever is looking.
+        ORDER BY b.created_at DESC, b.id DESC LIMIT ? OFFSET ?
         """,
         [*params, perPage, (page - 1) * perPage],
     )
@@ -350,6 +381,17 @@ def admin_list_books(
     }
 
 
+@router.get("/books/deleted")
+def admin_deleted_books(
+    admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
+) -> dict:
+    """The bin. Nothing here is gone — every row can be restored."""
+    page, per_page, offset = pager
+    result = books_repo.deleted(limit=per_page, offset=offset)
+    return paginate(result["items"], result["total"], page, per_page)
+
+
 @router.get("/books/{slug}")
 def admin_get_book(slug: str, admin: dict = Depends(require_read(permissions.BOOKS_READ))) -> dict:
     row = query_one("SELECT * FROM books WHERE slug = ?", (slug,))
@@ -366,11 +408,19 @@ def admin_get_book(slug: str, admin: dict = Depends(require_read(permissions.BOO
         (row["id"],),
     )
 
+    # The editor needs the current cover to show what it is replacing.
+    cover_row = query_one(
+        "SELECT src FROM book_images WHERE book_id = ? AND kind = 'front'"
+        " ORDER BY position LIMIT 1",
+        (row["id"],),
+    )
+
     return {
         "id": row["id"],
         "slug": row["slug"],
         "title": row["title"],
         "titleMr": row["title_mr"],
+        "cover": cover_row["src"] if cover_row else None,
         "series": row["series"],
         "board": row["board"],
         "classId": row["class_id"],
@@ -379,6 +429,10 @@ def admin_get_book(slug: str, admin: dict = Depends(require_read(permissions.BOO
         "stream": row["stream"],
         "price": row["price"],
         "mrp": row["mrp"],
+        # Sold as print, as a download, or both — each priced on its own.
+        "ebookPrice": row["ebook_price"],
+        "ebookAvailable": bool(row["ebook_available"]),
+        "physicalAvailable": bool(row["physical_available"]),
         "pages": row["pages"],
         "isbn": row["isbn"],
         "edition": row["edition"],
@@ -697,47 +751,116 @@ def admin_get_free_ranges(slug: str, admin: dict = Depends(require_read(permissi
 @router.get("/orders")
 def admin_orders(
     admin: dict = Depends(require_read(permissions.ORDERS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
     status: str | None = None,
-    limit: int = Query(default=100, ge=1, le=500),
-) -> list[dict]:
-    sql = "SELECT * FROM orders"
+    paymentStatus: str | None = None,  # noqa: N803 — matches the query the UI sends
+    q: str | None = Query(default=None, description="Order number, name, email or phone"),
+    dateFrom: str | None = Query(default=None, description="ISO date, inclusive"),  # noqa: N803
+    dateTo: str | None = Query(default=None, description="ISO date, inclusive"),  # noqa: N803
+    minTotal: int | None = Query(default=None, ge=0),  # noqa: N803
+    sort: str = Query(default="newest"),
+) -> dict:
+    """Orders, filtered and paginated.
+
+    The filters are the ones an operator actually reaches for: "what is unpaid",
+    "what came in last week", "where is the order this customer is phoning
+    about". Searching by order number, name, email AND phone from one box
+    matters because the caller rarely knows their order number.
+    """
+    page, per_page, _ = pager
+
+    clauses = ["1=1"]
     params: list[Any] = []
     if status:
-        sql += " WHERE status = ?"
+        clauses.append("status = ?")
         params.append(status)
-    sql += " ORDER BY created_at DESC LIMIT ?"
-    params.append(limit)
+    if paymentStatus:
+        clauses.append("payment_status = ?")
+        params.append(paymentStatus)
+    if dateFrom:
+        clauses.append("created_at >= ?")
+        params.append(dateFrom)
+    if dateTo:
+        # Inclusive of the whole end day: an operator asking for "up to the
+        # 5th" means the 5th, not midnight at its start.
+        clauses.append("created_at <= ?")
+        params.append(f"{dateTo}T23:59:59.999999+00:00")
+    if minTotal is not None:
+        clauses.append("total >= ?")
+        params.append(minTotal)
+    if q:
+        like = f"%{q.strip().lower()}%"
+        clauses.append(
+            "(LOWER(order_number) LIKE ? OR LOWER(customer_name) LIKE ?"
+            " OR LOWER(COALESCE(email,'')) LIKE ? OR phone LIKE ?)"
+        )
+        params.extend([like, like, like, like])
 
-    out = []
-    for row in query(sql, params):
-        items = query(
-            "SELECT slug, title, qty, unit_price, line_total FROM order_items WHERE order_id = ?",
-            (row["id"],),
+    orders = {
+        "newest": "created_at DESC",
+        "oldest": "created_at ASC",
+        "highest": "total DESC, created_at DESC",
+        "lowest": "total ASC, created_at DESC",
+    }
+    result = paginated_query(
+        query, query_one,
+        select="*",
+        from_where=f"orders WHERE {' AND '.join(clauses)}",
+        order_by=orders.get(sort, orders["newest"]),
+        params=params,
+        page=page,
+        per_page=per_page,
+    )
+
+    # One query for every line on the page, not one per order — the loop this
+    # replaces cost 101 round trips for a 100-order page.
+    def fetch_items(order_ids: list[Any]) -> list[dict]:
+        marks, vals = in_clause(order_ids)
+        return query(
+            "SELECT order_id, slug, title, qty, unit_price, line_total"
+            f" FROM order_items WHERE order_id IN ({marks})",
+            vals,
         )
-        out.append(
-            {
-                **{k: row[k] for k in row.keys()},
-                "items": [dict(i) for i in items],
-            }
-        )
-    return out
+
+    attach_children(
+        result["items"], fetch_items,
+        child_parent_key="order_id", field="items",
+    )
+    return result
 
 
 @router.get("/leads")
 def admin_leads(
     admin: dict = Depends(require_read(permissions.LEADS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
     kind: str | None = None,
-    limit: int = Query(default=100, ge=1, le=500),
-) -> list[dict]:
-    return leads_repo.recent(kind, limit)
+    handled: bool | None = None,
+) -> dict:
+    page, per_page, _ = pager
+    return leads_repo.page(
+        kind=kind, handled=handled, page=page, per_page=per_page
+    )
 
 
 @router.get("/audit")
 def admin_audit_log(
     admin: dict = Depends(require_read(permissions.AUDIT_READ)),
-    limit: int = Query(default=100, ge=1, le=500),
-) -> list[dict]:
-    return admin_repo.recent_audit(limit)
+    pager: tuple[int, int, int] = Depends(page_params),
+    action: str | None = None,
+    entity: str | None = None,
+    entityId: str | None = None,  # noqa: N803 — matches the query the UI sends
+    userId: str | None = None,  # noqa: N803
+) -> dict:
+    """The audit trail, filterable.
+
+    Filtering by entity is what turns this from a scrolling wall into an
+    answer to "who changed this order, and when".
+    """
+    page, per_page, _ = pager
+    return admin_repo.audit_page(
+        page=page, per_page=per_page, action=action,
+        entity=entity, entity_id=entityId, user_id=userId,
+    )
 
 
 @router.get("/stats")
@@ -748,12 +871,38 @@ def admin_stats(admin: dict = Depends(current_admin)) -> dict:
         row = query_one(sql, params)
         return int(row["n"]) if row else 0
 
+    # Every book count excludes soft-deleted rows. Without `deleted_at IS NULL`
+    # the dashboard reports a catalogue larger than the shop actually shows,
+    # and "total" stops matching the number on the books screen.
+    live = "deleted_at IS NULL"
+
+    recent_orders = [
+        {
+            "orderNumber": r["order_number"],
+            "customerName": r["customer_name"],
+            "status": r["status"],
+            "paymentStatus": r["payment_status"],
+            "total": r["total"],
+            "createdAt": r["created_at"],
+        }
+        for r in query(
+            "SELECT order_number, customer_name, status, payment_status, total,"
+            " created_at FROM orders ORDER BY created_at DESC LIMIT 8"
+        )
+    ]
+
     return {
         "books": {
-            "total": count("SELECT COUNT(*) AS n FROM books"),
-            "published": count("SELECT COUNT(*) AS n FROM books WHERE status='published'"),
-            "draft": count("SELECT COUNT(*) AS n FROM books WHERE status='draft'"),
-            "outOfStock": count("SELECT COUNT(*) AS n FROM books WHERE in_stock=0"),
+            "total": count(f"SELECT COUNT(*) AS n FROM books WHERE {live}"),
+            "published": count(
+                f"SELECT COUNT(*) AS n FROM books WHERE status='published' AND {live}"
+            ),
+            "draft": count(
+                f"SELECT COUNT(*) AS n FROM books WHERE status='draft' AND {live}"
+            ),
+            "outOfStock": count(
+                f"SELECT COUNT(*) AS n FROM books WHERE in_stock=0 AND {live}"
+            ),
             "withPdf": count(
                 "SELECT COUNT(DISTINCT book_id) AS n FROM book_assets WHERE is_current=1"
             ),
@@ -766,11 +915,26 @@ def admin_stats(admin: dict = Depends(current_admin)) -> dict:
         "orders": {
             "total": count("SELECT COUNT(*) AS n FROM orders"),
             "requested": count("SELECT COUNT(*) AS n FROM orders WHERE status='requested'"),
+            # Cancelled orders are excluded: counting them as revenue makes the
+            # headline number wrong in the direction nobody checks.
+            "revenue": count(
+                "SELECT COALESCE(SUM(total), 0) AS n FROM orders"
+                " WHERE status != 'cancelled'"
+            ),
+            "unpaid": count(
+                "SELECT COUNT(*) AS n FROM orders"
+                " WHERE payment_status = 'unpaid' AND status != 'cancelled'"
+            ),
+        },
+        "customers": {
+            "total": count("SELECT COUNT(*) AS n FROM customers"),
+            "active": count("SELECT COUNT(*) AS n FROM customers WHERE status='active'"),
         },
         "leads": {
             "contact": count("SELECT COUNT(*) AS n FROM leads WHERE kind='contact' AND handled=0"),
             "newsletter": count("SELECT COUNT(*) AS n FROM leads WHERE kind='newsletter'"),
         },
+        "recentOrders": recent_orders,
     }
 
 
@@ -1025,16 +1189,27 @@ def admin_adjust_stock(
 @router.get("/stock/low")
 def admin_low_stock(
     admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
 ) -> dict:
-    return {
-        "books": [
-            {
-                "slug": b["slug"], "title": b["title"],
-                "quantity": b["stock_qty"], "threshold": b["low_stock_threshold"],
-            }
-            for b in inventory.low_stock()
-        ]
-    }
+    """Books at or below their reorder threshold.
+
+    Sliced in the route rather than in SQL: the whole point of a low-stock
+    report is that it is short, and if it ever isn't, the count in the envelope
+    says so plainly instead of the screen quietly ending.
+    """
+    page, per_page, offset = pager
+    rows = [
+        {
+            "slug": b["slug"], "title": b["title"],
+            "quantity": b["stock_qty"], "threshold": b["low_stock_threshold"],
+        }
+        for b in inventory.low_stock()
+    ]
+    result = paginate(rows[offset:offset + per_page], len(rows), page, per_page)
+    # `books` kept alongside `items` so the existing dashboard tile keeps
+    # working while the table moves to the shared envelope.
+    result["books"] = result["items"]
+    return result
 
 
 # --------------------------------------------------------------------------
@@ -1068,6 +1243,16 @@ def admin_order_detail(
             "stockApplied": full["stock_applied_at"] is not None,
         },
         "timeline": order_flow.timeline(order_number),
+        # Fetched here rather than by a second call: the notes are part of what
+        # this screen IS, and a separate request means the page renders once
+        # without them and then jumps.
+        "notes": order_admin.notes(order_number),
+        # Same reasoning for the shipment and the carrier list — dispatching is
+        # done from this screen, so everything it needs arrives with it.
+        "shipment": shipping.for_order(order_number),
+        "carriers": [
+            {"code": c["code"], "name": c["name"]} for c in shipping.carriers()
+        ],
     }
 
 
@@ -1117,9 +1302,15 @@ class PaymentReviewIn(BaseModel):
 @router.get("/payments/queue")
 def admin_payment_queue(
     admin: dict = Depends(require_read(permissions.ORDERS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
 ) -> dict:
-    return {
-        "payments": [
+    """Payments awaiting manual verification.
+
+    A queue that is long is a queue that is behind, so the total is reported
+    rather than implied by however many rows fit on the screen.
+    """
+    page, per_page, offset = pager
+    rows = [
             {
                 "orderNumber": p["order_number"],
                 "customerName": p["customer_name"],
@@ -1135,9 +1326,13 @@ def admin_payment_queue(
                 "customerNote": p["customer_note"],
                 "submittedAt": p["updated_at"],
             }
-            for p in payments.queue()
-        ]
-    }
+        for p in payments.queue()
+    ]
+    result = paginate(rows[offset:offset + per_page], len(rows), page, per_page)
+    # Legacy key kept beside `items` so the dashboard tile keeps working while
+    # the table moves to the shared envelope.
+    result["payments"] = result["items"]
+    return result
 
 
 @router.post("/payments/{order_number}/review")
@@ -1190,9 +1385,10 @@ class ReviewModerateIn(BaseModel):
 @router.get("/reviews/pending")
 def admin_pending_reviews(
     admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
 ) -> dict:
-    return {
-        "reviews": [
+    page, per_page, offset = pager
+    rows = [
             {
                 "id": r["id"], "productSlug": r["product_slug"],
                 "author": r["author"], "rating": r["rating"],
@@ -1200,12 +1396,14 @@ def admin_pending_reviews(
                 "verified": bool(r["verified"]), "source": r["source"],
                 "createdAt": r["created_at"],
             }
-            for r in reviews_service.pending()
-        ],
-        # Surfaced so the provenance of the catalogue's ratings is visible in
-        # the panel rather than buried in the database.
-        "provenance": reviews_service.stats(),
-    }
+        for r in reviews_service.pending()
+    ]
+    result = paginate(rows[offset:offset + per_page], len(rows), page, per_page)
+    result["reviews"] = result["items"]
+    # Surfaced so the provenance of the catalogue's ratings is visible in the
+    # panel rather than buried in the database.
+    result["provenance"] = reviews_service.stats()
+    return result
 
 
 @router.post("/reviews/{review_id}/moderate")
@@ -1257,8 +1455,13 @@ class CouponIn(BaseModel):
 @router.get("/coupons")
 def admin_list_coupons(
     admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
 ) -> dict:
-    return {"coupons": coupons_service.report()}
+    page, per_page, offset = pager
+    rows = list(coupons_service.report())
+    result = paginate(rows[offset:offset + per_page], len(rows), page, per_page)
+    result["coupons"] = result["items"]
+    return result
 
 
 @router.post("/coupons", status_code=201)
@@ -1467,25 +1670,28 @@ class TicketUpdateIn(BaseModel):
 @router.get("/support/queue")
 def admin_ticket_queue(
     admin: dict = Depends(require_read(permissions.LEADS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
     status: str | None = None,
 ) -> dict:
-    return {
-        "tickets": [
-            {
-                "reference": t["reference"], "subject": t["subject"],
-                "category": t["category"], "status": t["status"],
-                "statusLabel": t["statusLabel"], "priority": t["priority"],
-                "email": t["email"], "name": t["name"],
-                "assigneeId": t["assignee_id"],
-                "messageCount": t["messageCount"],
-                "createdAt": t["created_at"], "updatedAt": t["updated_at"],
-                # The SLA number that matters: nobody has replied yet.
-                "awaitingFirstReply": t["first_response_at"] is None,
-            }
-            for t in support.queue(status=status)
-        ],
-        "stats": support.stats(),
-    }
+    page, per_page, offset = pager
+    rows = [
+        {
+            "reference": t["reference"], "subject": t["subject"],
+            "category": t["category"], "status": t["status"],
+            "statusLabel": t["statusLabel"], "priority": t["priority"],
+            "email": t["email"], "name": t["name"],
+            "assigneeId": t["assignee_id"],
+            "messageCount": t["messageCount"],
+            "createdAt": t["created_at"], "updatedAt": t["updated_at"],
+            # The SLA number that matters: nobody has replied yet.
+            "awaitingFirstReply": t["first_response_at"] is None,
+        }
+        for t in support.queue(status=status)
+    ]
+    result = paginate(rows[offset:offset + per_page], len(rows), page, per_page)
+    result["tickets"] = result["items"]
+    result["stats"] = support.stats()
+    return result
 
 
 @router.get("/support/{reference}")
@@ -1695,16 +1901,26 @@ def admin_test_send(
 @router.get("/customers")
 def admin_customers(
     admin: dict = Depends(require_read(permissions.CUSTOMERS_READ)),
+    pager: tuple[int, int, int] = Depends(page_params),
     q: str = "",
     status: str | None = None,
-    marketingOnly: bool = False,
-    limit: int = Query(default=50, ge=1, le=200),
-    offset: int = Query(default=0, ge=0),
+    marketingOnly: bool = False,  # noqa: N803 — matches the query the UI sends
 ) -> dict:
+    """Registered customers, newest first.
+
+    Moved onto the shared page envelope so one component paginates this table
+    like every other; `customers` is kept beside `items` for any caller still
+    reading the old key.
+    """
+    page, per_page, offset = pager
     result = customer_admin.search(
-        q, status=status, marketing_only=marketingOnly, limit=limit, offset=offset
+        q, status=status, marketing_only=marketingOnly,
+        limit=per_page, offset=offset,
     )
-    return {**result, "stats": customer_admin.stats()}
+    envelope = paginate(result["customers"], result["total"], page, per_page)
+    envelope["customers"] = envelope["items"]
+    envelope["stats"] = customer_admin.stats()
+    return envelope
 
 
 @router.get("/customers/{customer_id}")
@@ -1805,14 +2021,19 @@ def admin_customer_anonymise(
 
 @router.get("/notifications")
 def admin_notifications(
-    admin: dict = Depends(current_admin), unreadOnly: bool = False
+    admin: dict = Depends(current_admin),
+    pager: tuple[int, int, int] = Depends(page_params),
+    unreadOnly: bool = False,  # noqa: N803 — matches the query the UI sends
 ) -> dict:
     """Deliberately gated on the session only, not a permission.
 
     Every role needs to see the bell; what each can DO about an item is
     enforced by the route the link goes to.
     """
-    return notifications.for_admin(admin["id"], unread_only=unreadOnly)
+    page, per_page, _ = pager
+    return notifications.for_admin(
+        admin["id"], unread_only=unreadOnly, limit=per_page, page=page
+    )
 
 
 @router.post("/notifications/{notification_id}/read")
@@ -1882,3 +2103,477 @@ def admin_run_job(
         detail={"result": result.get("lastResult")}, ip=client_ip(request),
     )
     return {"ok": True, "job": result}
+
+
+@router.get("/search/insights")
+def admin_search_insights(
+    admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+    days: int = Query(default=30, ge=1, le=365),
+) -> dict:
+    """What people search for, and — more usefully — what they fail to find.
+
+    Every zero-result row is a customer who wanted to buy something and left.
+    """
+    from app.services import suggest as suggest_service
+
+    return {
+        "stats": suggest_service.stats(days),
+        "popular": suggest_service.popular(20, days),
+        "zeroResults": suggest_service.zero_results(25, days),
+    }
+
+
+# --------------------------------------------------------------------------
+# Bulk catalogue import
+# --------------------------------------------------------------------------
+
+@router.get("/books/bulk/template")
+def admin_bulk_template(
+    admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+) -> Response:
+    """A CSV with the headers and one worked example.
+
+    Without this the operator guesses column names and learns the real ones
+    through failed imports.
+    """
+    from app.services import bulk
+
+    return Response(
+        bulk.template(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="books-template.csv"'},
+    )
+
+
+@router.post("/books/bulk")
+async def admin_bulk_import(
+    request: Request,
+    file: UploadFile = File(...),
+    apply: bool = Query(default=False),
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    """Import a catalogue CSV.
+
+    `apply=false` (the default) validates and writes nothing. A caller must ask
+    for the write explicitly, because pasting 300 rows out of Excel and hoping
+    is not a workflow anyone should be offered.
+    """
+    from app.services import bulk
+
+    raw = await file.read()
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(413, "That file is larger than 5 MB. Split it.")
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        # Excel on a Windows machine still writes cp1252 by default.
+        try:
+            text = raw.decode("cp1252")
+        except UnicodeDecodeError as exc:
+            raise HTTPException(
+                422, "Could not read that file. Save it as CSV UTF-8."
+            ) from exc
+
+    result = bulk.apply(text, actor_id=admin["id"], dry_run=not apply)
+
+    if result["applied"]:
+        admin_repo.audit(
+            user_id=admin["id"], action="books.bulk_import", entity="books",
+            detail={"created": result["created"], "updated": result["updated"]},
+            ip=client_ip(request),
+        )
+        try:
+            revalidate.catalog_changed()
+        except Exception:  # noqa: BLE001 — a stale cache must not fail the import
+            log.warning("Could not revalidate the catalogue after a bulk import")
+    return result
+
+
+# --------------------------------------------------------------------------
+# Order notes and bulk actions
+# --------------------------------------------------------------------------
+
+class OrderNoteIn(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+    pinned: bool = False
+
+
+class BulkStatusIn(BaseModel):
+    orderNumbers: list[str] = Field(min_length=1, max_length=100)
+    status: str
+    note: str = Field(default="", max_length=500)
+
+
+@router.get("/orders/{order_number}/notes")
+def admin_order_notes(
+    order_number: str,
+    admin: dict = Depends(require_read(permissions.ORDERS_READ)),
+) -> dict:
+    return {"notes": order_admin.notes(order_number)}
+
+
+@router.post("/orders/{order_number}/notes", status_code=201)
+def admin_add_order_note(
+    order_number: str,
+    body: OrderNoteIn,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.ORDERS_WRITE)),
+) -> dict:
+    try:
+        note = order_admin.add_note(
+            order_number, body.body, author_id=admin["id"],
+            author_name=admin.get("name") or "", pinned=body.pinned,
+        )
+    except order_admin.OrderAdminError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    admin_repo.audit(
+        user_id=admin["id"], action="order.note", entity="order",
+        entity_id=order_number, detail={"pinned": body.pinned},
+        ip=client_ip(request),
+    )
+    return note
+
+
+@router.delete("/orders/{order_number}/notes/{note_id}")
+def admin_delete_order_note(
+    order_number: str,
+    note_id: str,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.ORDERS_WRITE)),
+) -> dict:
+    if not order_admin.delete_note(note_id):
+        raise HTTPException(404, "No such note")
+    admin_repo.audit(
+        user_id=admin["id"], action="order.note_delete", entity="order",
+        entity_id=order_number, detail={"noteId": note_id},
+        ip=client_ip(request),
+    )
+    return {"ok": True}
+
+
+@router.post("/orders/bulk/status")
+def admin_bulk_order_status(
+    body: BulkStatusIn,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.ORDERS_WRITE)),
+) -> dict:
+    """Move many orders at once.
+
+    Each one goes through the same state machine as a single change, so stock
+    effects and the timeline stay correct, and the response says per order what
+    did not move and why.
+    """
+    try:
+        result = order_admin.bulk_transition(
+            body.orderNumbers, body.status, note=body.note, actor=admin["id"],
+        )
+    except order_admin.OrderAdminError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    admin_repo.audit(
+        user_id=admin["id"], action="order.bulk_status", entity="order",
+        detail={
+            "status": body.status,
+            "moved": result["movedCount"],
+            "failed": result["failedCount"],
+        },
+        ip=client_ip(request),
+    )
+    return result
+
+
+# --------------------------------------------------------------------------
+# Soft delete / restore
+# --------------------------------------------------------------------------
+
+class RestoreIn(BaseModel):
+    # Never 'published'. A book was deleted for a reason; putting it straight
+    # back in the shop unreviewed is how a wrong price goes live twice.
+    status: str = Field(default="draft", pattern="^(draft|archived)$")
+
+
+@router.delete("/books/{slug}")
+def admin_delete_book(
+    slug: str,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    """Soft delete. The row is never removed.
+
+    Orders and invoices reference this book; an invoice that cannot name what
+    was sold is an auditor's problem, not just a broken page.
+    """
+    try:
+        result = books_repo.soft_delete(slug, actor_id=admin["id"])
+    except LookupError as exc:
+        raise HTTPException(404, "No such book") from exc
+
+    if not result["alreadyDeleted"]:
+        admin_repo.audit(
+            user_id=admin["id"], action="book.delete", entity="book",
+            entity_id=slug, detail={"previousStatus": result.get("previousStatus")},
+            ip=client_ip(request),
+        )
+        try:
+            revalidate.book_changed(slug)
+            revalidate.catalog_changed()
+        except Exception:  # noqa: BLE001 — a stale cache must not fail the delete
+            log.warning("Could not revalidate after deleting %s", slug)
+    return result
+
+
+@router.post("/books/{slug}/restore")
+def admin_restore_book(
+    slug: str,
+    body: RestoreIn,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    try:
+        result = books_repo.restore(slug, status=body.status)
+    except LookupError as exc:
+        raise HTTPException(404, "No such book") from exc
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    if not result["alreadyLive"]:
+        admin_repo.audit(
+            user_id=admin["id"], action="book.restore", entity="book",
+            entity_id=slug, detail={"status": body.status},
+            ip=client_ip(request),
+        )
+        try:
+            revalidate.catalog_changed()
+        except Exception:  # noqa: BLE001
+            log.warning("Could not revalidate after restoring %s", slug)
+    return result
+
+
+# --------------------------------------------------------------------------
+# Master data (class / series / board / subject / stream)
+# --------------------------------------------------------------------------
+
+class MasterIn(BaseModel):
+    kind: str = Field(pattern="^(class|series|board|subject|stream)$")
+    code: str = Field(min_length=1, max_length=60)
+    label: str = Field(min_length=1, max_length=120)
+    labelMr: str = Field(default="", max_length=120)
+    appliesTo: list[str] = Field(default_factory=list)
+    sortOrder: int = 0
+    isActive: bool = True
+
+
+class MasterPatch(BaseModel):
+    code: str | None = Field(default=None, max_length=60)
+    label: str | None = Field(default=None, max_length=120)
+    labelMr: str | None = Field(default=None, max_length=120)
+    appliesTo: list[str] | None = None
+    sortOrder: int | None = None
+    isActive: bool | None = None
+
+
+@router.get("/masters")
+def admin_masters(
+    admin: dict = Depends(require_read(permissions.BOOKS_READ)),
+    kind: str | None = None,
+) -> dict:
+    """Every master, with a usage count.
+
+    The count is what makes the delete button honest: it is the difference
+    between "remove this" and "remove this and strand 52 books".
+    """
+    try:
+        return {
+            "items": masters.listing(kind, with_usage=True),
+            "streamClasses": list(masters.STREAM_CLASSES),
+        }
+    except masters.MasterError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/masters", status_code=201)
+def admin_create_master(
+    body: MasterIn,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    try:
+        item = masters.create(
+            body.kind, code=body.code, label=body.label, label_mr=body.labelMr,
+            applies_to=body.appliesTo, sort_order=body.sortOrder,
+            is_active=body.isActive,
+        )
+    except masters.MasterError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    admin_repo.audit(
+        user_id=admin["id"], action="master.create", entity="master",
+        entity_id=item["id"], detail={"kind": body.kind, "code": item["code"]},
+        ip=client_ip(request),
+    )
+    _revalidate_catalog_quietly()
+    return item
+
+
+@router.put("/masters/{master_id}")
+def admin_update_master(
+    master_id: str,
+    body: MasterPatch,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    try:
+        item = masters.update(
+            master_id,
+            code=body.code, label=body.label, label_mr=body.labelMr,
+            applies_to=body.appliesTo, sort_order=body.sortOrder,
+            is_active=body.isActive,
+        )
+    except masters.MasterError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+    admin_repo.audit(
+        user_id=admin["id"], action="master.update", entity="master",
+        entity_id=master_id, detail={"code": item["code"]},
+        ip=client_ip(request),
+    )
+    _revalidate_catalog_quietly()
+    return item
+
+
+@router.delete("/masters/{master_id}")
+def admin_delete_master(
+    master_id: str,
+    request: Request,
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    try:
+        removed = masters.delete(master_id)
+    except masters.MasterError as exc:
+        # 409, not 400: the request is well-formed, it conflicts with the data.
+        raise HTTPException(409, str(exc)) from exc
+
+    admin_repo.audit(
+        user_id=admin["id"], action="master.delete", entity="master",
+        entity_id=master_id, detail=removed, ip=client_ip(request),
+    )
+    _revalidate_catalog_quietly()
+    return {"ok": True, **removed}
+
+
+def _revalidate_catalog_quietly() -> None:
+    """A stale cache must never fail a master edit."""
+    try:
+        revalidate.catalog_changed()
+    except Exception:  # noqa: BLE001
+        log.warning("Could not revalidate the catalogue after a master change")
+
+
+# --------------------------------------------------------------------------
+# Book cover upload
+# --------------------------------------------------------------------------
+
+MAX_COVER_BYTES = 8 * 1024 * 1024
+
+
+@router.post("/books/{slug}/cover", status_code=201)
+async def admin_upload_cover(
+    slug: str,
+    request: Request,
+    file: UploadFile = File(...),
+    admin: dict = Depends(require_write(permissions.BOOKS_WRITE)),
+) -> dict:
+    """Upload a front cover.
+
+    Stored under MEDIA_ROOT and served back by this API, NOT written into the
+    frontend's `public/` — the two run in separate containers and the backend
+    has no path into the web image. The seeded covers still live in `public/`
+    and keep working; `src` simply distinguishes the two by prefix.
+
+    Re-encoded to WebP rather than stored as uploaded: it strips whatever
+    metadata the phone or scanner attached, normalises 6 MB JPEGs down to
+    something a product grid can load, and means one format downstream.
+    """
+    from io import BytesIO
+
+    from PIL import Image
+
+    book = query_one("SELECT id FROM books WHERE slug = ? AND deleted_at IS NULL",
+                     (slug,))
+    if book is None:
+        raise HTTPException(404, "No such book")
+
+    raw = await file.read()
+    if not raw:
+        raise HTTPException(422, "That file is empty.")
+    if len(raw) > MAX_COVER_BYTES:
+        raise HTTPException(413, "Cover images must be 8 MB or smaller.")
+
+    try:
+        image = Image.open(BytesIO(raw))
+        image.load()
+    except Exception as exc:  # noqa: BLE001 — Pillow raises many types here
+        raise HTTPException(
+            422, "That does not look like an image. Use JPG, PNG or WebP."
+        ) from exc
+
+    # A book cover is portrait; anything wider than 1200px is wasted bytes on
+    # a grid that renders them at ~300px.
+    image = image.convert("RGB")
+    image.thumbnail((1200, 1600))
+
+    digest = hashlib.sha1(raw).hexdigest()  # noqa: S324 — a filename, not a secret
+    destination = storage.cover_path(digest)
+    image.save(destination, "WEBP", quality=82, method=4)
+    storage.harden(destination)
+
+    # The router prefix is `/admin-api`, and the frontend rewrites that
+    # path straight through — so this URL resolves for a logged-out
+    # visitor on the shop, which is exactly what a product image needs.
+    src = f"/admin-api/media/covers/{digest}.webp"
+    with transaction() as conn:
+        # One front cover per book: replace rather than accumulate, or the
+        # product page silently keeps showing the first one ever uploaded.
+        conn.execute(
+            "DELETE FROM book_images WHERE book_id = ? AND kind = 'front'",
+            (book["id"],),
+        )
+        conn.execute(
+            "INSERT INTO book_images (book_id, kind, src, alt, width, height,"
+            " position) VALUES (?, 'front', ?, ?, ?, ?, 0)",
+            (book["id"], src, f"{slug} front cover", image.width, image.height),
+        )
+
+    admin_repo.audit(
+        user_id=admin["id"], action="book.cover", entity="book",
+        entity_id=slug, detail={"bytes": len(raw)}, ip=client_ip(request),
+    )
+    try:
+        revalidate.book_changed(slug)
+    except Exception:  # noqa: BLE001
+        log.warning("Could not revalidate after a cover upload for %s", slug)
+
+    return {"src": src, "width": image.width, "height": image.height}
+
+
+@router.get("/media/covers/{filename}")
+def admin_cover_file(filename: str) -> FileResponse:
+    """Serve an uploaded cover.
+
+    Read-only and unauthenticated by design — it is a product image that
+    appears on the public shop. The filename is a content hash, validated by
+    `storage.cover_path`, so this cannot be walked out of the covers directory.
+    """
+    stem = filename[:-5] if filename.endswith(".webp") else filename
+    try:
+        path = storage.cover_path(stem)
+    except ValueError as exc:
+        raise HTTPException(400, "Bad filename") from exc
+    if not path.exists():
+        raise HTTPException(404, "No such image")
+    return FileResponse(
+        path,
+        media_type="image/webp",
+        headers={"Cache-Control": "public, max-age=31536000, immutable"},
+    )

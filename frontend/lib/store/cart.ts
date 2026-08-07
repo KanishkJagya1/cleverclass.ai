@@ -10,8 +10,13 @@ interface CartState {
   /** Hydration guard — see note below. */
   ready: boolean;
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  remove: (slug: string) => void;
-  setQty: (slug: string, qty: number) => void;
+  /**
+   * `delivery` is optional on purpose: omitting it removes BOTH formats of the
+   * title, which is what "remove this book" means from a cart row that shows
+   * only one of them.
+   */
+  remove: (slug: string, delivery?: CartItem["delivery"]) => void;
+  setQty: (slug: string, qty: number, delivery?: CartItem["delivery"]) => void;
   clear: () => void;
 }
 
@@ -23,25 +28,44 @@ export const useCart = create<CartState>()(
 
       add: (item, qty = 1) =>
         set((s) => {
-          const existing = s.items.find((i) => i.slug === item.slug);
+          // Matched on slug AND delivery. Keying on slug alone merged the
+          // printed copy and the e-book into one line at one price.
+          const delivery = item.delivery ?? "physical";
+          const same = (i: CartItem) =>
+            i.slug === item.slug && (i.delivery ?? "physical") === delivery;
+          const existing = s.items.find(same);
           return existing
             ? {
                 items: s.items.map((i) =>
-                  i.slug === item.slug ? { ...i, qty: Math.min(99, i.qty + qty) } : i,
+                  same(i) ? { ...i, qty: Math.min(99, i.qty + qty) } : i,
                 ),
               }
-            : { items: [...s.items, { ...item, qty }] };
+            : { items: [...s.items, { ...item, delivery, qty }] };
         }),
 
-      remove: (slug) => set((s) => ({ items: s.items.filter((i) => i.slug !== slug) })),
-
-      setQty: (slug, qty) =>
+      remove: (slug, delivery) =>
         set((s) => ({
-          items:
-            qty <= 0
-              ? s.items.filter((i) => i.slug !== slug)
-              : s.items.map((i) => (i.slug === slug ? { ...i, qty: Math.min(99, qty) } : i)),
+          items: s.items.filter((i) =>
+            delivery
+              ? !(i.slug === slug && (i.delivery ?? "physical") === delivery)
+              : i.slug !== slug,
+          ),
         })),
+
+      setQty: (slug, qty, delivery) =>
+        set((s) => {
+          const hit = (i: CartItem) =>
+            i.slug === slug &&
+            (delivery ? (i.delivery ?? "physical") === delivery : true);
+          return {
+            items:
+              qty <= 0
+                ? s.items.filter((i) => !hit(i))
+                : s.items.map((i) =>
+                    hit(i) ? { ...i, qty: Math.min(99, qty) } : i,
+                  ),
+          };
+        }),
 
       clear: () => set({ items: [] }),
     }),

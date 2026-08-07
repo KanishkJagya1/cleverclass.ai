@@ -1,14 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/primitives";
 import { ErrorState } from "@/components/ui/error-state";
 import { AdminPageHeader } from "@/features/admin/shell";
 import { BookForm } from "@/features/admin/book-form";
+import { CoverUpload } from "@/features/admin/cover-upload";
 import { PdfUpload, type PdfStatus } from "@/features/admin/pdf-upload";
 import { FreeRangesEditor, type FreeRangesState } from "@/features/admin/free-ranges";
-import { useAdminData } from "@/features/admin/auth-context";
+import { useAdminAuth, useAdminData } from "@/features/admin/auth-context";
+import { adminFetch, AdminApiError } from "@/features/admin/api";
+import { Button } from "@/components/ui/button";
 import type { AdminBook } from "@/features/admin/api";
 
 export default function EditBookPage() {
@@ -50,6 +54,10 @@ export default function EditBookPage() {
         description={`Last updated ${new Date(data.updatedAt).toLocaleString("en-IN")}`}
       />
 
+      <div className="mb-6">
+        <CoverUpload slug={data.slug} initialSrc={data.cover} />
+      </div>
+
       {/* The free sample comes first: a book without one shows no preview CTA
           and gives the assistant nothing to point at, so it is the thing most
           likely to be missing. */}
@@ -61,7 +69,95 @@ export default function EditBookPage() {
       {/* keyed on slug so switching books resets the form rather than merging
           the previous book's values into the new one */}
       <BookForm key={data.slug} book={data} />
+
+      <DangerZone slug={data.slug} title={data.title} />
     </>
+  );
+}
+
+/**
+ * Deleting a book.
+ *
+ * Two-step, because the button is next to a form people edit all day. And
+ * honest about what it does: nothing is destroyed, so the confirmation says
+ * that rather than the usual "this cannot be undone" — which would be a lie
+ * here, and the kind of lie that makes people distrust the real warnings.
+ */
+function DangerZone({ slug, title }: { slug: string; title: string }) {
+  const router = useRouter();
+  const { csrf } = useAdminAuth();
+  const [confirming, setConfirming] = React.useState(false);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  async function remove() {
+    setBusy(true);
+    setError(null);
+    try {
+      await adminFetch(`/books/${encodeURIComponent(slug)}`, {
+        method: "DELETE",
+        csrf,
+      });
+      router.push("/admin/books");
+    } catch (err) {
+      setError(
+        err instanceof AdminApiError || err instanceof Error
+          ? err.message
+          : "Couldn't delete that book",
+      );
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="mt-10 rounded-[var(--radius-lg)] border border-destructive/30 p-4">
+      <h2 className="font-[family-name:var(--font-display)] text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">
+        Delete this book
+      </h2>
+      <p className="mt-1 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
+        It disappears from the shop and search. Existing orders and invoices
+        keep working, and you can restore it from{" "}
+        <Link
+          href="/admin/books/deleted"
+          className="text-[color:var(--text-brand)]"
+        >
+          deleted books
+        </Link>
+        .
+      </p>
+
+      {error ? (
+        <p className="mt-2 text-[length:var(--text-sm)] text-destructive">{error}</p>
+      ) : null}
+
+      {confirming ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-[length:var(--text-sm)] text-[color:var(--text-1)]">
+            Delete “{title}”?
+          </span>
+          <Button size="sm" variant="danger" disabled={busy} onClick={remove}>
+            Yes, delete
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => setConfirming(false)}
+          >
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <Button
+          className="mt-3"
+          size="sm"
+          variant="outline"
+          onClick={() => setConfirming(true)}
+        >
+          Delete book
+        </Button>
+      )}
+    </section>
   );
 }
 

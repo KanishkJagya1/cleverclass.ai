@@ -181,7 +181,7 @@ export function FilterSheet({ facets, total }: { facets: Facets; total: number }
       </Drawer.Trigger>
       <Drawer.Portal>
         <Drawer.Overlay className="glass-veil fixed inset-0 z-[var(--z-overlay)]" />
-        <Drawer.Content className="glass-panel fixed inset-x-0 bottom-0 z-[var(--z-modal)] flex max-h-[88vh] flex-col !rounded-b-none">
+        <Drawer.Content className="glass-panel panel-solid fixed inset-x-0 bottom-0 z-[var(--z-modal)] flex max-h-[88vh] flex-col !rounded-b-none">
           <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-[var(--border-2)]" aria-hidden />
           <div className="flex items-center justify-between p-4">
             <Drawer.Title className="text-[length:var(--text-lg)] font-semibold text-[color:var(--text-1)]">

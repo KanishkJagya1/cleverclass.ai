@@ -46,6 +46,21 @@ SUITES = [
     "test_templates",
     "test_phase2_remainder",
     "test_jobs",
+    "test_search",
+    "test_bulk",
+    "test_order_admin",
+    "test_soft_delete",
+    "test_ticket_email",
+    "test_masters",
+    "test_analytics",
+    "test_ebook",
+    "test_ebook_delivery",
+    "test_basket",
+    "test_security",
+    "test_storage",
+    "test_addresses",
+    "test_customer_admin",
+    "test_reader",
 ]
 
 

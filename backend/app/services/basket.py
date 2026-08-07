@@ -41,7 +41,8 @@ def _now() -> str:
 def cart(customer_id: str) -> dict:
     """The cart, priced from the database at read time."""
     rows = query(
-        "SELECT c.*, b.title, b.price, b.mrp, b.class_id, b.medium, b.in_stock,"
+        "SELECT c.*, b.title, b.price, b.mrp, b.ebook_price, b.ebook_available,"
+        "       b.class_id, b.medium, b.in_stock,"
         "       b.status,"
         "       (SELECT src FROM book_images i WHERE i.book_id = b.id"
         "         ORDER BY i.position LIMIT 1) AS cover"
@@ -60,16 +61,29 @@ def cart(customer_id: str) -> dict:
         if row["title"] is None or row["status"] != "published":
             unavailable.append(row["slug"])
             continue
-        line_total = int(row["price"]) * row["qty"]
+        # An e-book line is priced from `ebook_price`. Using `price` here
+        # would show the printed cost in the basket and the real one at
+        # checkout — the discrepancy customers notice last and trust least.
+        delivery = row["delivery"] or "physical"
+        if delivery == "digital":
+            if not row["ebook_available"] or row["ebook_price"] is None:
+                unavailable.append(row["slug"])
+                continue
+            unit_price = int(row["ebook_price"])
+        else:
+            unit_price = int(row["price"])
+
+        line_total = unit_price * row["qty"]
         subtotal += line_total
         items.append({
             "slug": row["slug"],
             "format": row["format"],
+            "delivery": delivery,
             "title": row["title"],
             "classId": row["class_id"],
             "medium": row["medium"],
-            "price": int(row["price"]),
-            "mrp": row["mrp"],
+            "price": unit_price,
+            "mrp": row["mrp"] if delivery != "digital" else None,
             "qty": row["qty"],
             "lineTotal": line_total,
             "inStock": bool(row["in_stock"]),
@@ -81,16 +95,19 @@ def cart(customer_id: str) -> dict:
             "unavailable": unavailable}
 
 
-def set_item(customer_id: str, slug: str, qty: int, fmt: str = "book") -> dict:
+def set_item(customer_id: str, slug: str, qty: int, fmt: str = "book",
+             delivery: str = "physical") -> dict:
     if qty < 0:
         raise BasketError("Quantity cannot be negative")
+    delivery = delivery if delivery in ("physical", "digital") else "physical"
     if qty == 0:
-        return remove_item(customer_id, slug, fmt)
+        return remove_item(customer_id, slug, fmt, delivery)
 
     qty = min(qty, MAX_QTY)
     existing = query_one(
-        "SELECT id FROM cart_items WHERE customer_id = ? AND slug = ? AND format = ?",
-        (customer_id, slug, fmt),
+        "SELECT id FROM cart_items WHERE customer_id = ? AND slug = ?"
+        " AND format = ? AND delivery = ?",
+        (customer_id, slug, fmt, delivery),
     )
     if existing is None:
         lines = query_one(
@@ -101,21 +118,35 @@ def set_item(customer_id: str, slug: str, qty: int, fmt: str = "book") -> dict:
 
     with transaction() as conn:
         conn.execute(
-            "INSERT INTO cart_items (id, customer_id, slug, format, qty, added_at,"
-            " updated_at) VALUES (?,?,?,?,?,?,?)"
-            " ON CONFLICT(customer_id, slug, format)"
+            "INSERT INTO cart_items (id, customer_id, slug, format, delivery,"
+            " qty, added_at, updated_at) VALUES (?,?,?,?,?,?,?,?)"
+            # Must match idx_cart_unique exactly, delivery included — SQLite
+            # rejects an ON CONFLICT target that is not a real unique index.
+            " ON CONFLICT(customer_id, slug, format, delivery)"
             " DO UPDATE SET qty = excluded.qty, updated_at = excluded.updated_at",
-            (f"crt_{secrets.token_hex(8)}", customer_id, slug, fmt, qty, _now(), _now()),
+            (f"crt_{secrets.token_hex(8)}", customer_id, slug, fmt, delivery, qty,
+             _now(), _now()),
         )
     return cart(customer_id)
 
 
-def remove_item(customer_id: str, slug: str, fmt: str = "book") -> dict:
+def remove_item(customer_id: str, slug: str, fmt: str = "book",
+                delivery: str | None = None) -> dict:
     with transaction() as conn:
-        conn.execute(
-            "DELETE FROM cart_items WHERE customer_id = ? AND slug = ? AND format = ?",
-            (customer_id, slug, fmt),
-        )
+        if delivery is None:
+            # No delivery given removes BOTH formats of the title. That is the
+            # honest reading of "remove this book from my cart".
+            conn.execute(
+                "DELETE FROM cart_items WHERE customer_id = ? AND slug = ?"
+                " AND format = ?",
+                (customer_id, slug, fmt),
+            )
+        else:
+            conn.execute(
+                "DELETE FROM cart_items WHERE customer_id = ? AND slug = ?"
+                " AND format = ? AND delivery = ?",
+                (customer_id, slug, fmt, delivery),
+            )
     return cart(customer_id)
 
 
@@ -148,15 +179,18 @@ def merge_guest_cart(customer_id: str, guest_items: list[dict]) -> dict:
             if not slug:
                 continue
             fmt = str(item.get("format", "book"))
+            delivery = str(item.get("delivery") or "physical")
+            if delivery not in ("physical", "digital"):
+                delivery = "physical"
             qty = max(1, min(MAX_QTY, int(item.get("qty", 1))))
             merged = max(qty, current.get((slug, fmt), 0))
             conn.execute(
-                "INSERT INTO cart_items (id, customer_id, slug, format, qty,"
-                " added_at, updated_at) VALUES (?,?,?,?,?,?,?)"
-                " ON CONFLICT(customer_id, slug, format)"
+                "INSERT INTO cart_items (id, customer_id, slug, format, delivery,"
+                " qty, added_at, updated_at) VALUES (?,?,?,?,?,?,?,?)"
+                " ON CONFLICT(customer_id, slug, format, delivery)"
                 " DO UPDATE SET qty = excluded.qty, updated_at = excluded.updated_at",
-                (f"crt_{secrets.token_hex(8)}", customer_id, slug, fmt, merged,
-                 _now(), _now()),
+                (f"crt_{secrets.token_hex(8)}", customer_id, slug, fmt, delivery,
+                 merged, _now(), _now()),
             )
     log.info("Merged %d guest line(s) into cart for %s", len(guest_items), customer_id)
     return cart(customer_id)

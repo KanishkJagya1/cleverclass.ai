@@ -30,9 +30,21 @@ _VOID = ("cancelled", "refund_approved", "returned")
 
 
 def _range(days: int = 30) -> tuple[str, str]:
-    end = dt.datetime.now(dt.timezone.utc)
-    start = end - dt.timedelta(days=days)
-    return start.isoformat(), end.isoformat()
+    """The reporting window, aligned to whole days.
+
+    Aligned rather than a rolling `now - days` so that every figure on the
+    dashboard covers the SAME dates as the chart beside it. With a rolling
+    window an order placed early on the oldest day falls inside the headline
+    total but outside the series, and the chart quietly disagrees with the
+    number above it — the kind of discrepancy that gets noticed once and
+    destroys trust in the whole screen.
+
+    `end` stays as "now" so today is included up to the current moment.
+    """
+    now = dt.datetime.now(dt.timezone.utc)
+    first_day = now.date() - dt.timedelta(days=max(1, days) - 1)
+    start = dt.datetime.combine(first_day, dt.time.min, tzinfo=dt.timezone.utc)
+    return start.isoformat(), now.isoformat()
 
 
 def _void_clause(alias: str = "o") -> str:
@@ -51,7 +63,12 @@ def summary(days: int = 30) -> dict:
         row = query_one(
             f"SELECT COUNT(*) AS orders, COALESCE(SUM(o.total),0) AS revenue"
             f"  FROM orders o"
-            f" WHERE o.created_at >= ? AND o.created_at < ? AND {_void_clause()}",
+            # `<=`, not `<`. The clock here has ~15 ms resolution, so an order
+            # placed in the same tick as the window's end carries an identical
+            # timestamp and a strict `<` drops it — the order appears to exist
+            # one refresh later. Harmless in a month-long view, but it made the
+            # revenue test fail roughly one run in three.
+            f" WHERE o.created_at >= ? AND o.created_at <= ? AND {_void_clause()}",
             (from_at, to_at),
         )
         orders = row["orders"] or 0
@@ -101,20 +118,32 @@ def revenue_series(days: int = 30) -> list[dict]:
     A day with no orders must appear as 0 rather than be missing — a chart that
     silently skips empty days compresses time and makes a quiet week look busy.
     """
-    start, end = _range(days)
+    # Date-aligned, NOT `now - days`. Two reasons, both visible on the chart:
+    #
+    #   * `now - 7 days` spans eight calendar dates, so a "7 day" view drew
+    #     eight bars.
+    #   * it also keeps the time of day, so the oldest bucket held only the
+    #     orders placed after this hour — a partial day that renders as a
+    #     genuinely quiet one. Undercounting the first bar is worse than the
+    #     extra bar, because it looks like information.
+    #
+    # Today is still partial, which is unavoidable and is what a viewer expects
+    # of the current day.
+    last = dt.datetime.now(dt.timezone.utc).date()
+    first = last - dt.timedelta(days=max(1, days) - 1)
+
     rows = query(
         f"SELECT substr(o.created_at, 1, 10) AS day, COUNT(*) AS orders,"
         f"       COALESCE(SUM(o.total),0) AS revenue"
         f"  FROM orders o"
-        f" WHERE o.created_at >= ? AND {_void_clause()}"
+        f" WHERE substr(o.created_at, 1, 10) >= ? AND {_void_clause()}"
         f" GROUP BY day ORDER BY day",
-        (start,),
+        (first.isoformat(),),
     )
     found = {r["day"]: r for r in rows}
 
     series = []
-    day = dt.datetime.fromisoformat(start).date()
-    last = dt.datetime.fromisoformat(end).date()
+    day = first
     while day <= last:
         key = day.isoformat()
         row = found.get(key)

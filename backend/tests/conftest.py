@@ -24,9 +24,33 @@ bug. Run everything with `pytest` from `backend/`.
 
 from __future__ import annotations
 
+import os
 import pathlib
 
 HERE = pathlib.Path(__file__).parent
+
+# ---------------------------------------------------------------------------
+# Test scratch goes somewhere with room, BEFORE anything calls mkdtemp().
+#
+# Every suite creates a throwaway SQLite database under `tempfile.mkdtemp()`
+# and nothing removes it — a suite that fails half way through never reaches
+# its own cleanup. 262 of them accumulated on the system drive until it hit
+# zero bytes free and pytest died with `OSError: [Errno 28] No space left on
+# device` in the middle of an unrelated change.
+#
+# Set here rather than in pytest.ini because `env =` there needs the pytest-env
+# plugin; without it pytest prints "Unknown config option: env" as a warning
+# and carries on using the full drive — a config that looks right and does
+# nothing.
+#
+# The subprocess suites inherit this environment, so one assignment covers all
+# of them. Silently skipped when the target drive does not exist, so this does
+# nothing surprising on another machine or in CI.
+_SCRATCH = os.environ.get("CC_TEST_TMP", r"D:\cctmp")
+if os.path.isdir(os.path.splitdrive(_SCRATCH)[0] + os.sep):
+    os.makedirs(_SCRATCH, exist_ok=True)
+    for _var in ("TMP", "TEMP", "TMPDIR"):
+        os.environ[_var] = _SCRATCH
 
 # Everything except the runner. These are executed as subprocesses, not
 # collected — see the module docstring.
@@ -38,6 +62,14 @@ collect_ignore_glob = ["test_auth.py", "test_rate_limits.py", "test_corpus_isola
                        "test_razorpay.py", "test_coupons.py",
                        "test_exports.py", "test_shipping.py",
                        "test_support.py", "test_templates.py",
-                       "test_phase2_remainder.py", "test_jobs.py"]
+                       "test_phase2_remainder.py", "test_jobs.py",
+                       "test_search.py", "test_bulk.py",
+                       "test_order_admin.py", "test_soft_delete.py",
+                       "test_ticket_email.py", "test_masters.py",
+                       "test_analytics.py", "test_ebook.py",
+                       "test_ebook_delivery.py", "test_basket.py",
+                       "test_security.py", "test_storage.py",
+                       "test_addresses.py", "test_customer_admin.py",
+                       "test_reader.py"]
 
 __all__ = ["HERE", "collect_ignore_glob"]

@@ -191,3 +191,48 @@ def recent_audit(limit: int = 100) -> list[dict]:
             (int(limit),),
         )
     ]
+
+
+def audit_page(
+    *,
+    page: int = 1,
+    per_page: int = 50,
+    action: str | None = None,
+    entity: str | None = None,
+    entity_id: str | None = None,
+    user_id: str | None = None,
+) -> dict:
+    """A filtered page of the audit trail, counted before slicing.
+
+    This table only ever grows, so `recent_audit`'s bare LIMIT meant the
+    history beyond the newest N rows was unreachable — which defeats the point
+    of keeping it. Filtering by entity is what makes it usable in practice:
+    "who changed this book, and when" is the question people actually bring.
+    """
+    clauses = ["1=1"]
+    params: list[Any] = []
+    for column, value in (
+        ("a.action", action), ("a.entity", entity),
+        ("a.entity_id", entity_id), ("a.user_id", user_id),
+    ):
+        if value:
+            clauses.append(f"{column} = ?")
+            params.append(value)
+    where = " AND ".join(clauses)
+
+    total = query(
+        f"SELECT COUNT(*) AS n FROM admin_audit a WHERE {where}", params
+    )[0]["n"]
+    rows = query(
+        "SELECT a.*, u.email FROM admin_audit a"
+        " LEFT JOIN admin_users u ON u.id = a.user_id"
+        f" WHERE {where} ORDER BY a.created_at DESC LIMIT ? OFFSET ?",
+        [*params, int(per_page), (int(page) - 1) * int(per_page)],
+    )
+    return {
+        "items": [dict(r) for r in rows],
+        "total": total,
+        "page": page,
+        "perPage": per_page,
+        "totalPages": (total + per_page - 1) // per_page if total else 0,
+    }

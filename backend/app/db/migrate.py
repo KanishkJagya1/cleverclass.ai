@@ -71,7 +71,32 @@ def migrate() -> int:
         ran += 1
     if ran == 0:
         log.info("Database is up to date")
+
+    _seed_masters_once()
     return ran
+
+
+def _seed_masters_once() -> None:
+    """Fill the masters table from values already on `books`.
+
+    Runs after every migrate rather than inside migration 020, because the SQL
+    file cannot express "derive rows from existing data" and an empty masters
+    table is worse than useless: every picker in the admin would be blank while
+    324 books quietly use codes nothing knows about.
+
+    Idempotent and cheap — one COUNT when there is nothing to do.
+    """
+    try:
+        row = get_conn().execute("SELECT COUNT(*) AS n FROM masters").fetchone()
+        if row and row["n"]:
+            return
+        from app.services import masters
+
+        created = masters.seed_from_books()
+        if any(created.values()):
+            log.info("Seeded master data from books: %s", created)
+    except Exception:  # noqa: BLE001 — never block startup on this
+        log.exception("Could not seed master data")
 
 
 def main() -> None:

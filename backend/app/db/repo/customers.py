@@ -330,10 +330,29 @@ def orders_for(customer_id: str, limit: int = 50) -> list[dict]:
     out = []
     for row in rows:
         order = dict(row)
+        # `unit_price` and `line_total`, NOT `price` — order_items has no such
+        # column, so this query raised "no such column: price" and every
+        # signed-in customer's order history 500'd.
+        #
+        # The cover is joined here rather than fetched per item by the UI: a
+        # customer with ten orders would otherwise fire ten more requests to
+        # render pictures of books they already bought.
         order["items"] = [
-            dict(i)
+            {
+                "slug": i["slug"],
+                "title": i["title"],
+                "qty": i["qty"],
+                "unitPrice": i["unit_price"],
+                "lineTotal": i["line_total"],
+                "cover": i["cover"],
+            }
             for i in query(
-                "SELECT title, qty, price, slug FROM order_items WHERE order_id = ?",
+                "SELECT oi.slug, oi.title, oi.qty, oi.unit_price, oi.line_total,"
+                "       (SELECT src FROM book_images bi"
+                "         JOIN books b ON b.id = bi.book_id"
+                "        WHERE b.slug = oi.slug AND bi.kind = 'front'"
+                "        ORDER BY bi.position LIMIT 1) AS cover"
+                "  FROM order_items oi WHERE oi.order_id = ?",
                 (order["id"],),
             )
         ]

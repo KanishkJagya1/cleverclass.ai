@@ -257,3 +257,98 @@ def send_order_confirmation(order: dict, link: str) -> str | None:
         kind="order",
         related_id=order.get("id"),
     )
+
+
+# --------------------------------------------------------------------------
+# Support tickets
+# --------------------------------------------------------------------------
+
+def support_inbox() -> str:
+    """Where staff read tickets. Falls back to the company address."""
+    return settings.support_email or settings.company_email
+
+
+def send_ticket_opened_staff(ticket: dict, message: str = "") -> str | None:
+    """Tell staff a ticket was opened.
+
+    The customer's own words are included in full rather than summarised —
+    whoever picks this up should not have to open the panel to know whether it
+    is urgent. The reply-to is set to the customer so hitting reply in a mail
+    client does the obvious thing.
+    """
+    # NO `configured()` early return. `queue()` already records an unsendable
+    # message as `skipped` with the full body and logs loudly — that is the
+    # whole point of the outbox. Returning early here would mean a support
+    # request emails nobody AND leaves no trace that it should have.
+    reference = ticket.get("reference", "")
+    subject = ticket.get("subject") or "(no subject)"
+    category = ticket.get("category") or "general"
+    link = f"{settings.public_base_url.rstrip('/')}/admin/support/{reference}"
+
+    body_text = (
+        f"New {category} ticket {reference}\n\n"
+        f"Subject: {subject}\n"
+        f"From: {ticket.get('name') or 'Unknown'} <{ticket.get('email') or ''}>\n"
+        f"Phone: {ticket.get('phone') or '—'}\n\n"
+        f"{message or '(no message)'}\n\n"
+        f"Open it: {link}\n"
+    )
+    body_html = _shell(
+        f"New {category} ticket",
+        f"<p><strong>{subject}</strong></p>"
+        f"<p style='color:#64748b'>{ticket.get('name') or 'Unknown'} · "
+        f"{ticket.get('email') or ''} · {ticket.get('phone') or '—'}</p>"
+        f"<p style='white-space:pre-wrap;background:#f8fafc;padding:12px;"
+        f"border-radius:8px'>{message or '(no message)'}</p>"
+        f"<p style='color:#64748b'>Reference <strong>{reference}</strong></p>",
+        "Open in the panel", link,
+    )
+    return queue(
+        to_email=support_inbox(),
+        subject=f"[{category}] {reference} — {subject}",
+        body_text=body_text,
+        body_html=body_html,
+        kind="ticket_staff",
+        related_id=reference,
+    )
+
+
+def send_ticket_ack(ticket: dict) -> str | None:
+    """Acknowledge to the customer, with the reference they will need.
+
+    Sent because the alternative is a form that appears to swallow the message:
+    without a reference and a way back in, people submit again, and the queue
+    fills with duplicates of the same problem.
+    """
+    # Same reasoning as above: let `queue()` decide sendability. The empty
+    # address check stays — queuing a mail to nobody is a bounce, not a record.
+    email = (ticket.get("email") or "").strip()
+    if not email:
+        return None
+
+    reference = ticket.get("reference", "")
+    link = f"{settings.public_base_url.rstrip('/')}/support/{reference}"
+    name = ticket.get("name") or "there"
+
+    body_text = (
+        f"Hello {name},\n\n"
+        f"We have your message and someone will reply here.\n\n"
+        f"Your reference is {reference}.\n"
+        f"Track it: {link}\n\n"
+        f"{settings.company_name} · {settings.company_phone}\n"
+    )
+    body_html = _shell(
+        "We have your message",
+        f"<p>Hello {name},</p>"
+        f"<p>Someone will reply to this shortly. Your reference is "
+        f"<strong>{reference}</strong> — keep it to follow the conversation.</p>",
+        "Track your request", link,
+    )
+    return queue(
+        to_email=email,
+        subject=f"We have your message — {reference}",
+        body_text=body_text,
+        body_html=body_html,
+        kind="ticket_ack",
+        related_id=reference,
+    )

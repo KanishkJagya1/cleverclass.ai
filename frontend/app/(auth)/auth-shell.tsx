@@ -112,7 +112,7 @@ export function AuthShell({ mode }: { mode: AuthMode }) {
     <div className="relative isolate flex min-h-[70vh] items-center justify-center px-[var(--gutter)] py-16">
       <MeshBackground />
 
-      <div className="glass-panel glass-edge w-full max-w-md p-7 md:p-8">
+      <div className="glass-panel panel-solid glass-edge w-full max-w-md p-7 md:p-8">
         <h1 className="font-[family-name:var(--font-display)] text-[length:var(--text-2xl)] font-semibold text-[color:var(--text-1)]">
           {copy.title}
         </h1>

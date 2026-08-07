@@ -118,7 +118,7 @@ export function MobileNav({
         <Drawer.Overlay className="glass-veil fixed inset-0 z-[var(--z-overlay)]" />
         <Drawer.Content
           className={cn(
-            "glass-panel fixed inset-y-0 right-0 z-[var(--z-modal)] flex w-[88%] max-w-sm flex-col",
+            "glass-panel panel-solid fixed inset-y-0 right-0 z-[var(--z-modal)] flex w-[88%] max-w-sm flex-col",
             "!rounded-l-[var(--radius-2xl)] !rounded-r-none",
           )}
         >

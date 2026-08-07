@@ -170,11 +170,16 @@ def _stamp(page, text: str) -> None:
     try:
         # Low-contrast diagonal repeat across the page.
         for row in range(0, int(rect.height), 190):
+            pivot = fitz.Point(28, row + 90)
+            # An arbitrary angle needs `morph`; `rotate=` accepts only
+            # 0/90/180/270 and raises "bad rotate value" otherwise. That
+            # exception was caught and logged, so preview pages rendered with
+            # NO watermark at all — the failure looked like a working preview.
             page.insert_text(
-                fitz.Point(28, row + 90),
+                pivot,
                 text,
                 fontsize=13,
-                rotate=45,
+                morph=(pivot, fitz.Matrix(45)),
                 color=(0.55, 0.55, 0.62),
                 fill_opacity=0.16,
                 overlay=True,

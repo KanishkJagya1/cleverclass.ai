@@ -61,17 +61,67 @@ export function MediumSwitch({ book, variants }: { book: Book; variants: Book[] 
 /* -------------------------------------------------------------------------- */
 export function PurchasePanel({ book, variants }: { book: Book; variants: Book[] }) {
   const [qty, setQty] = React.useState(1);
-  const shortfall = Math.max(0, SITE.freeShippingThreshold - book.price * qty);
+
+  // Absent flags mean "printed only" — every book predates e-books, and a
+  // missing field must not silently delist the printed copy.
+  const hasPrint = book.physicalAvailable !== false;
+  const hasEbook = Boolean(book.ebookAvailable && book.ebookPrice != null);
+
+  // The printed copy is the default and the one promoted. The selector only
+  // appears when there is a genuine choice — a single-format book showing a
+  // "choose a format" control is a decision the shopper does not have.
+  const [delivery, setDelivery] = React.useState<"physical" | "digital">(
+    hasPrint ? "physical" : "digital",
+  );
+  const chosen = hasPrint && hasEbook ? delivery : hasPrint ? "physical" : "digital";
+  const isDigital = chosen === "digital";
+  const unitPrice = isDigital ? (book.ebookPrice ?? book.price) : book.price;
+
+  // Shipping applies to printed copies only, so the free-delivery nudge has
+  // no business appearing on a download.
+  const shortfall = isDigital
+    ? 0
+    : Math.max(0, SITE.freeShippingThreshold - unitPrice * qty);
 
   return (
     <div className="surface-card p-5 lg:sticky lg:top-[calc(var(--nav-h)+1.5rem)] lg:p-6">
       <div className="flex items-start justify-between gap-4">
-        <PriceBlock price={book.price} mrp={book.mrp} size="lg" />
-        <StockBadge inStock={book.inStock} />
+        <PriceBlock
+          price={unitPrice}
+          mrp={isDigital ? undefined : book.mrp}
+          size="lg"
+        />
+        {/* A download cannot be out of stock. */}
+        {isDigital ? null : <StockBadge inStock={book.inStock} />}
       </div>
 
       <div className="mt-5 space-y-5">
         <MediumSwitch book={book} variants={variants} />
+
+        {hasPrint && hasEbook ? (
+          <div>
+            <p className="mb-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-2)]">
+              Format
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <FormatOption
+                selected={chosen === "physical"}
+                onSelect={() => setDelivery("physical")}
+                label="Printed book"
+                price={book.price}
+                note="Hardbound · delivered to you"
+                recommended
+              />
+              <FormatOption
+                selected={chosen === "digital"}
+                onSelect={() => setDelivery("digital")}
+                label="E-book"
+                price={book.ebookPrice ?? book.price}
+                note="Read instantly · no delivery"
+              />
+            </div>
+          </div>
+        ) : null}
 
         <div>
           <p className="mb-2 text-[length:var(--text-sm)] font-medium text-[color:var(--text-2)]">Quantity</p>
@@ -98,7 +148,7 @@ export function PurchasePanel({ book, variants }: { book: Book; variants: Book[]
         </div>
 
         <div className="space-y-2.5">
-          <AddToCartButton item={book} qty={qty} size="lg" full />
+          <AddToCartButton item={book} qty={qty} delivery={chosen} size="lg" full />
 
           {/* The sample CTA appears only when the book actually HAS one, and
               states the real page count rather than a guess. It used to render
@@ -274,5 +324,59 @@ export function FrequentlyBoughtTogether({ anchor, others }: { anchor: Book; oth
         </div>
       </div>
     </section>
+  );
+}
+
+
+/**
+ * One format choice.
+ *
+ * The printed copy carries a "Recommended" flag — it is the format the shop
+ * makes its margin on and the one most customers here want, so it leads. The
+ * e-book sits beside it at its own price rather than being hidden behind a
+ * dropdown, because a format nobody can see is a format nobody buys.
+ */
+function FormatOption({
+  selected,
+  onSelect,
+  label,
+  price,
+  note,
+  recommended = false,
+}: {
+  selected: boolean;
+  onSelect: () => void;
+  label: string;
+  price: number;
+  note: string;
+  recommended?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={
+        "relative rounded-[var(--radius-md)] border p-3 text-left transition-colors " +
+        (selected
+          ? "border-[var(--text-brand)] bg-[var(--surface-0)]"
+          : "border-[var(--border-1)] hover:border-[var(--border-2)]")
+      }
+    >
+      {recommended ? (
+        <span className="absolute -top-2 right-2 rounded-full bg-[var(--text-brand)] px-1.5 py-0.5 text-[length:var(--text-2xs)] font-medium text-white">
+          Recommended
+        </span>
+      ) : null}
+      <span className="block text-[length:var(--text-sm)] font-medium text-[color:var(--text-1)]">
+        {label}
+      </span>
+      <span className="tabular mt-0.5 block text-[length:var(--text-base)] font-semibold text-[color:var(--text-1)]">
+        {formatPrice(price)}
+      </span>
+      <span className="mt-0.5 block text-[length:var(--text-xs)] text-[color:var(--text-3)]">
+        {note}
+      </span>
+    </button>
   );
 }

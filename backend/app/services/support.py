@@ -115,7 +115,27 @@ def create(
         notifications.ticket_opened(reference, subject[:80])
     except Exception:  # noqa: BLE001
         log.exception("Ticket notification failed for %s", reference)
-    return get(reference) or {}
+
+    ticket = get(reference) or {}
+
+    # Email is best-effort and deliberately AFTER the commit: the ticket is
+    # already saved, so a mail failure loses a notification, never the
+    # customer's message. Both are queued rather than sent inline — SMTP from
+    # inside a request is how a form ends up taking eight seconds.
+    try:
+        from app.services import mailer
+
+        mailer.send_ticket_opened_staff(ticket, message=body[:8000])
+    except Exception:  # noqa: BLE001
+        log.exception("Staff ticket email failed for %s", reference)
+    try:
+        from app.services import mailer
+
+        mailer.send_ticket_ack(ticket)
+    except Exception:  # noqa: BLE001
+        log.exception("Ticket acknowledgement failed for %s", reference)
+
+    return ticket
 
 
 def get(reference: str) -> dict | None:

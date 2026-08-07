@@ -33,6 +33,10 @@ _lookup_limiter = SlidingWindowLimiter([(30, 60), (200, 3600)])
 class OrderItemIn(BaseModel):
     slug: str = Field(min_length=1, max_length=200)
     qty: int = Field(default=1, ge=1, le=20)
+    # Printed copy or download. Defaults to physical so an older client — or
+    # any caller that predates e-books — orders exactly what it always did.
+    # The price is still resolved server-side from the book, never from here.
+    delivery: str = Field(default="physical", pattern="^(physical|digital)$")
 
 
 class OrderIn(BaseModel):

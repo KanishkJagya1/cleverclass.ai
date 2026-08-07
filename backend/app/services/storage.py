@@ -82,9 +82,17 @@ def absolute(rel: str) -> Path:
     runs on data you trust is a check that stops running the day the data
     source changes.
     """
-    candidate = (root() / rel).resolve()
-    if not str(candidate).startswith(str(root().resolve())):
-        raise ValueError(f"Path escapes the media root: {rel}")
+    base = root().resolve()
+    candidate = (base / rel).resolve()
+    # `relative_to`, not `str.startswith`. A prefix test on strings accepts a
+    # SIBLING whose name merely begins with the root's — "/data/media-evil"
+    # starts with "/data/media" — and it also depends on `resolve()` being
+    # idempotent, which it is not for every input on every platform. Path
+    # containment answers the question that is actually being asked.
+    try:
+        candidate.relative_to(base)
+    except ValueError as exc:
+        raise ValueError(f"Path escapes the media root: {rel}") from exc
     return candidate
 
 
@@ -136,3 +144,20 @@ def disk_usage() -> dict:
         "previewBytes": size("preview"),
         "coverBytes": size("covers"),
     }
+
+
+def ebook_path(order_number: str, slug: str) -> Path:
+    """Where a buyer's personalised copy lives.
+
+    Keyed by order AND book, because the watermark names the buyer — one
+    shared file per title would leak the first purchaser's details to everyone
+    who bought it afterwards.
+
+    Both parts are validated: they reach the filesystem, and an order number
+    from a URL is exactly the kind of input that walks out of a directory.
+    """
+    safe_order = "".join(c for c in order_number if c.isalnum() or c == "-")
+    safe_slug = "".join(c for c in slug if c.isalnum() or c in "-_")
+    if not safe_order or not safe_slug:
+        raise ValueError("Refusing to build a media path from unvalidated input")
+    return _ensure(root() / "ebooks" / safe_order) / f"{safe_slug}.pdf"

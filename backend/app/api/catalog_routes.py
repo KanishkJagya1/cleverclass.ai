@@ -242,8 +242,15 @@ def search(
     Semantic search lives in the RAG pipeline; this is the fast path the
     command palette hits first.
     """
+    from app.services import suggest as suggest_service
+
+    # Synonyms first: this catalogue's customers type "maths", "10th" and "SSC"
+    # for things the database calls "Mathematics" and "10". Without the rewrite
+    # the search box looks broken to exactly the people it was built for.
+    expanded = suggest_service.expand(q)
+
     hits: list[dict] = []
-    for book in books_repo.search_books(q, limit):
+    for book in books_repo.search_books(expanded, limit):
         cover = next((i["src"] for i in book["images"] if i["kind"] == "front"), None)
         hits.append(
             {
@@ -263,6 +270,10 @@ def search(
                 "medium": book["medium"],
             }
         )
+    # Logged after the fact, with the ORIGINAL query rather than the expanded
+    # one — the zero-result report is only useful if it shows what the customer
+    # actually typed.
+    suggest_service.record(q, len(hits), source="search")
     return hits
 
 
@@ -317,3 +328,34 @@ def export_slugs() -> dict:
         "keyNotes": catalog_repo.all_key_note_slugs(),
         "generatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
     }
+
+
+@router.get("/suggest")
+def suggest(
+    q: str = Query(default="", max_length=200),
+    limit: int = Query(default=8, ge=1, le=20),
+) -> dict:
+    """Autocomplete for the search box.
+
+    Separate from /search on purpose. This fires on keystrokes, so it is logged
+    under `source='suggest'` and kept out of the "popular searches" report —
+    otherwise the most popular query in the shop would be the letter "s".
+    """
+    from app.services import suggest as suggest_service
+
+    result = suggest_service.suggest(q, limit)
+    suggest_service.record(q, len(result["books"]), source="suggest")
+    return result
+
+
+@router.get("/masters")
+def catalog_masters() -> dict:
+    """The five lists, active entries only — what the storefront filters need.
+
+    Public and unauthenticated: these are the same values already visible in
+    every facet and URL, so there is nothing here a visitor cannot already see.
+    Inactive entries are excluded, which is the whole point of the flag.
+    """
+    from app.services import masters
+
+    return masters.grouped(active_only=True)

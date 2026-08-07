@@ -60,6 +60,43 @@ def recent(kind: str | None = None, limit: int = 100) -> list[dict]:
     return [dict(r) for r in query(sql, params)]
 
 
+def page(
+    *,
+    kind: str | None = None,
+    handled: bool | None = None,
+    page: int = 1,
+    per_page: int = 50,
+) -> dict:
+    """A page of leads, counted before slicing.
+
+    `handled` is a filter rather than a sort because the only question worth
+    asking on this screen is "what has nobody dealt with yet" — and with a bare
+    LIMIT the unhandled ones fall off the end as new leads arrive.
+    """
+    clauses = ["1=1"]
+    params: list = []
+    if kind:
+        clauses.append("kind = ?")
+        params.append(kind)
+    if handled is not None:
+        clauses.append("handled = ?")
+        params.append(1 if handled else 0)
+    where = " AND ".join(clauses)
+
+    total = query(f"SELECT COUNT(*) AS n FROM leads WHERE {where}", params)[0]["n"]
+    rows = query(
+        f"SELECT * FROM leads WHERE {where} ORDER BY created_at DESC LIMIT ? OFFSET ?",
+        [*params, int(per_page), (int(page) - 1) * int(per_page)],
+    )
+    return {
+        "items": [dict(r) for r in rows],
+        "total": total,
+        "page": page,
+        "perPage": per_page,
+        "totalPages": (total + per_page - 1) // per_page if total else 0,
+    }
+
+
 def mark_handled(lead_id: str) -> bool:
     with transaction() as conn:
         return conn.execute(

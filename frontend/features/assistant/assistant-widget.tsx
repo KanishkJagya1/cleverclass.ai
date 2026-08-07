@@ -475,6 +475,10 @@ function ProductCardInline({ hit }: { hit: SearchHit }) {
             add({
               slug: hit.slug,
               format: hit.format,
+              // The assistant recommends printed copies; choosing a download
+              // is a decision made on the product page, where both prices are
+              // visible side by side.
+              delivery: "physical",
               title: hit.title,
               titleMr: hit.titleMr,
               price: hit.price!,

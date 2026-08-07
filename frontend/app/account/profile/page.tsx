@@ -26,6 +26,7 @@ interface Address {
   city: string;
   state: string;
   pincode: string;
+  landmark: string;
   isDefault: boolean;
 }
 
@@ -33,7 +34,7 @@ type AddressDraft = Omit<Address, "id" | "isDefault">;
 
 const BLANK: AddressDraft = {
   label: "Home", name: "", phone: "", line1: "", line2: "", city: "",
-  state: "", pincode: "",
+  state: "", pincode: "", landmark: "",
 };
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -250,7 +251,7 @@ export default function ProfilePage() {
                   </p>
                   <p className="mt-1 text-[length:var(--text-sm)] text-[color:var(--text-2)]">
                     {address.name && `${address.name} · `}
-                    {[address.line1, address.line2, address.city, address.state, address.pincode]
+                    {[address.line1, address.line2, address.landmark, address.city, address.state, address.pincode]
                       .filter(Boolean)
                       .join(", ")}
                   </p>
@@ -277,6 +278,7 @@ export default function ProfilePage() {
                         label: address.label, name: address.name, phone: address.phone,
                         line1: address.line1, line2: address.line2, city: address.city,
                         state: address.state, pincode: address.pincode,
+                        landmark: address.landmark ?? "",
                       });
                       setEditingId(address.id);
                     }}
@@ -369,6 +371,15 @@ export default function ProfilePage() {
                     ? "Pincode must be 6 digits"
                     : undefined}
                 </FieldError>
+              </div>
+              <div>
+                <Label htmlFor="a-landmark">Landmark (optional)</Label>
+                <Input
+                  id="a-landmark"
+                  placeholder="e.g. opposite Ganesh temple"
+                  value={draft.landmark}
+                  onChange={(e) => setDraft({ ...draft, landmark: e.target.value })}
+                />
               </div>
               <div>
                 <Label htmlFor="a-phone">Contact number</Label>
